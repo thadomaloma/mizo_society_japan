@@ -79,9 +79,29 @@ Keep secrets in `.env` or production environment variables.
 
 Do not commit `.env` to GitHub.
 
+Use `.env.example` as a reference for local setup.
+
 ## Deployment
 
 The app is designed for Rails deployment with PostgreSQL, such as Railway or a similar hosting service.
+
+For Railway production, add these variables in the Railway service settings:
+
+```text
+RAILS_ENV=production
+RAILS_SERVE_STATIC_FILES=true
+SECRET_KEY_BASE=<output from bin/rails secret>
+APP_HOST=<your Railway domain>
+APP_PROTOCOL=https
+```
+
+If you use encrypted Rails credentials in production, also add:
+
+```text
+RAILS_MASTER_KEY=<contents of config/master.key>
+```
+
+PostgreSQL should provide `DATABASE_URL` automatically when the Railway database is connected.
 
 ## License
 
