@@ -82,6 +82,7 @@ bin/rails db:seed
 If the seed account already exists and you need to reset its password, temporarily set:
 
 ```text
+SEED_SUPER_ADMIN_ROLE=secretary
 RESET_SEED_SUPER_ADMIN_PASSWORD=true
 SEED_SUPER_ADMIN_PASSWORD=<new secure password>
 ```

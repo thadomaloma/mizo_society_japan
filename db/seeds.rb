@@ -1,11 +1,16 @@
 default_password = ENV["SEED_SUPER_ADMIN_PASSWORD"].presence || ENV.fetch("SEED_USER_PASSWORD", "password123")
 super_admin_email = ENV.fetch("SEED_SUPER_ADMIN_EMAIL", "president@msj.local")
+super_admin_role = ENV.fetch("SEED_SUPER_ADMIN_ROLE", "president")
 reset_password = ActiveModel::Type::Boolean.new.cast(ENV["RESET_SEED_SUPER_ADMIN_PASSWORD"])
+
+unless super_admin_role.in?(User::SUPER_ADMIN_ROLES)
+  raise ArgumentError, "SEED_SUPER_ADMIN_ROLE must be one of: #{User::SUPER_ADMIN_ROLES.join(', ')}"
+end
 
 super_admin = User.find_or_initialize_by(email: super_admin_email)
 super_admin.assign_attributes(
-  name: ENV.fetch("SEED_SUPER_ADMIN_NAME", "President"),
-  role: :president,
+  name: ENV.fetch("SEED_SUPER_ADMIN_NAME", User.role_label(super_admin_role)),
+  role: super_admin_role,
   active: true
 )
 super_admin.password = default_password if super_admin.encrypted_password.blank? || reset_password
@@ -24,4 +29,4 @@ profile.assign_attributes(
 )
 profile.save!
 
-puts "Seeded one super admin: #{super_admin.email}"
+puts "Seeded one super admin: #{super_admin.email} (#{super_admin.role})"
