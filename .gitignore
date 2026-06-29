@@ -10,6 +10,7 @@
 !/log/.keep
 !/tmp/.keep
 !/tmp/pids
+/tmp/pids/*
 !/tmp/pids/.keep
 !/tmp/storage
 !/tmp/storage/.keep
