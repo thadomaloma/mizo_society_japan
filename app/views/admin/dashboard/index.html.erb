@@ -1,0 +1,263 @@
+<% content_for :page_title, "Dashboard" %>
+
+<div class="space-y-6">
+  <%= render "shared/portal_notice" %>
+  <section class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div>
+      <h2 class="text-2xl font-black tracking-tight text-gray-950 dark:text-white sm:text-3xl">
+        Welcome back, <%= current_user.display_name %>
+      </h2>
+      <p class="mt-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
+        Here's what's happening with <%= portal_organization_name %>
+      </p>
+    </div>
+
+    <div class="inline-flex items-center gap-3 rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-black text-[#0F172A] shadow-sm dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#F8FAFC]">
+      <span><%= Date.current.strftime("%b %d, %Y") %></span>
+      <%= icon_svg(:events, classes: "h-4 w-4 text-gray-400") %>
+    </div>
+  </section>
+
+  <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+    <% @stats.each do |stat| %>
+      <%= render "shared/stat_card",
+        label: stat[:label],
+        value: stat[:value],
+        tone: stat[:tone],
+        icon: stat[:icon],
+        caption: stat[:caption],
+        caption_tone: stat[:caption_tone] %>
+    <% end %>
+  </section>
+
+  <section class="grid gap-5 xl:grid-cols-[1.15fr_1fr_1fr]">
+    <%= render "shared/section_card", title: "Financial Overview (This Month)", body_class: "p-5" do %>
+      <% chart_data = @finance_chart.presence || [ { label: Date.current.strftime("%b %-d"), income: 0, expense: 0 } ] %>
+      <% max_value = [ chart_data.flat_map { |point| [ point[:income], point[:expense] ] }.max.to_i, 1 ].max %>
+      <% chart_left = 38 %>
+      <% chart_right = 328 %>
+      <% chart_top = 24 %>
+      <% chart_bottom = 158 %>
+      <% chart_width = chart_right - chart_left %>
+      <% chart_height = chart_bottom - chart_top %>
+      <% point_gap = chart_width.to_f / [ chart_data.size - 1, 1 ].max %>
+      <% chart_point = ->(point, index, key) { x = chart_left + (index * point_gap); y = chart_bottom - ((point[key].to_f / max_value) * chart_height); [ x.round(2), y.round(2) ] } %>
+      <% income_coords = chart_data.each_with_index.map { |point, index| chart_point.call(point, index, :income) } %>
+      <% expense_coords = chart_data.each_with_index.map { |point, index| chart_point.call(point, index, :expense) } %>
+      <% income_points = income_coords.map { |x, y| "#{x},#{y}" }.join(" ") %>
+      <% expense_points = expense_coords.map { |x, y| "#{x},#{y}" }.join(" ") %>
+      <% income_area_points = "#{chart_left},#{chart_bottom} #{income_points} #{chart_right},#{chart_bottom}" %>
+      <% expense_area_points = "#{chart_left},#{chart_bottom} #{expense_points} #{chart_right},#{chart_bottom}" %>
+      <% net_balance = @finance_summary[:income].to_i - @finance_summary[:expense].to_i %>
+
+      <div class="mb-5 grid gap-3 sm:grid-cols-3">
+        <div class="rounded-xl border border-emerald-100 bg-emerald-50/80 px-3 py-2.5 dark:border-emerald-400/20 dark:bg-emerald-400/10">
+          <p class="text-[11px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Income</p>
+          <p class="mt-1 text-base font-black text-[#0F172A] dark:text-white"><%= yen(@finance_summary[:income]) %></p>
+        </div>
+        <div class="rounded-xl border border-red-100 bg-red-50/80 px-3 py-2.5 dark:border-red-400/20 dark:bg-red-400/10">
+          <p class="text-[11px] font-black uppercase tracking-wide text-red-700 dark:text-red-300">Expense</p>
+          <p class="mt-1 text-base font-black text-[#0F172A] dark:text-white"><%= yen(@finance_summary[:expense]) %></p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-600 dark:bg-slate-800/70">
+          <p class="text-[11px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-300">Net</p>
+          <p class="mt-1 text-base font-black <%= net_balance.negative? ? "text-red-700 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300" %>"><%= yen(net_balance) %></p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/80">
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-3 px-1">
+          <div class="flex items-center gap-4 text-xs font-black">
+            <span class="inline-flex items-center gap-2 text-emerald-700 dark:text-emerald-300"><span class="h-2 w-2 rounded-full bg-emerald-600 shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"></span>Income</span>
+            <span class="inline-flex items-center gap-2 text-red-700 dark:text-red-300"><span class="h-2 w-2 rounded-full bg-red-600 shadow-[0_0_0_4px_rgba(220,38,38,0.12)]"></span>Expense</span>
+          </div>
+          <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-500 dark:bg-slate-700 dark:text-slate-200">Monthly trend</span>
+        </div>
+
+        <svg viewBox="0 0 360 196" class="h-60 w-full overflow-visible" role="img" aria-label="Monthly income and expense trend">
+          <defs>
+            <linearGradient id="incomeAreaGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#059669" stop-opacity="0.26" />
+              <stop offset="100%" stop-color="#059669" stop-opacity="0" />
+            </linearGradient>
+            <linearGradient id="expenseAreaGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#DC2626" stop-opacity="0.22" />
+              <stop offset="100%" stop-color="#DC2626" stop-opacity="0" />
+            </linearGradient>
+            <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.10" />
+            </filter>
+          </defs>
+
+          <% 5.times do |line| %>
+            <% y = chart_top + (line * (chart_height / 4.0)) %>
+            <% value = max_value - ((max_value / 4.0) * line) %>
+            <line x1="<%= chart_left %>" x2="<%= chart_right %>" y1="<%= y %>" y2="<%= y %>" stroke="currentColor" stroke-dasharray="<%= line == 4 ? "0" : "4 8" %>" class="text-slate-200 dark:text-slate-700" />
+            <text x="2" y="<%= y + 4 %>" class="fill-slate-400 text-[10px] font-bold dark:fill-slate-400"><%= number_to_human(value, precision: 1, units: { thousand: "K", million: "M" }) %></text>
+          <% end %>
+
+          <polygon points="<%= income_area_points %>" fill="url(#incomeAreaGradient)" />
+          <polygon points="<%= expense_area_points %>" fill="url(#expenseAreaGradient)" />
+          <polyline points="<%= income_points %>" fill="none" stroke="#059669" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#lineGlow)" />
+          <polyline points="<%= expense_points %>" fill="none" stroke="#DC2626" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#lineGlow)" />
+
+          <% income_coords.each do |x, y| %>
+            <circle cx="<%= x %>" cy="<%= y %>" r="4.5" fill="#FFFFFF" stroke="#059669" stroke-width="3" class="dark:fill-slate-900" />
+          <% end %>
+          <% expense_coords.each do |x, y| %>
+            <circle cx="<%= x %>" cy="<%= y %>" r="4.5" fill="#FFFFFF" stroke="#DC2626" stroke-width="3" class="dark:fill-slate-900" />
+          <% end %>
+
+          <% chart_data.each_with_index do |point, index| %>
+            <% x = chart_left + (index * point_gap) %>
+            <text x="<%= x %>" y="188" text-anchor="middle" class="fill-slate-500 text-[10px] font-bold dark:fill-slate-300"><%= point[:label] %></text>
+          <% end %>
+          <line x1="<%= chart_left %>" x2="<%= chart_right %>" y1="<%= chart_bottom %>" y2="<%= chart_bottom %>" stroke="currentColor" class="text-slate-300 dark:text-slate-600" />
+        </svg>
+      </div>
+
+      <% if @finance_chart.blank? %>
+        <div class="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+          No finance transactions yet for this month.
+        </div>
+      <% end %>
+    <% end %>
+
+    <%= render "shared/section_card",
+      title: "Recent Activities",
+      body_class: "space-y-5 p-5" do %>
+      <% @recent_activities.each do |activity| %>
+        <%= render "shared/activity_item", title: activity[:title], subtitle: activity[:subtitle], icon: activity[:icon] %>
+      <% end %>
+      <% if @recent_activities.empty? %>
+        <p class="text-sm font-semibold text-gray-500 dark:text-gray-400">No recent activities yet.</p>
+      <% end %>
+    <% end %>
+
+    <%= render "shared/section_card",
+      title: "Upcoming Events",
+      body_class: "space-y-4 p-5" do %>
+      <% @upcoming_events.each do |event| %>
+        <%= render "shared/event_item", event: event %>
+      <% end %>
+      <% if @upcoming_events.empty? %>
+        <p class="text-sm font-semibold text-gray-500 dark:text-gray-400">No upcoming events yet.</p>
+      <% end %>
+    <% end %>
+  </section>
+
+  <section class="grid gap-5 xl:grid-cols-3">
+    <% if @finance_dashboard_enabled %>
+      <%= render "shared/section_card",
+        title: "Payments",
+        action: action_link("View all", admin_membership_payments_path, icon: :finance),
+        body_class: "space-y-4 p-5" do %>
+        <%= link_to admin_payment_settings_path, class: "flex items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50 px-3 py-3 transition hover:border-red-200 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:hover:bg-red-500/15" do %>
+          <span class="flex min-w-0 items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-600 text-white shadow-sm shadow-red-950/10">
+              <%= icon_svg(:settings, classes: "h-4 w-4") %>
+            </span>
+            <span class="min-w-0">
+              <span class="block text-sm font-black text-[#0F172A] dark:text-white">Bank Details</span>
+              <span class="mt-0.5 block text-xs font-semibold text-red-700 dark:text-red-200">Edit member transfer account</span>
+            </span>
+          </span>
+          <%= icon_svg(:arrow_right, classes: "h-4 w-4 shrink-0 text-red-700 dark:text-red-200") %>
+        <% end %>
+
+        <% [
+          [ "To Verify", "#{@membership_payment_summary[:pending_verification]} submitted", @membership_payment_summary[:pending_verification_amount], "text-amber-700 dark:text-amber-300" ],
+          [ "Unpaid", "#{@membership_payment_summary[:pending]} awaiting payment", @membership_payment_summary[:pending_amount], "text-red-700 dark:text-red-300" ],
+          [ "Paid This Month", "#{@membership_payment_summary[:paid_this_month]} approved", @membership_payment_summary[:paid_this_month_amount], "text-emerald-700 dark:text-emerald-300" ]
+        ].each do |label, caption, amount, tone| %>
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-sm font-black <%= tone %>"><%= label %></p>
+              <p class="text-xs font-semibold text-gray-500 dark:text-gray-400"><%= caption %></p>
+            </div>
+            <p class="text-sm font-black text-gray-950 dark:text-white"><%= yen(amount) %></p>
+          </div>
+        <% end %>
+
+        <% if @pending_verification_payments.any? %>
+          <div class="border-t border-slate-100 pt-4 dark:border-[#334155]">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <p class="text-xs font-black uppercase tracking-wide text-slate-500 dark:text-slate-300">Latest transfer submissions</p>
+              <%= link_to admin_membership_payments_path(status: :pending_verification), class: "text-xs font-black text-red-700 hover:text-red-800 dark:text-red-300 dark:hover:text-red-200" do %>
+                Review
+              <% end %>
+            </div>
+            <div class="space-y-3">
+              <% @pending_verification_payments.each do |payment| %>
+                <%= link_to admin_membership_payment_path(payment), class: "flex items-center justify-between gap-3 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2.5 transition hover:border-amber-200 hover:bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10 dark:hover:bg-amber-500/15" do %>
+                  <span class="min-w-0">
+                    <span class="block truncate text-sm font-black text-[#0F172A] dark:text-white"><%= user_label(payment.user) %></span>
+                    <span class="mt-0.5 block truncate text-xs font-semibold text-amber-700 dark:text-amber-200"><%= payment.membership_plan.name %></span>
+                  </span>
+                  <span class="shrink-0 text-sm font-black text-[#0F172A] dark:text-white"><%= yen(payment.transfer_amount || payment.amount) %></span>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+
+    <%= render "shared/section_card",
+      title: "Welfare Cases",
+      action: action_link("View all", admin_welfare_cases_path, icon: :welfare),
+      body_class: "space-y-4 p-5" do %>
+      <% [
+        [ "Open", @welfare_summary[:open], "text-red-700" ],
+        [ "In Progress", @welfare_summary[:in_progress], "text-amber-700" ],
+        [ "Resolved", @welfare_summary[:resolved], "text-emerald-700" ]
+      ].each do |label, count, tone| %>
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-black <%= tone %>"><%= label %></p>
+          <p class="text-sm font-black text-gray-950 dark:text-white"><%= count %> Cases</p>
+        </div>
+      <% end %>
+    <% end %>
+
+    <%= render "shared/section_card",
+      title: "Official Letters",
+      action: action_link("Open Letters", documents_path, icon: :documents),
+      body_class: "space-y-4 p-5" do %>
+      <div class="grid grid-cols-2 gap-3">
+        <% [
+          [ "Total", @document_stats[:total] ],
+          [ "Drafts", @document_stats[:drafts] ],
+          [ "Published", @document_stats[:published] ],
+          [ "Final Files", @document_stats[:final_files] ]
+        ].each do |label, count| %>
+          <div class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
+            <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></p>
+            <p class="mt-1 text-xl font-black text-[#0F172A] dark:text-white"><%= count %></p>
+          </div>
+        <% end %>
+      </div>
+
+      <% if @latest_documents.any? %>
+        <div class="border-t border-[#E2E8F0] pt-4 dark:border-[#334155]">
+          <p class="mb-3 text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Recent letters</p>
+          <div class="space-y-2">
+            <% @latest_documents.each do |letter| %>
+              <%= link_to document_path(letter), class: "flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 transition hover:border-red-200 hover:bg-red-50/40 dark:border-[#334155] dark:bg-[#1E293B] dark:hover:bg-[#334155]" do %>
+                <span class="min-w-0">
+                  <span class="block truncate text-sm font-black text-[#0F172A] dark:text-white"><%= letter.title %></span>
+                  <span class="mt-0.5 block text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= visibility_label(letter.visibility) %></span>
+                </span>
+                <%= render "shared/status_badge", status: letter.status, compact: true %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% else %>
+        <div class="rounded-xl border border-dashed border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm font-semibold text-[#64748B] dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#CBD5E1]">
+          No official letters have been saved yet.
+        </div>
+      <% end %>
+    <% end %>
+  </section>
+
+</div>

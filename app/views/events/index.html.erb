@@ -1,0 +1,83 @@
+<% content_for :page_title, "Updates" %>
+
+<div class="space-y-5 lg:space-y-6">
+  <% actions = capture do %>
+    <% if current_user.event_manager? %>
+      <%= link_to admin_event_categories_path, class: action_button_classes(:secondary) do %>
+        <%= icon_svg(:tag, classes: "h-4 w-4") %>
+        <span>Categories</span>
+      <% end %>
+    <% end %>
+    <% if policy(Event).create? %>
+      <%= link_to new_event_path, class: action_button_classes(:primary) do %>
+        <%= icon_svg(:plus, classes: "h-4 w-4") %>
+        <span>New Event</span>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <section class="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <div class="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+      <div class="min-w-0">
+        <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400">MSJ Updates</p>
+        <h1 class="mt-1 text-2xl font-black tracking-tight text-[#0F172A] dark:text-[#F8FAFC] sm:text-3xl">Updates</h1>
+        <p class="mt-2 max-w-2xl text-sm font-semibold leading-6 text-[#64748B] dark:text-[#CBD5E1]">Events, programmes, and official notices in one simple place.</p>
+      </div>
+      <div class="flex flex-wrap gap-2 lg:justify-end">
+        <%= actions %>
+      </div>
+    </div>
+  </section>
+
+  <%= form_with url: events_path, method: :get, class: "rounded-2xl border border-[#E2E8F0] bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]" do |form| %>
+    <div class="grid gap-2 <%= current_user.event_manager? ? "lg:grid-cols-[minmax(14rem,1fr)_9rem_11rem_9rem_auto]" : "lg:grid-cols-[minmax(14rem,1fr)_9rem_11rem_auto]" %>">
+      <%= form.search_field :query, value: @query, placeholder: "Search events...", class: "w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none placeholder:text-[#64748B] focus:border-red-600 focus:bg-white focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white dark:placeholder:text-[#CBD5E1]" %>
+      <%= form.select :timeframe, options_for_select([ [ "Upcoming", "upcoming" ], [ "Past events", "past" ], [ "All events", "all" ] ], @timeframe), {}, class: "w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:bg-white focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      <%= form.select :event_category_id, options_for_select([ [ "All categories", "" ] ] + @event_category_options.map { |category| [ category.name, category.id ] }, @event_category_id), {}, class: "w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:bg-white focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      <% if current_user.event_manager? %>
+        <%= form.select :status, options_for_select([ [ "All statuses", "" ] ] + Event.statuses.keys.map { |status| [ status.humanize, status ] }, @status), {}, class: "w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:bg-white focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      <% end %>
+      <%= form.button type: :submit, class: action_button_classes(:dark, size: :sm, full_width: true) do %>
+        <%= icon_svg(:filter, classes: "h-4 w-4") %>
+        <span>Filter</span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <section class="grid gap-5 xl:grid-cols-[1fr_24rem]">
+    <div class="space-y-4">
+      <div class="flex items-center justify-between gap-3 rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+        <div>
+          <h2 class="text-lg font-black text-[#0F172A] dark:text-white"><%= @timeframe == "past" ? "Past Events" : "Upcoming Events" %></h2>
+          <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= pluralize(@events.size, "event") %> found</p>
+        </div>
+        <span class="grid h-10 w-10 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:events, classes: "h-5 w-5") %></span>
+      </div>
+
+      <% if @events.any? %>
+        <div class="grid gap-4 lg:grid-cols-2">
+          <% @events.each do |event| %>
+            <%= render "shared/compact_event_card", event: event %>
+          <% end %>
+        </div>
+      <% else %>
+        <%= render "shared/empty_state", title: "No events found", message: "Try another search or filter." %>
+      <% end %>
+    </div>
+
+    <aside class="space-y-4">
+      <%= render "shared/section_card",
+        title: "Official Notices",
+        subtitle: "Latest announcements",
+        action: action_link("All notices", announcements_path, icon: :announcements),
+        body_class: "space-y-2 p-3 sm:space-y-3 sm:p-4" do %>
+        <% @latest_announcements.each do |announcement| %>
+          <%= render "shared/compact_announcement_card", announcement: announcement %>
+        <% end %>
+        <% if @latest_announcements.empty? %>
+          <p class="text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">No notices yet.</p>
+        <% end %>
+      <% end %>
+    </aside>
+  </section>
+</div>

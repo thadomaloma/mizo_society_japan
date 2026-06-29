@@ -1,0 +1,9 @@
+<% variant = local_assigns.fetch(:variant, :primary) %>
+<% size = local_assigns.fetch(:size, :sm) %>
+
+<%= link_to path, class: action_button_classes(variant, size: size, extra: local_assigns[:class]) do %>
+  <% if local_assigns[:icon].present? %>
+    <%= icon_svg(icon, classes: "h-4 w-4") %>
+  <% end %>
+  <span><%= label %></span>
+<% end %>

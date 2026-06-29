@@ -1,0 +1,7 @@
+<% flash.each do |type, message| %>
+  <% next if [ "Signed out successfully.", "You need to sign in or sign up before continuing." ].include?(message.to_s) %>
+  <% tone = type.to_s == "alert" ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800" %>
+  <div class="mb-4 rounded-lg border px-3 py-2 text-sm font-medium shadow-sm <%= tone %>">
+    <%= message %>
+  </div>
+<% end %>

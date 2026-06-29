@@ -1,0 +1,10 @@
+<% content_for :page_title, "Edit Profile" %>
+
+<div class="mx-auto max-w-3xl space-y-5">
+  <%= render "shared/page_header",
+    eyebrow: "Member profile",
+    title: "Edit Profile",
+    subtitle: "Keep your MSJ member contact and address information up to date." %>
+
+  <%= render "form", member_profile: @member_profile %>
+</div>

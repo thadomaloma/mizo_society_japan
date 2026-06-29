@@ -1,0 +1,6 @@
+<% content_for :page_title, "New Payment" %>
+
+<div class="space-y-6">
+  <%= render "shared/page_header", eyebrow: "Finance", title: "New Payment", subtitle: "Record a membership, donation, fundraiser, or society fund payment." %>
+  <%= render "form", membership_payment: @membership_payment %>
+</div>

@@ -1,0 +1,31 @@
+<%= form_with model: [ :admin, finance_category ], class: "rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:p-6" do |form| %>
+  <%= render "devise/shared/error_messages", resource: finance_category %>
+
+  <div class="grid gap-5 md:grid-cols-2">
+    <div>
+      <%= form.label :name, class: "block text-sm font-black text-[#0F172A] dark:text-white" do %>Category Name <span class="text-red-600 dark:text-red-400">*</span><% end %>
+      <%= form.text_field :name, required: true, placeholder: "e.g. Membership Fee", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+    </div>
+
+    <div>
+      <%= form.label :category_type, class: "block text-sm font-black text-[#0F172A] dark:text-white" do %>Category Type <span class="text-red-600 dark:text-red-400">*</span><% end %>
+      <%= form.select :category_type, FinanceCategory.category_types.keys.map { |type| [ type.humanize, type ] }, {}, class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+    </div>
+
+    <label class="flex items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3 dark:border-[#334155] dark:bg-[#0F172A] md:col-span-2">
+      <%= form.check_box :active, class: "h-5 w-5 rounded border-gray-300 text-red-700 focus:ring-red-600" %>
+      <span class="text-sm font-black text-[#0F172A] dark:text-white">Active category</span>
+    </label>
+  </div>
+
+  <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+    <%= link_to admin_finance_categories_path, class: action_button_classes(:secondary) do %>
+      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+      <span>Cancel</span>
+    <% end %>
+    <%= form.button type: :submit, class: action_button_classes(:primary) do %>
+      <%= icon_svg(:save, classes: "h-4 w-4") %>
+      <span><%= finance_category.persisted? ? "Update Category" : "Create Category" %></span>
+    <% end %>
+  </div>
+<% end %>

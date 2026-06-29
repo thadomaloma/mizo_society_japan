@@ -1,0 +1,26 @@
+<tr>
+  <td class="px-5 py-4 font-black text-gray-950">#<%= welfare_case.id %></td>
+  <td class="px-5 py-4">
+    <p class="font-black text-gray-950"><%= user_label(welfare_case.user) %></p>
+    <p class="mt-1 text-xs font-semibold text-gray-500"><%= welfare_case.user.email %></p>
+  </td>
+  <td class="px-5 py-4 text-gray-700"><%= welfare_case.welfare_category.name %></td>
+  <td class="px-5 py-4 font-semibold text-gray-700"><%= welfare_case.priority.humanize %></td>
+  <td class="px-5 py-4"><%= render "shared/status_badge", status: welfare_case.status %></td>
+  <td class="px-5 py-4 text-gray-600"><%= welfare_case.assigned_to&.display_name || "Unassigned" %></td>
+  <td class="px-5 py-4 text-gray-600"><%= welfare_case.submitted_at.strftime("%b %d, %Y") %></td>
+  <td class="px-5 py-4">
+    <div class="flex justify-end gap-2">
+      <%= link_to admin_welfare_case_path(welfare_case), class: action_button_classes(:secondary, size: :xs) do %>
+        <%= icon_svg(:eye, classes: "h-3.5 w-3.5") %>
+        <span>View</span>
+      <% end %>
+      <% if policy(welfare_case).edit? %>
+        <%= link_to edit_admin_welfare_case_path(welfare_case), class: action_button_classes(:dark, size: :xs) do %>
+          <%= icon_svg(:edit, classes: "h-3.5 w-3.5") %>
+          <span>Edit</span>
+        <% end %>
+      <% end %>
+    </div>
+  </td>
+</tr>

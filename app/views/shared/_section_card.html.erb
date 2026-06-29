@@ -1,0 +1,20 @@
+<section class="rounded-xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B] <%= local_assigns[:class] %>">
+  <% if local_assigns[:title].present? || local_assigns[:action].present? %>
+    <div class="flex items-center justify-between gap-3 border-b border-[#E2E8F0] px-5 py-4 dark:border-[#334155]">
+      <div>
+        <% if local_assigns[:title].present? %>
+          <h3 class="text-base font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= title %></h3>
+        <% end %>
+        <% if local_assigns[:subtitle].present? %>
+          <p class="mt-1 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= subtitle %></p>
+        <% end %>
+      </div>
+      <% if local_assigns[:action].present? %>
+        <div class="shrink-0"><%= action %></div>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="<%= local_assigns.fetch(:body_class, "p-5") %>">
+    <%= yield %>
+  </div>
+</section>

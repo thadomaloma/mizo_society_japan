@@ -1,0 +1,277 @@
+<% content_for :page_title, "Payment Detail" %>
+
+<div class="space-y-6">
+  <% payment_actions = capture do %>
+    <%= link_to membership_payments_path, class: action_button_classes(:secondary) do %>
+      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+      <span>Back</span>
+    <% end %>
+  <% end %>
+
+  <%= render "shared/page_header",
+    eyebrow: @membership_payment.plan_type_label,
+    title: @membership_payment.membership_plan.name,
+    subtitle: "#{@membership_payment.period_label} · #{yen(@membership_payment.amount)}",
+    actions: payment_actions %>
+
+  <section class="grid gap-5 lg:grid-cols-[1fr_22rem]">
+    <div class="space-y-5">
+      <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400">Payment status</p>
+            <h2 class="mt-1 text-2xl font-black text-[#0F172A] dark:text-white"><%= yen(@membership_payment.amount) %></h2>
+            <p class="mt-2 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">Pay online by card or wallet, or use bank transfer if you prefer.</p>
+          </div>
+          <%= render "shared/status_badge", status: @membership_payment.status, compact: true %>
+        </div>
+      </section>
+
+      <% if policy(@membership_payment).checkout? %>
+        <section class="rounded-2xl border border-red-100 bg-red-50 p-5 shadow-sm dark:border-red-500/20 dark:bg-red-500/10">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-start gap-3">
+              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-red-600 text-white shadow-sm shadow-red-950/10"><%= icon_svg(:credit_card, classes: "h-5 w-5") %></span>
+              <div>
+                <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-200">Fast online payment</p>
+                <h3 class="mt-1 text-lg font-black text-[#0F172A] dark:text-white">Card / Apple Pay / Google Pay</h3>
+                <p class="mt-1 text-sm font-semibold leading-6 text-red-700 dark:text-red-100">
+                  Use Stripe Checkout for a quick online payment. Apple Pay and Google Pay appear when supported on your device and account.
+                </p>
+              </div>
+            </div>
+            <%= button_to checkout_membership_payment_path(@membership_payment), method: :post, form: { data: { turbo: false } }, class: action_button_classes(:primary, full_width: true, extra: "sm:w-auto") do %>
+              <%= icon_svg(:credit_card, classes: "h-4 w-4") %>
+              <span>Pay Online</span>
+            <% end %>
+          </div>
+        </section>
+      <% end %>
+
+      <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+        <div class="flex items-center gap-3">
+          <span class="grid h-10 w-10 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:credit_card, classes: "h-5 w-5") %></span>
+          <div>
+            <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400">Bank Account Details</p>
+            <h3 class="text-lg font-black text-[#0F172A] dark:text-white">Transfer destination</h3>
+          </div>
+        </div>
+
+        <dl class="mt-5 grid gap-3 sm:grid-cols-2">
+          <% [
+            [ "Account Name", @bank_transfer_details[:account_name] ],
+            [ "Bank", @bank_transfer_details[:bank_name] ]
+          ].each do |label, value| %>
+            <% next if value.blank? %>
+            <div class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
+              <dt class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></dt>
+              <dd class="mt-1 break-words text-sm font-black text-[#0F172A] dark:text-white"><%= value %></dd>
+            </div>
+          <% end %>
+
+          <% if @bank_transfer_details[:branch_name].present? || @bank_transfer_details[:branch_code].present? %>
+            <div class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A] sm:col-span-2">
+              <div class="grid gap-3 sm:grid-cols-2">
+                <% if @bank_transfer_details[:branch_name].present? %>
+                  <div>
+                    <p class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Store Name (店名)</p>
+                    <p class="mt-1 break-words text-sm font-black text-[#0F172A] dark:text-white"><%= @bank_transfer_details[:branch_name] %></p>
+                  </div>
+                <% end %>
+                <% if @bank_transfer_details[:branch_code].present? %>
+                  <div>
+                    <p class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Store Number (店番)</p>
+                    <p class="mt-1 break-words text-sm font-black text-[#0F172A] dark:text-white"><%= @bank_transfer_details[:branch_code] %></p>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <% [
+            [ "Account Number", @bank_transfer_details[:account_number] ],
+            [ "Yuucho Symbol / Number (optional)", @bank_transfer_details[:yucho_symbol_number] ]
+          ].each do |label, value| %>
+            <% next if value.blank? %>
+            <div class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
+              <dt class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></dt>
+              <dd class="mt-1 break-words text-sm font-black text-[#0F172A] dark:text-white"><%= value %></dd>
+            </div>
+          <% end %>
+        </dl>
+
+        <div class="mt-5 rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-4 dark:border-[#334155] dark:bg-[#0F172A]">
+          <p class="text-sm font-black text-[#0F172A] dark:text-white">QR Code</p>
+          <% if @bank_transfer_details[:qr_code_url].present? %>
+            <%= image_tag @bank_transfer_details[:qr_code_url], alt: "Bank transfer QR code", class: "mt-3 h-40 w-40 rounded-xl border border-[#E2E8F0] bg-white object-contain p-2 dark:border-[#334155]" %>
+          <% else %>
+            <p class="mt-2 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">QR code can be added from Settings.</p>
+          <% end %>
+        </div>
+      </section>
+
+      <% if @membership_payment.pending_verification? || @membership_payment.paid? %>
+        <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+          <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400">Submitted transfer</p>
+          <div class="mt-4 grid gap-3 sm:grid-cols-3">
+            <div>
+              <p class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Transfer Date</p>
+              <p class="mt-1 font-black text-[#0F172A] dark:text-white"><%= @membership_payment.transferred_on&.strftime("%b %d, %Y") || "Not submitted" %></p>
+            </div>
+            <div>
+              <p class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Amount</p>
+              <p class="mt-1 font-black text-[#0F172A] dark:text-white"><%= yen(@membership_payment.transfer_amount || @membership_payment.amount) %></p>
+            </div>
+            <div>
+              <p class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Reference Name</p>
+              <p class="mt-1 font-black text-[#0F172A] dark:text-white"><%= @membership_payment.transfer_reference_name.presence || "Not submitted" %></p>
+            </div>
+          </div>
+          <% if @membership_payment.transfer_screenshot.attached? %>
+            <%= link_to rails_blob_path(@membership_payment.transfer_screenshot, disposition: "attachment"), class: "#{action_button_classes(:secondary, size: :sm)} mt-4", target: "_blank", rel: "noopener" do %>
+              <%= icon_svg(:download, classes: "h-4 w-4") %>
+              <span>Download screenshot</span>
+            <% end %>
+          <% end %>
+        </section>
+      <% end %>
+
+      <% if policy(@membership_payment).submit_transfer? %>
+        <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+          <h3 class="text-lg font-black text-[#0F172A] dark:text-white">Submit Bank Transfer Details</h3>
+          <p class="mt-1 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">Submit after your bank transfer is complete.</p>
+
+          <%= form_with model: @membership_payment, url: submit_transfer_membership_payment_path(@membership_payment), method: :patch, class: "mt-5 grid gap-4 sm:grid-cols-2" do |form| %>
+            <%= render "devise/shared/error_messages", resource: @membership_payment %>
+            <div>
+              <%= form.label :transferred_on, "Transfer Date", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+              <%= form.date_field :transferred_on, required: true, max: Date.current, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+            </div>
+            <div>
+              <%= form.label :transfer_amount, "Amount", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+              <%= form.number_field :transfer_amount, required: true, min: 0, step: 1, value: @membership_payment.amount.to_i, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+            </div>
+            <div class="sm:col-span-2">
+              <%= form.label :transfer_reference_name, "Reference Name", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+              <%= form.text_field :transfer_reference_name, required: true, placeholder: current_user.display_name, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+            </div>
+            <div class="sm:col-span-2">
+              <%= form.label :transfer_screenshot, "Screenshot (optional)", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+              <%= form.file_field :transfer_screenshot, accept: "image/png,image/jpeg,image/webp,application/pdf", class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-sm text-[#334155] file:mr-3 file:rounded-md file:border-0 file:bg-[#0F172A] file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#CBD5E1]" %>
+            </div>
+            <div class="sm:col-span-2 sm:flex sm:justify-end">
+              <%= form.button type: :submit, class: action_button_classes(:primary, full_width: true, extra: "sm:w-auto") do %>
+                <%= icon_svg(:check, classes: "h-4 w-4") %>
+                <span>Submit Details</span>
+              <% end %>
+            </div>
+          <% end %>
+        </section>
+      <% elsif @membership_payment.pending_verification? %>
+        <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-500/30 dark:bg-amber-500/10">
+          <p class="font-black text-amber-800 dark:text-amber-200">Pending Verification</p>
+          <p class="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-100">Treasurer will verify the bank account and approve your payment.</p>
+        </section>
+      <% elsif @membership_payment.paid? %>
+        <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+          <p class="font-black text-emerald-800 dark:text-emerald-200">Payment Paid</p>
+          <p class="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-100">Your payment has been verified.</p>
+        </section>
+      <% end %>
+    </div>
+
+    <aside class="space-y-5">
+      <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+        <h3 class="text-lg font-black text-[#0F172A] dark:text-white">Hybrid payment</h3>
+        <ol class="mt-4 space-y-3">
+          <% [ "Pay online for instant confirmation", "Or transfer from your bank app", "Submit bank transfer details", "Treasurer verifies manual transfers", "Status becomes paid" ].each_with_index do |step, index| %>
+            <li class="flex gap-3">
+              <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-red-600 text-xs font-black text-white"><%= index + 1 %></span>
+              <span class="pt-1 text-sm font-bold text-[#334155] dark:text-[#CBD5E1]"><%= step %></span>
+            </li>
+          <% end %>
+        </ol>
+      </section>
+
+      <section class="rounded-2xl border border-red-100 bg-white p-5 shadow-sm dark:border-red-500/20 dark:bg-[#1E293B]">
+        <div class="flex items-start gap-3">
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
+            <%= icon_svg(:credit_card, classes: "h-5 w-5") %>
+          </span>
+          <div>
+            <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Bank transfer guide</p>
+            <h3 class="mt-1 text-lg font-black text-[#0F172A] dark:text-white">ゆうちょ銀行</h3>
+            <p class="mt-1 text-sm font-semibold leading-6 text-[#64748B] dark:text-[#CBD5E1]">For first-time bank transfer users.</p>
+          </div>
+        </div>
+
+        <div class="mt-5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 dark:border-[#334155] dark:bg-[#0F172A]">
+          <p class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Transfer to</p>
+          <dl class="mt-3 space-y-2 text-sm">
+            <% [
+              [ "Bank", @bank_transfer_details[:bank_name] ],
+              [ "Account", @bank_transfer_details[:account_number] ],
+              [ "Symbol", @bank_transfer_details[:yucho_symbol_number] ],
+              [ "Name", @bank_transfer_details[:account_name] ]
+            ].each do |label, value| %>
+              <% next if value.blank? %>
+              <div class="flex gap-3">
+                <dt class="w-16 shrink-0 font-black text-[#64748B] dark:text-[#CBD5E1]"><%= label %></dt>
+                <dd class="break-words font-black text-[#0F172A] dark:text-white"><%= value %></dd>
+              </div>
+            <% end %>
+
+            <% if @bank_transfer_details[:branch_name].present? || @bank_transfer_details[:branch_code].present? %>
+              <div class="grid gap-2 rounded-lg bg-white/70 p-2 dark:bg-[#1E293B]/70 sm:grid-cols-2">
+                <% if @bank_transfer_details[:branch_name].present? %>
+                  <div>
+                    <p class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Store Name</p>
+                    <p class="mt-0.5 break-words font-black text-[#0F172A] dark:text-white"><%= @bank_transfer_details[:branch_name] %></p>
+                  </div>
+                <% end %>
+                <% if @bank_transfer_details[:branch_code].present? %>
+                  <div>
+                    <p class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Store No.</p>
+                    <p class="mt-0.5 break-words font-black text-[#0F172A] dark:text-white"><%= @bank_transfer_details[:branch_code] %></p>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </dl>
+        </div>
+
+        <ol class="mt-5 space-y-3">
+          <% [
+            [ "Choose transfer method", "Use your bank app, ゆうちょダイレクト, ゆうちょ通帳アプリ, or a ゆうちょ ATM." ],
+            [ "From another bank", "Select 振込, choose ゆうちょ銀行, then enter 店名 or 店番, account number, and account name." ],
+            [ "From ゆうちょ to ゆうちょ", "Use 記号・番号 if your app or ATM asks for it. If it is blank above, use the store name, store number, and account number instead." ],
+            [ "Confirm amount and name", "Enter #{yen(@membership_payment.amount)} and make sure the receiver name matches the account name above." ],
+            [ "Submit details here", "After transfer is complete, return to this page and submit Transfer Date, Amount, and Reference Name." ]
+          ].each_with_index do |(title, body), index| %>
+            <li class="flex gap-3">
+              <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#0F172A] text-[11px] font-black text-white dark:bg-[#334155]"><%= index + 1 %></span>
+              <span>
+                <span class="block text-sm font-black text-[#0F172A] dark:text-white"><%= title %></span>
+                <span class="mt-0.5 block text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]"><%= body %></span>
+              </span>
+            </li>
+          <% end %>
+        </ol>
+
+        <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">
+          <p class="text-xs font-black text-amber-800 dark:text-amber-100">Authentication note</p>
+          <p class="mt-1 text-xs font-semibold leading-5 text-amber-700 dark:text-amber-100">
+            ゆうちょ may ask for the ゆうちょ認証アプリ depending on your account setup. If your app shows that prompt, install and follow the official bank instructions before completing the transfer.
+          </p>
+        </div>
+
+        <div class="mt-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
+          <p class="text-xs font-black text-[#0F172A] dark:text-white">Receipt reminder</p>
+          <p class="mt-1 text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]">
+            Keep your transfer receipt or screenshot until the treasurer verifies the payment.
+          </p>
+        </div>
+      </section>
+    </aside>
+  </section>
+</div>

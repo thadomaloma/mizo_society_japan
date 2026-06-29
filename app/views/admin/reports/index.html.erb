@@ -1,0 +1,23 @@
+<% content_for :page_title, "Reports" %>
+
+<div class="space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Operations",
+    title: "Reports",
+    subtitle: "Export-ready summaries from existing MSJ portal records." %>
+
+  <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <% [
+      [ "Finance Report", "Income, expenses, balance, category breakdown.", finance_admin_reports_path, :finance ],
+      [ "Member Report", "Member counts, profile status, locations.", members_admin_reports_path, :members ],
+      [ "Event Report", "Events, RSVP, and attendance totals.", events_admin_reports_path, :events ],
+      [ "Welfare Report", "Open, urgent, resolved, and category totals.", welfare_admin_reports_path, :welfare ]
+    ].each do |title, description, path, icon| %>
+      <%= link_to path, class: "rounded-xl border border-[#E2E8F0] bg-white p-5 shadow-sm transition hover:border-red-200 hover:shadow-md dark:border-[#334155] dark:bg-[#1E293B] dark:hover:bg-[#334155]" do %>
+        <div class="grid h-12 w-12 place-items-center rounded-lg bg-red-600 text-white"><%= icon_svg(icon) %></div>
+        <h3 class="mt-4 text-lg font-black text-gray-950 dark:text-white"><%= title %></h3>
+        <p class="mt-2 text-sm font-semibold text-gray-500 dark:text-gray-400"><%= description %></p>
+      <% end %>
+    <% end %>
+  </section>
+</div>

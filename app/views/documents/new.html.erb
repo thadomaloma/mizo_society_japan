@@ -1,0 +1,8 @@
+<% content_for :page_title, "New Official Letter" %>
+<div class="mx-auto max-w-4xl space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Official Letters",
+    title: "New Official Letter",
+    subtitle: "Prepare a formal MSJ letterhead document, download DOCX, then archive the final file." %>
+  <%= render "form", document: @document %>
+</div>

@@ -1,0 +1,28 @@
+<turbo-frame id="global_search_results">
+  <% if @query.blank? %>
+    <div class="p-8 text-center text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">Start typing to search the portal.</div>
+  <% elsif @sections.any? %>
+    <div class="max-h-[min(60vh,34rem)] overflow-y-auto p-2">
+      <% @sections.each do |section| %>
+        <section class="py-2">
+          <p class="px-3 pb-2 text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= section.label %></p>
+          <% section.records.each do |record| %>
+            <% result_path = global_search_result_path(section.key, record) %>
+            <% result_content = capture do %>
+              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(section.icon, classes: "h-4 w-4") %></span>
+              <span class="min-w-0 flex-1"><span class="block truncate text-sm font-black text-[#0F172A] dark:text-white"><%= global_search_result_title(section.key, record) %></span><span class="mt-0.5 block truncate text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= global_search_result_subtitle(section.key, record) %></span></span>
+              <% if result_path.present? %><%= icon_svg(:arrow_right, classes: "h-4 w-4 shrink-0 text-[#64748B] dark:text-[#CBD5E1]") %><% end %>
+            <% end %>
+            <% if result_path.present? %>
+              <%= link_to result_path, data: { turbo_frame: "_top" }, class: "flex items-center gap-3 rounded-lg px-3 py-2.5 transition hover:bg-red-50 dark:hover:bg-red-500/10" do %><%= result_content %><% end %>
+            <% else %>
+              <div class="flex items-center gap-3 rounded-lg px-3 py-2.5"><%= result_content %></div>
+            <% end %>
+          <% end %>
+        </section>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="p-8 text-center text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">No results found for "<%= @query %>".</div>
+  <% end %>
+</turbo-frame>

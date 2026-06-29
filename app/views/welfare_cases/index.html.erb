@@ -1,0 +1,25 @@
+<% content_for :page_title, "My Welfare Requests" %>
+
+<div class="space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Confidential support",
+    title: "My Welfare Requests",
+    subtitle: "Submit and track private help requests with the MSJ welfare team.",
+    actions: render("shared/action_button", label: "New Request", path: new_welfare_case_path, icon: :plus) %>
+
+  <%= form_with url: welfare_cases_path, method: :get, class: "grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:grid-cols-[1fr_auto]" do |form| %>
+    <%= form.select :status, options_for_select([ [ "All statuses", "" ] ] + WelfareCase.statuses.keys.map { |status| [ status.humanize, status ] }, @status), {}, class: "rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    <%= form.button type: :submit, class: action_button_classes(:dark) do %>
+      <%= icon_svg(:filter, classes: "h-4 w-4") %>
+      <span>Filter</span>
+    <% end %>
+  <% end %>
+
+  <% if @welfare_cases.any? %>
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <%= render partial: "case_card", collection: @welfare_cases, as: :welfare_case %>
+    </div>
+  <% else %>
+    <%= render "shared/empty_state", title: "No welfare requests yet", message: "Use New Request to confidentially contact the welfare team." %>
+  <% end %>
+</div>

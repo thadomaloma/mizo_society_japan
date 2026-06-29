@@ -1,0 +1,117 @@
+<% content_for :page_title, "Welfare Case" %>
+<% admin_welfare_actions = capture do %>
+  <% if policy(@welfare_case).edit? %>
+    <%= link_to edit_admin_welfare_case_path(@welfare_case), class: action_button_classes(:dark) do %>
+      <%= icon_svg(:edit, classes: "h-4 w-4") %>
+      <span>Edit</span>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Confidential welfare",
+    title: @welfare_case.title,
+    subtitle: "Case ##{@welfare_case.id} · #{user_label(@welfare_case.user)}",
+    actions: admin_welfare_actions %>
+
+  <section class="grid gap-6 xl:grid-cols-[1fr_22rem]">
+    <article class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-wide text-red-700"><%= @welfare_case.welfare_category.name %></p>
+          <h2 class="mt-2 text-xl font-black text-gray-950"><%= @welfare_case.title %></h2>
+        </div>
+        <%= render "shared/status_badge", status: @welfare_case.status %>
+      </div>
+
+      <dl class="mt-5 grid gap-4 text-sm sm:grid-cols-3">
+        <div>
+          <dt class="font-bold text-gray-400">Priority</dt>
+          <dd class="mt-1 font-black text-gray-950"><%= @welfare_case.priority.humanize %></dd>
+        </div>
+        <div>
+          <dt class="font-bold text-gray-400">Submitted</dt>
+          <dd class="mt-1 font-black text-gray-950"><%= @welfare_case.submitted_at.strftime("%b %d, %Y") %></dd>
+        </div>
+        <div>
+          <dt class="font-bold text-gray-400">Assigned To</dt>
+          <dd class="mt-1 font-black text-gray-950"><%= @welfare_case.assigned_to&.display_name || "Unassigned" %></dd>
+        </div>
+      </dl>
+
+      <div class="mt-5 whitespace-pre-line text-sm leading-6 text-gray-700"><%= @welfare_case.description %></div>
+    </article>
+
+    <aside class="space-y-4">
+      <% if @welfare_case.user.member_profile.present? %>
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h3 class="text-lg font-black text-gray-950">Member Contact</h3>
+          <p class="mt-2 font-black text-gray-950"><%= @welfare_case.user.display_name %></p>
+          <p class="mt-1 text-sm font-semibold text-gray-500"><%= @welfare_case.user.member_profile.mobile_number %></p>
+          <div class="mt-3">
+            <%= render "admin/shared/member_contact_actions", user: @welfare_case.user %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if policy(@welfare_case).assign? %>
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h3 class="text-lg font-black text-gray-950">Assign officer</h3>
+          <%= form_with model: [ :admin, @welfare_case ], url: assign_admin_welfare_case_path(@welfare_case), method: :patch, class: "mt-4 space-y-3" do |form| %>
+            <%= form.collection_select :assigned_to_id, @assignable_users, :id, :display_name, { include_blank: "Choose officer" }, class: "block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+            <%= form.button type: :submit, class: action_button_classes(:dark, full_width: true) do %>
+              <%= icon_svg(:user_plus, classes: "h-4 w-4") %>
+              <span>Assign</span>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h3 class="text-lg font-black text-gray-950">Actions</h3>
+        <div class="mt-4 grid gap-2">
+          <% if policy(@welfare_case).resolve? %>
+            <%= button_to resolve_admin_welfare_case_path(@welfare_case), method: :patch, class: action_button_classes(:success, full_width: true) do %>
+              <%= icon_svg(:check, classes: "h-4 w-4") %>
+              <span>Resolve</span>
+            <% end %>
+          <% end %>
+          <% if policy(@welfare_case).reject? %>
+            <%= button_to reject_admin_welfare_case_path(@welfare_case), method: :patch, class: action_button_classes(:danger, full_width: true) do %>
+              <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
+              <span>Reject</span>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <h3 class="text-lg font-black text-gray-950">Attachments</h3>
+    <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <% @welfare_case.welfare_attachments.each do |attachment| %>
+        <div class="rounded-lg border border-gray-200 p-4">
+          <%= link_to rails_blob_path(attachment.file, disposition: "attachment"), class: "block text-sm font-bold text-gray-700 hover:text-red-700" do %>
+            <span class="flex items-center gap-2 font-black text-gray-950"><%= icon_svg(:paperclip, classes: "h-4 w-4 text-red-700") %><span><%= attachment.file.filename %></span></span>
+            <span class="mt-1 block text-gray-500"><%= attachment.file_extension.upcase %> · <%= formatted_file_size(attachment) %></span>
+          <% end %>
+          <% if policy(attachment).destroy? %>
+            <%= button_to admin_welfare_attachment_path(attachment), method: :delete, class: "#{action_button_classes(:outline_danger, size: :xs)} mt-3" do %>
+              <%= icon_svg(:trash, classes: "h-3.5 w-3.5") %>
+              <span>Delete</span>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @welfare_case.welfare_attachments.empty? %>
+        <p class="text-sm text-gray-500">No attachments uploaded.</p>
+      <% end %>
+    </div>
+  </section>
+
+  <% if policy(@welfare_case).view_internal_notes? %>
+    <%= render "notes", welfare_case: @welfare_case, welfare_note: @welfare_note, welfare_notes: @welfare_notes %>
+  <% end %>
+</div>

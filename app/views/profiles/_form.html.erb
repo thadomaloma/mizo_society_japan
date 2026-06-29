@@ -1,0 +1,190 @@
+<% setup_mode = local_assigns.fetch(:setup_mode, false) %>
+<% form_url = setup_mode ? complete_setup_profile_path : profile_path %>
+
+<%= form_with model: member_profile, url: form_url, method: :patch, class: "space-y-5", data: { controller: "postal-code family-details" } do |form| %>
+  <%= render "devise/shared/error_messages", resource: member_profile %>
+
+  <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400">Profile Completion</p>
+        <h2 class="mt-1 text-xl font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= profile_completion_percentage %>%</h2>
+      </div>
+      <div class="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-[#334155] sm:max-w-xs">
+        <div class="h-full rounded-full bg-red-600 transition-all" style="width: <%= profile_completion_percentage %>%"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <div class="grid gap-4 md:grid-cols-2">
+      <div class="md:col-span-2">
+        <%= form.label :avatar, class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+        <%= form.file_field :avatar, accept: "image/png,image/jpeg,image/webp", class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-sm text-[#334155] file:mr-3 file:rounded-md file:border-0 file:bg-[#0F172A] file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#CBD5E1]" %>
+      </div>
+
+      <div>
+        <%= form.label :full_name, class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" do %>
+          Full Name <span class="text-red-600 dark:text-red-400">*</span>
+        <% end %>
+        <%= form.text_field :full_name, autocomplete: "name", required: true, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+      </div>
+
+      <div>
+        <%= form.label :mobile_number, class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" do %>
+          Mobile Number <span class="text-red-600 dark:text-red-400">*</span>
+        <% end %>
+        <%= form.telephone_field :mobile_number, autocomplete: "tel", placeholder: "09012345678", required: true, pattern: "0[789]0-?\\d{4}-?\\d{4}", class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+        <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Japan mobile format: 09012345678, 08012345678, 07012345678.</p>
+      </div>
+
+      <div>
+        <%= form.label :gender, class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+        <%= form.select :gender, options_for_select([ [ "Prefer not to say", "" ] ] + MemberProfile.genders.keys.map { |gender| [ gender.humanize, gender ] }, member_profile.gender), {}, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+      </div>
+
+      <div>
+        <%= form.label :date_of_birth, "Date of Birth", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+        <%= form.date_field :date_of_birth, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <div class="flex items-start gap-3">
+      <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:members, classes: "h-5 w-5") %></span>
+      <div>
+        <h3 class="text-base font-black text-[#0F172A] dark:text-[#F8FAFC]">Family Information</h3>
+        <p class="mt-1 text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]">Optional details for society records and family support.</p>
+      </div>
+    </div>
+
+    <div class="mt-5 grid gap-4 md:grid-cols-2">
+      <div>
+        <%= form.label :father_name, "Father's Name", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+        <%= form.text_field :father_name, autocomplete: "off", class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+      </div>
+
+      <div>
+        <%= form.label :mother_name, "Mother's Name", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+        <%= form.text_field :mother_name, autocomplete: "off", class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+      </div>
+
+      <div class="md:col-span-2">
+        <%= form.label :family_status, "Family Status", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+        <div class="mt-2 grid gap-2 sm:grid-cols-2">
+          <% MemberProfile.family_statuses.keys.each do |status| %>
+            <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 transition has-[:checked]:border-red-300 has-[:checked]:bg-red-50 dark:border-[#334155] dark:bg-[#0F172A] dark:has-[:checked]:border-red-500/50 dark:has-[:checked]:bg-red-500/10">
+              <%= form.radio_button :family_status, status, data: { family_details_target: "status", action: "family-details#toggle" }, class: "h-4 w-4 border-slate-300 text-red-700 focus:ring-red-600" %>
+              <span class="text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= status.humanize %></span>
+            </label>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 space-y-4" data-family-details-target="familyFields">
+      <div>
+        <%= form.label :spouse_name, "Spouse Name", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+        <%= form.text_field :spouse_name, autocomplete: "off", placeholder: "Husband or wife name", class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-sm font-black text-[#334155] dark:text-[#CBD5E1]">Children</p>
+            <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Add each child name if applicable.</p>
+          </div>
+          <button type="button" class="<%= action_button_classes(:secondary, size: :xs) %>" data-action="family-details#addChild">
+            <%= icon_svg(:plus, classes: "h-3.5 w-3.5") %>
+            <span>Add Child</span>
+          </button>
+        </div>
+
+        <div class="mt-3 space-y-2" data-family-details-target="childrenList">
+          <%= form.fields_for :family_members, member_profile.child_family_members do |child_form| %>
+            <div class="flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-2 dark:border-[#334155] dark:bg-[#0F172A]" data-family-details-target="childRow">
+              <%= child_form.hidden_field :relationship, value: "Child" %>
+              <%= child_form.hidden_field :_destroy, value: "0", data: { family_details_target: "destroyInput" } %>
+              <%= child_form.text_field :name, placeholder: "Child name", class: "block min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#F8FAFC]" %>
+              <button type="button" class="<%= action_button_classes(:outline_danger, size: :xs, extra: "h-9 w-9 px-0") %>" data-action="family-details#removeChild" aria-label="Remove child">
+                <%= icon_svg(:trash, classes: "h-3.5 w-3.5") %>
+              </button>
+            </div>
+          <% end %>
+        </div>
+
+        <template data-family-details-target="childTemplate">
+          <%= form.fields_for :family_members, FamilyMember.new(relationship: "Child"), child_index: "NEW_CHILD" do |child_form| %>
+            <div class="flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-2 dark:border-[#334155] dark:bg-[#0F172A]" data-family-details-target="childRow">
+              <%= child_form.hidden_field :relationship, value: "Child" %>
+              <%= child_form.hidden_field :_destroy, value: "0", data: { family_details_target: "destroyInput" } %>
+              <%= child_form.text_field :name, placeholder: "Child name", class: "block min-w-0 flex-1 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#F8FAFC]" %>
+              <button type="button" class="<%= action_button_classes(:outline_danger, size: :xs, extra: "h-9 w-9 px-0") %>" data-action="family-details#removeChild" aria-label="Remove child">
+                <%= icon_svg(:trash, classes: "h-3.5 w-3.5") %>
+              </button>
+            </div>
+          <% end %>
+        </template>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <%= form.label :postal_code, class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" do %>
+          Postal Code <span class="text-red-600 dark:text-red-400">*</span>
+        <% end %>
+        <div class="mt-2 flex gap-2">
+          <%= form.text_field :postal_code, autocomplete: "postal-code", placeholder: "169-0075", required: true, class: "block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]", data: { postal_code_target: "postalCode", action: "input->postal-code#lookupWhenReady" } %>
+          <button type="button" class="<%= action_button_classes(:dark, size: :sm) %>" data-action="postal-code#lookup">
+            <%= icon_svg(:search, classes: "h-4 w-4") %>
+            <span>Lookup</span>
+          </button>
+        </div>
+        <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]" data-postal-code-target="message">Postal code can fill prefecture, city, and town area.</p>
+      </div>
+
+      <div>
+        <%= form.label :prefecture, class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" do %>
+          Prefecture <span class="text-red-600 dark:text-red-400">*</span>
+        <% end %>
+        <%= form.text_field :prefecture, required: true, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]", data: { postal_code_target: "prefecture" } %>
+      </div>
+
+      <div>
+        <%= form.label :city, class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" do %>
+          City <span class="text-red-600 dark:text-red-400">*</span>
+        <% end %>
+        <%= form.text_field :city, required: true, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]", data: { postal_code_target: "city" } %>
+      </div>
+
+      <div>
+        <%= form.label :address_line1, class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" do %>
+          Address Line 1 <span class="text-red-600 dark:text-red-400">*</span>
+        <% end %>
+        <%= form.text_field :address_line1, autocomplete: "address-line1", required: true, placeholder: "Town/chome, street number", class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]", data: { postal_code_target: "addressLine1" } %>
+      </div>
+
+      <div>
+        <%= form.label :address_line2, "Address Line 2", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
+        <%= form.text_field :address_line2, autocomplete: "address-line2", class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+        <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Enter building name, room number, and any remaining address details manually.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+    <% unless setup_mode %>
+      <%= link_to profile_path, class: action_button_classes(:secondary, size: :sm) do %>
+        <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+        <span>Cancel</span>
+      <% end %>
+    <% end %>
+    <%= form.button type: :submit, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "sm:w-auto") do %>
+      <%= icon_svg(:save, classes: "h-4 w-4") %>
+      <span><%= setup_mode ? "Complete Profile" : "Save Profile" %></span>
+    <% end %>
+  </div>
+<% end %>

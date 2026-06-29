@@ -1,0 +1,6 @@
+<% content_for :page_title, "New Finance Category" %>
+
+<div class="space-y-6">
+  <%= render "shared/page_header", eyebrow: "Finance", title: "New Finance Category", subtitle: "Create an income or expense category." %>
+  <%= render "form", finance_category: @finance_category %>
+</div>

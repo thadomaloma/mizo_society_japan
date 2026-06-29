@@ -1,0 +1,87 @@
+/*
+ * This is a manifest file that'll be compiled into application.css.
+ *
+ * With Propshaft, assets are served efficiently without preprocessing steps. You can still include
+ * application-wide styles in this file, but keep in mind that CSS precedence will follow the standard
+ * cascading order, meaning styles declared later in the document or manifest will override earlier ones,
+ * depending on specificity.
+ *
+ * Consider organizing styles into separate files for maintainability.
+ */
+
+.minute-document-content p {
+  margin: 0 0 0.75rem;
+}
+
+.minute-document-content ol,
+.minute-document-content ul {
+  margin: 0.25rem 0 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.minute-document-content ol {
+  list-style: decimal;
+}
+
+.minute-document-content ul {
+  list-style: disc;
+}
+
+.minute-document-content li {
+  margin: 0.2rem 0;
+  padding-left: 0.25rem;
+}
+
+.official-letter-preview-body p {
+  text-indent: 2.5rem;
+}
+
+.official-letter-preview-shell {
+  max-height: min(78vh, 56rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.official-letter-preview-frame {
+  --official-letter-scale: min(1, calc((100vw - 4.5rem) / 794));
+  height: calc(1123px * var(--official-letter-scale));
+  width: calc(794px * var(--official-letter-scale));
+}
+
+.official-letter-preview-page {
+  transform: scale(var(--official-letter-scale));
+  transform-origin: top left;
+}
+
+@media (min-width: 1280px) {
+  .official-letter-preview-frame {
+    --official-letter-scale: min(1, calc((50vw - 7rem) / 794));
+  }
+}
+
+@media (max-width: 767px) {
+  .official-letter-preview-shell {
+    max-height: 68vh;
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-radius: 0.75rem;
+  }
+
+  .official-letter-preview-frame {
+    --official-letter-scale: min(1, calc((100vw - 2rem) / 794));
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}

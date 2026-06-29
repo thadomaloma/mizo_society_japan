@@ -1,0 +1,100 @@
+<header class="sticky top-0 z-20 border-b border-[#E2E8F0] bg-white/95 shadow-sm shadow-slate-950/[0.03] backdrop-blur-xl dark:border-[#334155] dark:bg-[#0F172A]/95 dark:shadow-black/10">
+  <div class="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6 lg:h-20 lg:px-8">
+    <div class="flex min-w-0 flex-1 items-center">
+      <%= link_to(dashboard_home_path, class: "flex min-w-0 items-center gap-2.5 lg:hidden", aria: { label: "Go to dashboard" }) do %>
+        <span class="h-9 w-1 shrink-0 rounded-full bg-red-600 shadow-sm shadow-red-950/10 dark:bg-red-500"></span>
+        <span class="min-w-0">
+          <span class="block truncate text-[13px] font-black tracking-wide text-[#0F172A] dark:text-[#F8FAFC]">MIZO SOCIETY OF JAPAN</span>
+          <span class="mt-0.5 block truncate text-[11px] font-extrabold tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Unity <span class="px-0.5 text-red-600 dark:text-red-300">•</span> Culture <span class="px-0.5 text-red-600 dark:text-red-300">•</span> Welfare</span>
+        </span>
+      <% end %>
+      <button type="button" data-action="global-search#open" class="hidden h-11 w-full max-w-md items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 text-left text-sm font-semibold text-[#64748B] transition hover:border-red-200 hover:bg-white hover:text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#CBD5E1] dark:hover:bg-[#334155] dark:hover:text-[#F8FAFC] lg:flex" aria-label="Search members, events, letters, and announcements">
+        <%= icon_svg(:search, classes: "h-5 w-5 shrink-0") %>
+        <span class="min-w-0 flex-1 truncate">Search members, events, letters...</span>
+        <kbd class="rounded border border-[#E2E8F0] bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#64748B] dark:border-[#475569] dark:bg-[#0F172A] dark:text-[#CBD5E1]">⌘ K</kbd>
+      </button>
+    </div>
+
+    <div class="flex shrink-0 items-center gap-1 sm:gap-3">
+      <button type="button" data-action="theme#toggle" class="grid h-9 w-9 place-items-center rounded-xl border border-[#E2E8F0] bg-white text-slate-700 transition hover:border-red-200 hover:text-red-700 active:scale-95 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:text-red-400 sm:h-10 sm:w-10" title="Toggle dark mode" aria-label="Toggle dark mode">
+        <span data-theme-target="moonIcon"><%= icon_svg(:moon, classes: "h-5 w-5") %></span>
+        <span data-theme-target="sunIcon" class="hidden"><%= icon_svg(:sun, classes: "h-5 w-5") %></span>
+      </button>
+
+      <%= render "shared/quick_actions" %>
+
+      <% unread_count = current_user.unread_notifications_count %>
+      <% recent_notifications = current_user.notifications.latest.limit(5) %>
+      <details class="group relative">
+        <summary class="relative grid h-9 w-9 cursor-pointer list-none place-items-center rounded-xl text-slate-700 transition hover:bg-slate-100 hover:text-red-700 active:scale-95 dark:text-[#F8FAFC] dark:hover:bg-[#334155] dark:hover:text-red-400 sm:h-10 sm:w-10" aria-label="Open notifications">
+          <%= icon_svg(:notifications, classes: "h-5 w-5") %>
+          <% if unread_count.positive? %>
+            <span class="absolute right-1 top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white dark:bg-red-500"><%= [ unread_count, 9 ].min %></span>
+          <% end %>
+        </summary>
+
+        <div class="absolute right-0 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-xl dark:border-[#334155] dark:bg-[#1E293B]">
+          <div class="flex items-center justify-between gap-3 border-b border-[#E2E8F0] px-3 py-2 dark:border-[#334155]">
+            <div>
+              <p class="text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]">Notifications</p>
+              <p class="text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= pluralize(unread_count, "unread update") %></p>
+            </div>
+            <% if unread_count.positive? %>
+              <%= button_to mark_all_as_read_notifications_path, method: :patch, class: action_button_classes(:ghost, size: :xs) do %>
+                <%= icon_svg(:check, classes: "h-3.5 w-3.5") %>
+                <span>Mark all</span>
+              <% end %>
+            <% end %>
+          </div>
+
+          <div class="max-h-80 divide-y divide-[#E2E8F0] overflow-y-auto dark:divide-[#334155]">
+            <% recent_notifications.each do |notification| %>
+              <div class="p-4 <%= notification.unread? ? "bg-red-50/70 dark:bg-red-500/10" : "" %>">
+                <p class="line-clamp-2 text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= notification.title %></p>
+                <% if notification.body.present? %>
+                  <p class="mt-1 line-clamp-2 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= notification.body %></p>
+                <% end %>
+                <div class="mt-2 flex items-center justify-between gap-2">
+                  <p class="text-[11px] font-bold text-[#64748B] dark:text-[#CBD5E1]"><%= time_ago_in_words(notification.created_at) %> ago</p>
+                  <% if notification.unread? %>
+                    <%= button_to mark_as_read_notification_path(notification), method: :patch, class: action_button_classes(:ghost, size: :xs) do %>
+                      <%= icon_svg(:check, classes: "h-3.5 w-3.5") %>
+                      <span>Read</span>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            <% if recent_notifications.empty? %>
+              <p class="p-4 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">No notifications yet.</p>
+            <% end %>
+          </div>
+
+          <%= link_to notifications_path, class: "flex items-center justify-center gap-2 border-t border-[#E2E8F0] px-3 py-2 text-sm font-black text-red-700 transition hover:bg-red-50 dark:border-[#334155] dark:text-red-400 dark:hover:bg-red-500/10" do %>
+            <span>View all notifications</span>
+            <%= icon_svg(:arrow_right, classes: "h-4 w-4") %>
+          <% end %>
+        </div>
+      </details>
+
+      <details class="group relative">
+        <summary class="grid h-9 w-9 cursor-pointer list-none place-items-center rounded-full bg-[#0F172A] text-sm font-black text-white ring-2 ring-white transition hover:ring-red-200 active:scale-95 dark:bg-[#334155] dark:text-[#F8FAFC] dark:ring-[#1E293B] sm:h-10 sm:w-10" aria-label="Open user menu">
+          <div class="grid h-9 w-9 place-items-center rounded-full bg-[#0F172A] text-sm font-black text-white ring-2 ring-white dark:bg-[#334155] dark:text-[#F8FAFC] sm:h-10 sm:w-10">
+            <%= current_user.display_name.first&.upcase || "M" %>
+          </div>
+        </summary>
+
+        <div class="absolute right-0 mt-2 w-44 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white p-1.5 shadow-xl dark:border-[#334155] dark:bg-[#1E293B]">
+          <div class="px-2.5 py-1.5">
+            <p class="truncate text-xs font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= current_user.display_name %></p>
+            <p class="mt-0.5 text-[11px] font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= role_label(current_user.role) %></p>
+          </div>
+          <%= button_to destroy_user_session_path, method: :delete, class: "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-black text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10" do %>
+            <%= icon_svg(:logout, classes: "h-3.5 w-3.5") %>
+            <span>Log out</span>
+          <% end %>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>

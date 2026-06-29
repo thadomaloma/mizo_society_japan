@@ -1,0 +1,18 @@
+<%= link_to announcement_path(announcement), class: "group block rounded-xl border border-[#E2E8F0] bg-white p-4 transition hover:border-red-200 hover:bg-red-50/40 dark:border-[#334155] dark:bg-[#1E293B] dark:hover:border-red-400/40 dark:hover:bg-[#334155]" do %>
+  <div class="flex items-start justify-between gap-3">
+    <div class="min-w-0">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="rounded-md bg-red-50 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= announcement.category.humanize %></span>
+        <% if announcement.pinned? %>
+          <span class="rounded-md bg-amber-50 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-200">Pinned</span>
+        <% end %>
+      </div>
+      <h3 class="mt-3 line-clamp-2 text-sm font-black leading-5 text-[#0F172A] group-hover:text-red-700 dark:text-white dark:group-hover:text-red-300"><%= announcement.title %></h3>
+      <p class="mt-2 line-clamp-2 text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]"><%= announcement.body %></p>
+    </div>
+    <%= icon_svg(:arrow_right, classes: "mt-1 h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-red-600 dark:text-slate-500 dark:group-hover:text-red-300") %>
+  </div>
+  <p class="mt-3 text-xs font-bold text-[#64748B] dark:text-[#CBD5E1]">
+    <%= announcement.published_at&.strftime("%b %d, %Y") || announcement.created_at.strftime("%b %d, %Y") %>
+  </p>
+<% end %>

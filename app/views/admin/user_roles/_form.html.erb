@@ -1,0 +1,45 @@
+<section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+  <% if user.errors.any? %>
+    <div class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+      <p class="font-black">Please check the form.</p>
+      <ul class="mt-2 list-disc space-y-1 pl-5">
+        <% user.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with model: user, url: form_url, class: "space-y-5" do |form| %>
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div>
+        <%= form.label :name, "Name", class: "text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]" %>
+        <%= form.text_field :name, required: true, autocomplete: "name", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+      </div>
+
+      <div>
+        <%= form.label :email, "Email", class: "text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]" %>
+        <%= form.email_field :email, required: true, autocomplete: "email", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+      </div>
+    </div>
+
+    <div>
+      <%= form.label :role, "Role", class: "text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]" %>
+      <%= form.select :role, options_for_select(role_options, user.role || "member"), {}, class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-black text-[#0F172A] outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+      <% if user.new_record? %>
+        <p class="mt-2 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">The user will receive an email to set their password.</p>
+      <% end %>
+    </div>
+
+    <div class="flex flex-col gap-2 border-t border-[#E2E8F0] pt-5 dark:border-[#334155] sm:flex-row sm:justify-end">
+      <%= link_to admin_user_roles_path, class: action_button_classes(:secondary) do %>
+        <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
+        <span>Cancel</span>
+      <% end %>
+      <%= form.button type: :submit, class: action_button_classes(:primary) do %>
+        <%= icon_svg(submit_icon, classes: "h-4 w-4") %>
+        <span><%= submit_label %></span>
+      <% end %>
+    </div>
+  <% end %>
+</section>

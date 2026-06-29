@@ -1,0 +1,174 @@
+<% letter_value = ->(key, fallback = nil) { document.letter_data.fetch(key.to_s, nil).presence || fallback || OfficialLetterDocxBuilder.default_for(key) } %>
+
+<%= form_with model: document, class: "space-y-5" do |form| %>
+  <% if document.errors.any? %>
+    <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"><%= document.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <section data-controller="official-letter" class="rounded-2xl border border-red-100 bg-white p-5 shadow-sm dark:border-red-500/20 dark:bg-[#1E293B]">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div>
+        <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Official Letter Builder</p>
+        <h2 class="mt-1 text-base font-black text-[#0F172A] dark:text-white">MSJ letterhead format</h2>
+        <p class="mt-2 max-w-2xl text-sm font-semibold leading-6 text-[#64748B] dark:text-[#CBD5E1]">Create letters with a formal MSJ heading, reference number, subject, body, and signature block.</p>
+      </div>
+      <%= button_tag type: :submit,
+        formaction: official_letter_template_documents_path,
+        formmethod: :post,
+        formtarget: "_blank",
+        formnovalidate: true,
+        data: { turbo: false },
+        class: action_button_classes(:primary, size: :sm) do %>
+        <%= icon_svg(:download, classes: "h-4 w-4") %>
+        <span>Download DOCX</span>
+      <% end %>
+    </div>
+
+    <div class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(34rem,1.1fr)]">
+      <div class="grid content-start gap-3 sm:grid-cols-2">
+        <div class="sm:col-span-2">
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Organization Name</label>
+          <%= text_field_tag "official_letter[organization_name]", letter_value.call(:organization_name), data: { official_letter_target: "organizationName", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div>
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Location</label>
+          <%= text_field_tag "official_letter[organization_location]", letter_value.call(:organization_location), data: { official_letter_target: "organizationLocation", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div>
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">President Name</label>
+          <%= text_field_tag "official_letter[president_name]", letter_value.call(:president_name), placeholder: "e.g. Lalramliana", data: { official_letter_target: "presidentName", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div>
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">President Phone</label>
+          <%= text_field_tag "official_letter[president_phone]", letter_value.call(:president_phone), placeholder: "e.g. 090-1234-5678", data: { official_letter_target: "presidentPhone", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div>
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Secretary Name</label>
+          <%= text_field_tag "official_letter[secretary_name]", letter_value.call(:secretary_name), placeholder: "e.g. Secretary name", data: { official_letter_target: "secretaryName", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div>
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Secretary Phone</label>
+          <%= text_field_tag "official_letter[secretary_phone]", letter_value.call(:secretary_phone), placeholder: "e.g. 080-1234-5678", data: { official_letter_target: "secretaryPhone", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div>
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Reference No.</label>
+          <%= text_field_tag "official_letter[reference_number]", letter_value.call(:reference_number), data: { official_letter_target: "referenceNumber", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div>
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Dated Place</label>
+          <%= text_field_tag "official_letter[dated_place]", letter_value.call(:dated_place), data: { official_letter_target: "datedPlace", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div>
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Letter Date</label>
+          <%= text_field_tag "official_letter[letter_date]", letter_value.call(:letter_date), data: { official_letter_target: "letterDate", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Motto</label>
+          <%= text_area_tag "official_letter[motto]", letter_value.call(:motto), rows: 3, data: { official_letter_target: "motto", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold leading-6 text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+          <p class="mt-1 text-[11px] font-semibold text-[#64748B] dark:text-[#CBD5E1]">Write each motto on a new line. The letterhead will number them automatically.</p>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">To</label>
+          <%= text_area_tag "official_letter[recipient_block]", letter_value.call(:recipient_block), rows: 4, placeholder: "The President/General Secretary,\nOrganization Name,\nAddress.", data: { official_letter_target: "recipientBlock", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Subject</label>
+          <%= text_field_tag "official_letter[subject]", letter_value.call(:subject), placeholder: "e.g. Lawmthu sawina", data: { official_letter_target: "subject", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Salutation</label>
+          <%= text_field_tag "official_letter[salutation]", letter_value.call(:salutation, "Thawhpui duhtak,"), data: { official_letter_target: "salutation", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Body</label>
+          <%= text_area_tag "official_letter[body]", letter_value.call(:body), rows: 7, placeholder: "Mizo Society of Japan hmingin chibai kan buk a che.\n\nLetter body paragraph dang dah zel rawh.", data: { official_letter_target: "body", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold leading-6 text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div>
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Closing</label>
+          <%= text_field_tag "official_letter[closing]", letter_value.call(:closing, "I thawhpui,"), data: { official_letter_target: "closing", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div>
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Signer Name</label>
+          <%= text_field_tag "official_letter[signer_name]", letter_value.call(:signer_name, current_user.display_name), data: { official_letter_target: "signerName", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="text-xs font-black text-[#0F172A] dark:text-white">Signer Title</label>
+          <%= text_field_tag "official_letter[signer_title]", letter_value.call(:signer_title, role_label(current_user.role)), data: { official_letter_target: "signerTitle", action: "input->official-letter#update" }, class: "mt-1 block w-full rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+      </div>
+
+      <div class="official-letter-preview-shell rounded-xl border border-[#E2E8F0] bg-slate-100 p-3 shadow-inner dark:border-[#334155] dark:bg-[#0F172A]">
+        <div class="official-letter-preview-frame mx-auto">
+          <div class="official-letter-preview-page mx-auto min-h-[297mm] w-[210mm] bg-white px-[18mm] py-[16mm] font-serif text-[12px] leading-5 text-black shadow-sm">
+            <header class="text-center">
+              <h3 class="text-[25px] font-black leading-7 tracking-tight" data-official-letter-target="previewOrganizationName"></h3>
+              <p class="text-[21px] font-black leading-6" data-official-letter-target="previewOrganizationLocation"></p>
+            </header>
+            <div class="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-black pb-2">
+              <div class="text-[11px] leading-4" data-official-letter-target="previewMotto"></div>
+              <div class="grid h-16 w-16 place-items-center rounded-full border border-black text-center text-[10px] font-black leading-3">MSJ<br>印</div>
+              <div class="space-y-1 text-right text-[11px] leading-4" data-official-letter-target="previewContacts">
+              </div>
+            </div>
+            <div class="mt-5 flex justify-between gap-8 text-[12px]">
+              <p data-official-letter-target="previewReference"></p>
+              <p class="text-right" data-official-letter-target="previewDateLine"></p>
+            </div>
+            <main class="mt-8">
+              <p>To</p>
+              <div class="ml-24 mt-5 whitespace-pre-line" data-official-letter-target="previewRecipient"></div>
+              <div class="mt-7 grid grid-cols-[5rem_1fr] gap-4 font-bold">
+                <p>Subject :</p>
+                <p data-official-letter-target="previewSubject"></p>
+              </div>
+              <p class="mt-6" data-official-letter-target="previewSalutation"></p>
+              <div class="official-letter-preview-body mt-7 space-y-5 text-justify" data-official-letter-target="previewBody"></div>
+              <div class="mt-12 ml-auto w-56 text-center">
+                <p data-official-letter-target="previewClosing"></p>
+                <div class="mt-14 font-semibold leading-5" data-official-letter-target="previewSigner"></div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <div class="mb-5">
+      <h2 class="font-black text-[#0F172A] dark:text-white">Archive final letter</h2>
+      <p class="mt-1 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">After downloading and finalising the letter, attach the saved DOCX or PDF here.</p>
+    </div>
+    <div class="grid gap-5 md:grid-cols-2">
+      <div class="md:col-span-2">
+        <%= form.label :title, "Letter Title", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+        <%= form.text_field :title, placeholder: "e.g. Lawmthu Sawina Letter", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        <p class="mt-2 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Optional for draft. If blank, the subject or reference number will be used as the title.</p>
+      </div>
+      <div>
+        <%= form.label :visibility, "Visibility", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+        <%= form.select :visibility, Document.official_letter_visibility_options.map { |visibility| [ visibility_label(visibility), visibility ] }, {}, class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        <p class="mt-2 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Official letters are internal by default. Members will not see Office Bearer or Executive Committee letters.</p>
+      </div>
+      <div>
+        <%= form.label :expires_at, "Expiry Date", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+        <%= form.datetime_local_field :expires_at, class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      </div>
+      <div class="md:col-span-2">
+        <%= form.label :description, "Letter Notes", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+        <%= form.text_area :description, rows: 4, placeholder: "Briefly explain the purpose of this official letter.", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold leading-6 text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      </div>
+      <div class="md:col-span-2">
+        <%= form.label :file, "Final Letter File", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+        <%= form.file_field :file, accept: ".pdf,.docx,.xlsx,.png,.jpg,.jpeg", class: "mt-3 block w-full text-sm font-semibold text-[#0F172A] file:mr-3 file:rounded-lg file:border-0 file:bg-red-700 file:px-3 file:py-2 file:text-xs file:font-black file:text-white hover:file:bg-red-800 dark:text-white" %>
+        <p class="mt-2 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Optional for draft. Attach the final DOCX or PDF before publishing.</p>
+        <% if document.file.attached? %><p class="mt-2 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Current file: <%= document.file.filename %></p><% end %>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+    <%= link_to documents_path, class: action_button_classes(:secondary) do %><%= icon_svg(:arrow_left, classes: "h-4 w-4") %><span>Cancel</span><% end %>
+    <%= form.button type: :submit, class: action_button_classes(:primary) do %><%= icon_svg(:save, classes: "h-4 w-4") %><span><%= document.persisted? ? "Update Letter" : "Save Draft" %></span><% end %>
+  </div>
+<% end %>

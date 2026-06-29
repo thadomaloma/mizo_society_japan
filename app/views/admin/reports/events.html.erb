@@ -1,0 +1,18 @@
+<% content_for :page_title, "Event Report" %>
+
+<div class="space-y-6">
+  <% export_action = policy(:report).export? ? link_to(safe_join([ icon_svg(:download, classes: "h-4 w-4"), tag.span("Export CSV") ]), events_admin_reports_path(format: :csv), class: action_button_classes(:primary)) : nil %>
+  <%= render "shared/page_header",
+    eyebrow: "Reports",
+    title: "Event Report",
+    subtitle: "Events, RSVP, and attendance summary.",
+    actions: export_action %>
+
+  <section class="grid gap-4 md:grid-cols-5">
+    <%= render "shared/stat_card", label: "Total Events", value: @summary[:total_events], tone: "red", icon: :events %>
+    <%= render "shared/stat_card", label: "Upcoming", value: @summary[:upcoming_events], tone: "blue", icon: :events %>
+    <%= render "shared/stat_card", label: "Completed", value: @summary[:completed_events], tone: "green", icon: :events %>
+    <%= render "shared/stat_card", label: "RSVPs", value: @summary[:rsvp_count], tone: "dark", icon: :members %>
+    <%= render "shared/stat_card", label: "Attendance", value: @summary[:attendance_count], tone: "purple", icon: :members %>
+  </section>
+</div>

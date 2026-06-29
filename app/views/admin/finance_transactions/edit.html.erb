@@ -1,0 +1,6 @@
+<% content_for :page_title, "Edit Finance Transaction" %>
+
+<div class="space-y-6">
+  <%= render "shared/page_header", eyebrow: "Finance", title: "Edit Finance Transaction", subtitle: @finance_transaction.finance_category.name %>
+  <%= render "form", finance_transaction: @finance_transaction %>
+</div>

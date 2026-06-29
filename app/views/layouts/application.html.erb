@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" data-controller="theme">
+  <head>
+    <title><%= content_for(:title) || portal_organization_name %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Mizo Society Japan">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0F172A">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="min-h-screen bg-[#F8FAFC] text-[#0F172A] antialiased transition-colors duration-200 dark:bg-[#0F172A] dark:text-[#F8FAFC]">
+    <% if user_signed_in? %>
+      <div class="min-h-screen lg:flex" data-controller="global-search mobile-menu">
+        <%= render "shared/sidebar" %>
+
+        <div class="min-w-0 flex-1 lg:pl-72">
+          <%= render "shared/topbar" %>
+
+          <main class="mx-auto w-full max-w-[1440px] px-4 pb-[calc(env(safe-area-inset-bottom)+6.5rem)] pt-4 sm:px-6 lg:px-8 lg:pb-10 lg:pt-6">
+            <%= render "shared/flash" %>
+            <%= yield %>
+          </main>
+        </div>
+
+        <%= render "shared/mobile_nav" %>
+        <%= render "shared/mobile_menu" %>
+        <%= render "shared/global_search_modal" %>
+      </div>
+    <% else %>
+      <main class="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0F172A] px-4 py-10">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.22),transparent_34%),linear-gradient(135deg,#1E293B,#0F172A_52%,#111827)]"></div>
+        <div class="absolute inset-x-0 top-0 h-1 bg-red-600"></div>
+        <div class="relative w-full max-w-md">
+          <%= render "shared/flash" %>
+          <%= yield %>
+        </div>
+      </main>
+    <% end %>
+  </body>
+</html>

@@ -1,0 +1,62 @@
+<% content_for :page_title, "Welfare Request" %>
+
+<div class="space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Confidential support",
+    title: @welfare_case.title,
+    subtitle: "Case ##{@welfare_case.id} · #{@welfare_case.welfare_category.name}" %>
+
+  <section class="grid gap-6 lg:grid-cols-[1fr_20rem]">
+    <article class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-wide text-red-700"><%= @welfare_case.priority.humanize %> priority</p>
+          <h2 class="mt-2 text-xl font-black text-gray-950"><%= @welfare_case.title %></h2>
+        </div>
+        <%= render "shared/status_badge", status: @welfare_case.status %>
+      </div>
+
+      <div class="mt-5 whitespace-pre-line text-sm leading-6 text-gray-700"><%= @welfare_case.description %></div>
+    </article>
+
+    <aside class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <h3 class="text-lg font-black text-gray-950">Status</h3>
+      <dl class="mt-4 space-y-3 text-sm">
+        <div>
+          <dt class="font-bold text-gray-400">Submitted</dt>
+          <dd class="mt-1 font-black text-gray-950"><%= @welfare_case.submitted_at.strftime("%b %d, %Y %H:%M") %></dd>
+        </div>
+        <div>
+          <dt class="font-bold text-gray-400">Assigned to</dt>
+          <dd class="mt-1 font-black text-gray-950"><%= @welfare_case.assigned_to&.display_name || "Not assigned yet" %></dd>
+        </div>
+        <div>
+          <dt class="font-bold text-gray-400">Resolved</dt>
+          <dd class="mt-1 font-black text-gray-950"><%= @welfare_case.resolved_at&.strftime("%b %d, %Y") || "Not resolved" %></dd>
+        </div>
+      </dl>
+
+      <% if policy(@welfare_case).edit? %>
+        <%= link_to edit_welfare_case_path(@welfare_case), class: "#{action_button_classes(:dark, full_width: true)} mt-5" do %>
+          <%= icon_svg(:edit, classes: "h-4 w-4") %>
+          <span>Edit Request</span>
+        <% end %>
+      <% end %>
+    </aside>
+  </section>
+
+  <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <h3 class="text-lg font-black text-gray-950">Attachments</h3>
+    <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <% @welfare_case.welfare_attachments.each do |attachment| %>
+        <%= link_to rails_blob_path(attachment.file, disposition: "attachment"), class: "rounded-lg border border-gray-200 p-4 text-sm font-bold text-gray-700 transition hover:bg-gray-50" do %>
+          <span class="flex items-center gap-2 font-black text-gray-950"><%= icon_svg(:paperclip, classes: "h-4 w-4 text-red-700") %><span><%= attachment.file.filename %></span></span>
+          <span class="mt-1 block text-gray-500"><%= attachment.file_extension.upcase %> · <%= formatted_file_size(attachment) %></span>
+        <% end %>
+      <% end %>
+      <% if @welfare_case.welfare_attachments.empty? %>
+        <p class="text-sm text-gray-500">No attachments uploaded.</p>
+      <% end %>
+    </div>
+  </section>
+</div>

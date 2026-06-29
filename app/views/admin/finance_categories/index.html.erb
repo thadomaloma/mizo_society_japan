@@ -1,0 +1,61 @@
+<% content_for :page_title, "Finance Categories" %>
+
+<div class="space-y-6">
+  <% header_actions = capture do %>
+    <% if policy(FinanceCategory).create? %>
+      <%= link_to new_admin_finance_category_path, class: action_button_classes(:primary) do %>
+        <%= icon_svg(:plus, classes: "h-4 w-4") %>
+        <span>Add Category</span>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= render "shared/page_header",
+    eyebrow: "Finance",
+    title: "Finance Categories",
+    subtitle: "Maintain the income and expense categories used by finance transactions.",
+    actions: header_actions %>
+
+  <%= form_with url: admin_finance_categories_path, method: :get, class: "rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:flex sm:items-center sm:gap-3" do |form| %>
+    <%= form.select :category_type, options_for_select([ [ "All types", "" ] ] + FinanceCategory.category_types.keys.map { |type| [ type.humanize, type ] }, @category_type), {}, class: "w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white sm:w-56" %>
+    <%= form.button type: :submit, class: action_button_classes(:secondary, full_width: true, extra: "mt-3 sm:mt-0 sm:w-auto") do %>
+      <%= icon_svg(:filter, classes: "h-4 w-4") %>
+      <span>Filter</span>
+    <% end %>
+  <% end %>
+
+  <% if @finance_categories.any? %>
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <% @finance_categories.each do |category| %>
+        <% category_in_use = category.finance_transactions.any? %>
+        <article class="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-md dark:border-[#334155] dark:bg-[#1E293B] dark:hover:border-[#475569]">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-base font-black text-[#0F172A] dark:text-white"><%= link_to category.name, admin_finance_category_path(category), class: "transition hover:text-red-700 dark:hover:text-red-400" %></h3>
+              <p class="mt-1 text-sm font-semibold capitalize text-[#64748B] dark:text-[#CBD5E1]"><%= category.category_type.humanize %></p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <%= render "shared/status_badge", status: category.active? ? "active" : "inactive" %>
+              <% if policy(category).update? %>
+                <%= link_to edit_admin_finance_category_path(category), class: action_button_classes(:secondary, size: :xs, extra: "h-8 w-8 px-0"), title: "Edit #{category.name}", aria: { label: "Edit #{category.name}" } do %>
+                  <%= icon_svg(:edit, classes: "h-3.5 w-3.5") %>
+                <% end %>
+              <% end %>
+              <% if policy(category).destroy? %>
+                <%= button_to admin_finance_category_path(category), method: :delete, data: { turbo_confirm: "Delete #{category.name}? This cannot be undone." }, disabled: category_in_use, class: action_button_classes(:outline_danger, size: :xs, extra: "h-8 w-8 px-0"), form: { class: "inline-flex" }, title: (category_in_use ? "This category is used by finance transactions and cannot be deleted" : "Delete #{category.name}"), aria: { label: "Delete #{category.name}" } do %>
+                  <%= icon_svg(:trash, classes: "h-3.5 w-3.5") %>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+          <div class="mt-4 flex items-center justify-between border-t border-[#E2E8F0] pt-3 text-xs font-bold text-[#64748B] dark:border-[#334155] dark:text-[#CBD5E1]">
+            <span><%= category_in_use ? "Used by finance transactions" : "Available to use" %></span>
+            <%= link_to admin_finance_category_path(category), class: "font-black text-red-700 transition hover:text-red-800 dark:text-red-400 dark:hover:text-red-300" do %>View<% end %>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  <% else %>
+    <%= render "shared/empty_state", title: "No finance categories found", message: "Create categories before recording finance transactions." %>
+  <% end %>
+</div>

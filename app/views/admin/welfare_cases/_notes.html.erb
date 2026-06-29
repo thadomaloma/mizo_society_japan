@@ -1,0 +1,47 @@
+<section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h3 class="text-lg font-black text-gray-950">Internal notes</h3>
+      <p class="mt-1 text-sm text-gray-600">Visible only to authorized welfare officers.</p>
+    </div>
+  </div>
+
+  <%= form_with model: [ :admin, welfare_case, welfare_note ], class: "mt-4 space-y-3" do |form| %>
+    <%= form.text_area :body, rows: 4, placeholder: "Add private officer note...", class: "block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    <label class="flex items-center gap-3 text-sm font-bold text-gray-700">
+      <%= form.check_box :internal, checked: true, class: "h-4 w-4 rounded border-gray-300 text-red-700 focus:ring-red-600" %>
+      Internal note
+    </label>
+    <%= form.button type: :submit, class: action_button_classes(:primary) do %>
+      <%= icon_svg(:plus, classes: "h-4 w-4") %>
+      <span>Add Note</span>
+    <% end %>
+  <% end %>
+
+  <div class="mt-6 space-y-3">
+    <% welfare_notes.each do |note| %>
+      <article class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="font-black text-gray-950"><%= note.user.display_name %></p>
+            <p class="mt-1 text-xs font-semibold text-gray-500"><%= note.created_at.strftime("%b %d, %Y %H:%M") %></p>
+          </div>
+          <div class="flex gap-2">
+            <%= link_to edit_admin_welfare_case_welfare_note_path(welfare_case, note), class: action_button_classes(:secondary, size: :xs) do %>
+              <%= icon_svg(:edit, classes: "h-3.5 w-3.5") %>
+              <span>Edit</span>
+            <% end %>
+            <%= button_to admin_welfare_case_welfare_note_path(welfare_case, note), method: :delete, class: action_button_classes(:outline_danger, size: :xs) do %>
+              <%= icon_svg(:trash, classes: "h-3.5 w-3.5") %>
+              <span>Delete</span>
+            <% end %>
+          </div>
+        </div>
+        <p class="mt-3 whitespace-pre-line text-sm leading-6 text-gray-700"><%= note.body %></p>
+      </article>
+    <% end %>
+    <% if welfare_notes.empty? %>
+      <p class="text-sm text-gray-500">No internal notes yet.</p>
+    <% end %>
+  </div>
+</section>

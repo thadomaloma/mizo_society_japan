@@ -1,0 +1,10 @@
+<% content_for :page_title, "Edit Welfare Case" %>
+
+<div class="mx-auto max-w-3xl space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Confidential welfare",
+    title: "Edit Welfare Case",
+    subtitle: "Case ##{@welfare_case.id} for #{user_label(@welfare_case.user)}." %>
+
+  <%= render "form", welfare_case: @welfare_case %>
+</div>

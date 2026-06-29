@@ -1,0 +1,16 @@
+<% content_for :page_title, "Welfare Report" %>
+
+<div class="space-y-6">
+  <% export_action = policy(:report).export? ? link_to(safe_join([ icon_svg(:download, classes: "h-4 w-4"), tag.span("Export CSV") ]), welfare_admin_reports_path(format: :csv), class: action_button_classes(:primary)) : nil %>
+  <%= render "shared/page_header",
+    eyebrow: "Reports",
+    title: "Welfare Report",
+    subtitle: "Confidential welfare case summary for authorized users.",
+    actions: export_action %>
+
+  <section class="grid gap-4 md:grid-cols-3">
+    <%= render "shared/stat_card", label: "Open Cases", value: @summary[:open_cases], tone: "red", icon: :welfare %>
+    <%= render "shared/stat_card", label: "Urgent Cases", value: @summary[:urgent_cases], tone: "amber", icon: :welfare %>
+    <%= render "shared/stat_card", label: "Resolved Cases", value: @summary[:resolved_cases], tone: "green", icon: :welfare %>
+  </section>
+</div>

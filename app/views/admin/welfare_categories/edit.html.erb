@@ -1,0 +1,10 @@
+<% content_for :page_title, "Edit Welfare Category" %>
+
+<div class="mx-auto max-w-2xl space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Confidential welfare",
+    title: "Edit Welfare Category",
+    subtitle: @welfare_category.name %>
+
+  <%= render "form", welfare_category: @welfare_category %>
+</div>

@@ -1,0 +1,35 @@
+<% content_for :page_title, "Plan Types" %>
+
+<div class="space-y-6">
+  <% header_actions = capture do %>
+    <%= link_to admin_membership_plans_path, class: action_button_classes(:secondary, size: :sm) do %><%= icon_svg(:arrow_left, classes: "h-4 w-4") %><span>Payment Plans</span><% end %>
+    <% if policy(MembershipPlanType).create? %><%= link_to new_admin_membership_plan_type_path, class: action_button_classes(:primary, size: :sm) do %><%= icon_svg(:plus, classes: "h-4 w-4") %><span>New Type</span><% end %><% end %>
+  <% end %>
+
+  <%= render "shared/page_header", eyebrow: "Finance", title: "Plan Types", subtitle: "Manage the types available when creating payment plans.", actions: header_actions %>
+
+  <% if @membership_plan_types.any? %>
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <% @membership_plan_types.each do |plan_type| %>
+        <% type_in_use = plan_type.membership_plans.any? %>
+        <article class="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-md dark:border-[#334155] dark:bg-[#1E293B] dark:hover:border-[#475569]">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-3">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:tag, classes: "h-5 w-5") %></span>
+              <div class="min-w-0"><h2 class="truncate text-base font-black text-[#0F172A] dark:text-white"><%= plan_type.name %></h2><p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= type_in_use ? "Used by payment plans" : "Ready to use" %></p></div>
+            </div>
+            <div class="flex shrink-0 items-center gap-1.5">
+              <%= render "shared/status_badge", status: plan_type.active? ? "active" : "inactive" %>
+              <% if policy(plan_type).update? %><%= link_to edit_admin_membership_plan_type_path(plan_type), class: action_button_classes(:secondary, size: :xs, extra: "h-8 w-8 px-0"), title: "Edit #{plan_type.name}", aria: { label: "Edit #{plan_type.name}" } do %><%= icon_svg(:edit, classes: "h-3.5 w-3.5") %><% end %><% end %>
+              <% if policy(plan_type).destroy? && !(type_in_use || plan_type.default?) %>
+                <%= button_to admin_membership_plan_type_path(plan_type), method: :delete, data: { turbo_confirm: "Delete #{plan_type.name}? This cannot be undone." }, class: action_button_classes(:outline_danger, size: :xs, extra: "h-8 w-8 px-0"), form: { class: "inline-flex" }, title: "Delete #{plan_type.name}", aria: { label: "Delete #{plan_type.name}" } do %><%= icon_svg(:trash, classes: "h-3.5 w-3.5") %><% end %>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  <% else %>
+    <%= render "shared/empty_state", title: "No plan types found", message: "Create a plan type before adding payment plans." %>
+  <% end %>
+</div>

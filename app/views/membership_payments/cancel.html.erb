@@ -1,0 +1,33 @@
+<% content_for :page_title, "Payment Cancelled" %>
+
+<div class="mx-auto max-w-3xl space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Online payment",
+    title: "Payment cancelled",
+    subtitle: "No online payment was completed. You can try online payment again or use bank transfer." %>
+
+  <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-500/30 dark:bg-amber-500/10">
+    <div class="flex items-start gap-3">
+      <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500 text-white"><%= icon_svg(:credit_card, classes: "h-5 w-5") %></span>
+      <div>
+        <p class="font-black text-amber-900 dark:text-amber-100">Choose a payment method</p>
+        <p class="mt-1 text-sm font-semibold leading-6 text-amber-700 dark:text-amber-100">
+          Online payment is fastest. Bank transfer remains available for members who prefer manual transfer.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex flex-col gap-2 sm:flex-row">
+    <% if policy(@membership_payment).checkout? %>
+      <%= button_to checkout_membership_payment_path(@membership_payment), method: :post, form: { data: { turbo: false } }, class: action_button_classes(:primary) do %>
+        <%= icon_svg(:credit_card, classes: "h-4 w-4") %>
+        <span>Pay Online</span>
+      <% end %>
+    <% end %>
+    <%= link_to membership_payment_path(@membership_payment), class: action_button_classes(:secondary) do %>
+      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+      <span>Use Bank Transfer</span>
+    <% end %>
+  </div>
+</div>

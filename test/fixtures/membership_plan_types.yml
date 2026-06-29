@@ -1,0 +1,19 @@
+membership:
+  name: Membership
+  code: membership
+  active: true
+
+donation:
+  name: Donation
+  code: donation
+  active: true
+
+fundraiser:
+  name: Fundraiser
+  code: fundraiser
+  active: true
+
+other_fee:
+  name: Other Fee
+  code: other_fee
+  active: true

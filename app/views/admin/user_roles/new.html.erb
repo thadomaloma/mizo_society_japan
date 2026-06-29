@@ -1,0 +1,23 @@
+<% content_for :page_title, "Add User" %>
+
+<div class="mx-auto max-w-3xl space-y-6">
+  <% add_user_actions = capture do %>
+    <%= link_to admin_user_roles_path, class: action_button_classes(:secondary) do %>
+      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+      <span>Back</span>
+    <% end %>
+  <% end %>
+
+  <%= render "shared/page_header",
+    eyebrow: "Settings",
+    title: "Add User",
+    subtitle: "Create an account and send password setup instructions.",
+    actions: add_user_actions %>
+
+  <%= render "form",
+    user: @user,
+    form_url: admin_user_roles_path,
+    role_options: @role_options,
+    submit_label: "Add User",
+    submit_icon: :user_plus %>
+</div>

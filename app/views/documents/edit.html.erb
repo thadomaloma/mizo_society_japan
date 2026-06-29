@@ -1,0 +1,8 @@
+<% content_for :page_title, "Edit Official Letter" %>
+<div class="mx-auto max-w-4xl space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Official Letters",
+    title: "Edit Official Letter",
+    subtitle: @document.title %>
+  <%= render "form", document: @document %>
+</div>

@@ -1,0 +1,157 @@
+<% content_for :page_title, "Settings" %>
+
+<div class="mx-auto max-w-6xl space-y-6">
+  <% can_update_settings = policy(AppSetting).update? %>
+  <% settings_actions = capture do %>
+    <% if current_user.super_admin? %>
+      <div class="flex flex-wrap gap-2">
+        <%= link_to admin_user_roles_path, class: action_button_classes(:secondary) do %>
+          <%= icon_svg(:user_plus, classes: "h-4 w-4") %>
+          <span>User Roles</span>
+        <% end %>
+        <%= link_to admin_audit_logs_path, class: action_button_classes(:secondary) do %>
+          <%= icon_svg(:reports, classes: "h-4 w-4") %>
+          <span>Audit Logs</span>
+        <% end %>
+        <%= link_to admin_permissions_path, class: action_button_classes(:secondary) do %>
+          <%= icon_svg(:lock, classes: "h-4 w-4") %>
+          <span>Permissions</span>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%= render "shared/page_header",
+    eyebrow: "Administration",
+    title: "Settings",
+    subtitle: "Central controls for organization details, bank transfer instructions, notices, and future system operations.",
+    actions: settings_actions %>
+
+  <% if @settings_errors.present? %>
+    <section class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100">
+      <p class="font-black">Please correct the settings below.</p>
+      <ul class="mt-2 list-disc space-y-1 pl-5"><% @settings_errors.each do |error| %><li><%= error %></li><% end %></ul>
+    </section>
+  <% end %>
+
+  <div class="grid gap-6 xl:grid-cols-[1fr_22rem]">
+    <%= form_with url: admin_settings_path, method: :patch, scope: :settings, class: "space-y-5" do |form| %>
+      <% @setting_sections.each do |section, settings| %>
+        <section class="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+          <div class="border-b border-[#E2E8F0] px-5 py-4 dark:border-[#334155]">
+            <div class="flex items-center gap-3">
+              <div class="grid h-10 w-10 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
+                <%= icon_svg(:settings, classes: "h-5 w-5") %>
+              </div>
+              <div>
+                <h3 class="text-base font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= section %></h3>
+                <p class="mt-0.5 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= pluralize(settings.size, "setting") %></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="divide-y divide-[#E2E8F0] dark:divide-[#334155]">
+            <% settings.each do |setting| %>
+              <div class="grid gap-4 px-5 py-4 md:grid-cols-[1fr_20rem] md:items-center">
+                <div>
+                  <%= form.label setting[:key], setting[:label], class: "text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]" %>
+                  <p class="mt-1 text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]"><%= setting[:description] %></p>
+                </div>
+
+                <% case setting[:type] %>
+                <% when :textarea %>
+                  <%= form.text_area setting[:key],
+                    value: setting[:value],
+                    rows: 4,
+                    placeholder: setting[:placeholder],
+                    readonly: !can_update_settings,
+                    class: "block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none transition placeholder:text-[#64748B] focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC] dark:placeholder:text-[#CBD5E1]" %>
+                <% when :number %>
+                  <%= form.number_field setting[:key],
+                    value: setting[:value],
+                    placeholder: setting[:placeholder],
+                    min: 0,
+                    step: 1,
+                    readonly: !can_update_settings,
+                    class: "block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none transition placeholder:text-[#64748B] focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC] dark:placeholder:text-[#CBD5E1]" %>
+                <% when :boolean %>
+                  <label class="flex <%= can_update_settings ? "cursor-pointer" : "cursor-not-allowed opacity-75" %> items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 dark:border-[#334155] dark:bg-[#0F172A]">
+                    <span class="text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]">
+                      <%= AppSetting::BOOLEAN.cast(setting[:value]) ? "Enabled" : "Disabled" %>
+                    </span>
+                    <span class="relative inline-flex items-center">
+                      <%= form.check_box setting[:key],
+                        { checked: AppSetting::BOOLEAN.cast(setting[:value]), disabled: !can_update_settings, class: "peer sr-only" },
+                        "1",
+                        "0" %>
+                      <span class="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-red-600 dark:bg-slate-600"></span>
+                      <span class="absolute left-1 h-4 w-4 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
+                    </span>
+                  </label>
+                <% else %>
+                  <%= form.text_field setting[:key],
+                    value: setting[:value],
+                    type: setting[:type],
+                    placeholder: setting[:placeholder],
+                    readonly: !can_update_settings,
+                    class: "block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none transition placeholder:text-[#64748B] focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#F8FAFC] dark:placeholder:text-[#CBD5E1]" %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </section>
+      <% end %>
+
+      <div class="sticky bottom-20 flex flex-col gap-2 rounded-2xl border border-[#E2E8F0] bg-white/95 p-3 shadow-lg shadow-slate-950/10 backdrop-blur dark:border-[#334155] dark:bg-[#1E293B]/95 sm:flex-row sm:justify-end lg:bottom-4">
+        <%= link_to admin_dashboard_path, class: action_button_classes(:secondary) do %>
+          <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+          <span>Back</span>
+        <% end %>
+        <% if can_update_settings %>
+          <%= button_tag type: :submit, class: action_button_classes(:primary) do %>
+            <%= icon_svg(:save, classes: "h-4 w-4") %>
+            <span>Save Settings</span>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <aside class="space-y-5">
+      <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+        <div class="flex items-center gap-3">
+          <div class="grid h-10 w-10 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
+            <%= icon_svg(:settings, classes: "h-5 w-5") %>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-[#0F172A] dark:text-[#F8FAFC]">Future Importance</h3>
+            <p class="mt-0.5 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Keep this page.</p>
+          </div>
+        </div>
+
+        <div class="mt-5 space-y-3">
+          <% [
+            "Single place for society contact and branding.",
+            "Bank details support manual transfer instructions for members.",
+            "Portal notices can become dashboard banners.",
+            "Maintenance mode protects release windows while super admins keep access.",
+            "Changes are recorded in audit logs."
+          ].each do |item| %>
+            <div class="flex gap-3">
+              <span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
+                <%= icon_svg(:check, classes: "h-3.5 w-3.5") %>
+              </span>
+              <p class="text-sm font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]"><%= item %></p>
+            </div>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-red-500/30 dark:bg-red-500/10">
+        <h3 class="text-sm font-black text-red-800 dark:text-red-200">Security Note</h3>
+        <p class="mt-2 text-sm font-semibold leading-6 text-red-700 dark:text-red-100">
+          Google OAuth secrets should stay in environment variables, not in this settings table.
+        </p>
+      </section>
+    </aside>
+  </div>
+</div>

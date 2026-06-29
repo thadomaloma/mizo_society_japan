@@ -1,0 +1,26 @@
+<% searchable_labels = [ "events", "letters", "announcements" ] %>
+<% searchable_labels.unshift("members") if current_user&.super_admin? %>
+<% searchable_labels.insert(-2, "meeting minutes") if current_user&.minutes_access? %>
+<div data-global-search-target="modal" data-action="click->global-search#closeFromBackdrop" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-950/45 px-4 py-[max(4rem,env(safe-area-inset-top))] backdrop-blur-sm">
+  <div class="mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-2xl dark:border-[#334155] dark:bg-[#1E293B]">
+    <%= form_with url: global_search_path, method: :get, data: { turbo_frame: "global_search_results", global_search_target: "form" }, class: "border-b border-[#E2E8F0] dark:border-[#334155]" do |form| %>
+      <div class="flex items-center gap-3 px-4 py-3">
+        <%= icon_svg(:search, classes: "h-5 w-5 shrink-0 text-red-700 dark:text-red-300") %>
+        <%= form.search_field :q, autocomplete: "off", placeholder: "Search #{searchable_labels.to_sentence(last_word_connector: ' and ')}...", data: { global_search_target: "input", action: "input->global-search#queueSearch" }, class: "min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-semibold text-[#0F172A] outline-none placeholder:text-[#64748B] focus:ring-0 dark:text-white dark:placeholder:text-[#CBD5E1]" %>
+        <button type="button" data-action="global-search#close" class="grid h-7 w-7 place-items-center rounded-md text-[#64748B] transition hover:bg-slate-100 hover:text-red-700 dark:text-[#CBD5E1] dark:hover:bg-[#334155] dark:hover:text-red-300" title="Close search" aria-label="Close search"><%= icon_svg(:x_mark, classes: "h-4 w-4") %></button>
+      </div>
+    <% end %>
+
+    <turbo-frame id="global_search_results">
+      <div class="p-8 text-center">
+        <p class="text-sm font-black text-[#0F172A] dark:text-white">Search the portal</p>
+        <p class="mt-1 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= searchable_labels.map(&:humanize).to_sentence %>.</p>
+      </div>
+    </turbo-frame>
+
+    <div class="flex items-center justify-between border-t border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2 text-xs font-semibold text-[#64748B] dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#CBD5E1]">
+      <span>Press Esc to close</span>
+      <span class="hidden sm:inline">Press Cmd/Ctrl + K to search</span>
+    </div>
+  </div>
+</div>

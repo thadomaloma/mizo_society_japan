@@ -1,0 +1,149 @@
+<% content_for :page_title, @event.title %>
+
+<div class="space-y-6">
+  <% actions = capture do %>
+    <%= link_to events_path, class: action_button_classes(:secondary) do %>
+      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+      <span>Back</span>
+    <% end %>
+    <%= link_to calendar_event_path(@event, format: :ics), class: action_button_classes(:secondary) do %>
+      <%= icon_svg(:download, classes: "h-4 w-4") %>
+      <span>Calendar</span>
+    <% end %>
+    <% if policy(@event).update? %>
+      <%= link_to edit_event_path(@event), class: action_button_classes(:secondary) do %>
+        <%= icon_svg(:edit, classes: "h-4 w-4") %>
+        <span>Edit</span>
+      <% end %>
+    <% end %>
+    <% if policy(@event).publish? && @event.draft? %>
+      <%= button_to publish_event_path(@event), method: :patch, class: action_button_classes(:primary) do %>
+        <%= icon_svg(:upload, classes: "h-4 w-4") %>
+        <span>Publish</span>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= render "shared/page_header", eyebrow: "Events", title: @event.title, subtitle: "#{@event.event_date.strftime("%B %d, %Y")} · #{@event.start_time.strftime("%H:%M")}", actions: actions %>
+
+  <% if @event.cover_image.attached? %>
+    <%= image_tag @event.cover_image, class: "h-64 w-full rounded-2xl object-cover shadow-sm sm:h-80" %>
+  <% end %>
+
+  <section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <article class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <div class="prose prose-sm max-w-none font-semibold leading-7 text-[#334155] dark:prose-invert dark:text-[#CBD5E1]">
+        <%= simple_format(@event.description) %>
+      </div>
+
+      <% if @event.photos.attached? %>
+        <div class="mt-8 border-t border-[#E2E8F0] pt-5 dark:border-[#334155]">
+          <h2 class="font-black text-[#0F172A] dark:text-white">Event Gallery</h2>
+          <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <% @event.photos.each do |photo| %>
+              <%= image_tag photo, class: "h-32 w-full rounded-xl object-cover" %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </article>
+
+    <aside class="space-y-4">
+      <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+        <dl class="space-y-4 text-sm">
+          <div>
+            <dt class="font-bold text-[#64748B] dark:text-[#CBD5E1]">Date & Time</dt>
+            <dd class="mt-1 font-black text-[#0F172A] dark:text-white"><%= @event.event_date.strftime("%a, %d %b %Y") %><br><%= @event.start_time.strftime("%H:%M") %></dd>
+          </div>
+          <div>
+            <dt class="font-bold text-[#64748B] dark:text-[#CBD5E1]">Venue</dt>
+            <dd class="mt-1 font-black text-[#0F172A] dark:text-white"><%= @event.full_location %></dd>
+          </div>
+          <div>
+            <dt class="font-bold text-[#64748B] dark:text-[#CBD5E1]">Category</dt>
+            <dd class="mt-1 font-black text-[#0F172A] dark:text-white"><%= @event.event_category.name %></dd>
+          </div>
+          <div>
+            <dt class="font-bold text-[#64748B] dark:text-[#CBD5E1]">Registration</dt>
+            <dd class="mt-1 font-black text-[#0F172A] dark:text-white"><%= @event.registration_status %></dd>
+            <% if @event.registration_deadline.present? %><p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Closes <%= @event.registration_deadline.strftime("%d %b, %H:%M") %></p><% end %>
+            <% if @event.max_participants.present? %><p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= @event.available_spots %> of <%= @event.max_participants %> places remaining</p><% end %>
+          </div>
+        </dl>
+      </section>
+
+      <% if @registration&.going? %>
+        <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+          <h2 class="font-black text-emerald-800 dark:text-emerald-200">Your RSVP is confirmed</h2>
+          <p class="mt-2 text-sm font-semibold text-emerald-700 dark:text-emerald-200">You are marked as attending this event.</p>
+          <%= button_to withdraw_rsvp_event_path(@event), method: :patch, class: "mt-4 #{action_button_classes(:outline_danger, full_width: true)}" do %>
+            <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
+            <span>Withdraw RSVP</span>
+          <% end %>
+        </section>
+      <% elsif policy(@event).rsvp? %>
+        <section class="rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-red-500/30 dark:bg-red-500/10">
+          <h2 class="font-black text-red-800 dark:text-red-200">Attend this event?</h2>
+          <%= form_with url: rsvp_event_path(@event), scope: :event_registration, class: "mt-4 space-y-3" do |form| %>
+            <%= form.text_field :note, placeholder: "Optional note", class: "block w-full rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-red-500/30 dark:bg-[#0F172A] dark:text-white" %>
+            <%= form.button type: :submit, class: action_button_classes(:primary, full_width: true) do %>
+              <%= icon_svg(:check, classes: "h-4 w-4") %>
+              <span>RSVP</span>
+            <% end %>
+          <% end %>
+        </section>
+      <% elsif @event.registration_required? && @event.published? && @event.upcoming? %>
+        <section class="rounded-2xl border border-[#E2E8F0] bg-slate-50 p-5 dark:border-[#334155] dark:bg-[#0F172A]">
+          <h2 class="font-black text-[#0F172A] dark:text-white">Registration is closed</h2>
+          <p class="mt-2 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">This event is full or its registration deadline has passed.</p>
+        </section>
+      <% end %>
+
+      <% if policy(@event).complete? || policy(@event).cancel? || policy(@event).destroy? %>
+        <section class="flex flex-wrap gap-2">
+          <% if policy(@event).complete? && @event.published? %>
+            <%= button_to complete_event_path(@event), method: :patch, class: action_button_classes(:success) do %>
+              <%= icon_svg(:check, classes: "h-4 w-4") %>
+              <span>Complete</span>
+            <% end %>
+          <% end %>
+          <% if policy(@event).cancel? && @event.published? %>
+            <%= button_to cancel_event_path(@event), method: :patch, class: action_button_classes(:outline_danger) do %>
+              <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
+              <span>Cancel</span>
+            <% end %>
+          <% end %>
+          <% if policy(@event).destroy? %>
+            <%= button_to @event, method: :delete, data: { turbo_confirm: "Delete this event?" }, class: action_button_classes(:outline_danger) do %>
+              <%= icon_svg(:trash, classes: "h-4 w-4") %>
+              <span>Delete</span>
+            <% end %>
+          <% end %>
+        </section>
+      <% end %>
+    </aside>
+  </section>
+
+  <% if policy(@event).manage_registrations? %>
+    <section class="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <div class="flex items-center justify-between gap-3 border-b border-[#E2E8F0] px-5 py-4 dark:border-[#334155]">
+        <div>
+          <h2 class="font-black text-[#0F172A] dark:text-white">RSVPs</h2>
+          <p class="mt-1 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= @event.rsvp_count %> member<%= "s" unless @event.rsvp_count == 1 %> attending</p>
+        </div>
+      </div>
+      <% if @registrations.any? %>
+        <div class="divide-y divide-[#E2E8F0] dark:divide-[#334155]">
+          <% @registrations.each do |registration| %>
+            <div class="flex items-center justify-between gap-4 px-5 py-3 text-sm">
+              <div class="min-w-0"><p class="truncate font-black text-[#0F172A] dark:text-white"><%= registration.user.member_profile&.full_name.presence || registration.user.name %></p><p class="truncate text-[#64748B] dark:text-[#CBD5E1]"><%= registration.note.presence || registration.user.email %></p></div>
+              <p class="shrink-0 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= registration.registered_at.strftime("%d %b") %></p>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="px-5 py-6 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">No RSVPs yet.</p>
+      <% end %>
+    </section>
+  <% end %>
+</div>

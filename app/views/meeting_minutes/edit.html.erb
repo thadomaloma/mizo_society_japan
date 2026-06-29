@@ -1,0 +1,18 @@
+<% content_for :page_title, "Edit Minute" %>
+
+<div class="space-y-6">
+  <% edit_actions = capture do %>
+    <%= link_to meeting_minute_path(@meeting_minute), class: action_button_classes(:secondary) do %>
+      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+      <span>View Record</span>
+    <% end %>
+  <% end %>
+
+  <%= render "shared/page_header",
+    eyebrow: "Minutes",
+    title: "Edit Minute",
+    subtitle: "Update the meeting details and agenda for #{@meeting_minute.title}.",
+    actions: edit_actions %>
+
+  <%= render "form", meeting_minute: @meeting_minute %>
+</div>

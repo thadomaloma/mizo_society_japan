@@ -1,0 +1,72 @@
+<% content_for :page_title, "Finance Transaction" %>
+
+<div class="space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Finance transaction",
+    title: @finance_transaction.finance_category.name,
+    subtitle: @finance_transaction.transaction_date.strftime("%B %d, %Y"),
+    actions: safe_join([
+      link_to(admin_finance_transactions_path, class: action_button_classes(:secondary)) do
+        safe_join([ icon_svg(:arrow_left, classes: "h-4 w-4"), tag.span("Back") ])
+      end,
+      (link_to(edit_admin_finance_transaction_path(@finance_transaction), class: action_button_classes(:dark)) do
+        safe_join([ icon_svg(:edit, classes: "h-4 w-4"), tag.span("Edit") ])
+      end if policy(@finance_transaction).update?)
+    ].compact, " ") %>
+
+  <section class="grid gap-5 lg:grid-cols-[1fr_22rem]">
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <p class="text-sm font-bold text-gray-500">Amount</p>
+          <p class="mt-2 text-3xl font-black text-gray-950"><%= yen(@finance_transaction.amount) %></p>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-gray-500">Status</p>
+          <p class="mt-2"><%= render "shared/status_badge", status: @finance_transaction.status %></p>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-gray-500">Type</p>
+          <p class="mt-2"><%= render "shared/status_badge", status: @finance_transaction.transaction_type %></p>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-gray-500">Reference</p>
+          <p class="mt-2 font-black text-gray-950"><%= @finance_transaction.reference_number.presence || "Not recorded" %></p>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-gray-500">Recorded by</p>
+          <p class="mt-2 font-black text-gray-950"><%= @finance_transaction.recorded_by.display_name %></p>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-gray-500">Approved by</p>
+          <p class="mt-2 font-black text-gray-950"><%= @finance_transaction.approved_by&.display_name || "Not approved" %></p>
+        </div>
+      </div>
+
+      <div class="mt-6 border-t border-gray-200 pt-6">
+        <p class="text-sm font-bold text-gray-500">Description</p>
+        <p class="mt-2 text-sm leading-6 text-gray-700"><%= @finance_transaction.description.presence || "No description." %></p>
+      </div>
+    </div>
+
+    <aside class="space-y-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <h3 class="text-lg font-black text-gray-950">Review actions</h3>
+      <% if policy(@finance_transaction).approve? %>
+        <%= button_to approve_admin_finance_transaction_path(@finance_transaction), method: :patch, class: action_button_classes(:success, full_width: true) do %>
+          <%= icon_svg(:check, classes: "h-4 w-4") %>
+          <span>Approve</span>
+        <% end %>
+        <%= button_to reject_admin_finance_transaction_path(@finance_transaction), method: :patch, class: action_button_classes(:danger, full_width: true) do %>
+          <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
+          <span>Reject</span>
+        <% end %>
+      <% end %>
+      <% if policy(@finance_transaction).destroy? %>
+        <%= button_to admin_finance_transaction_path(@finance_transaction), method: :delete, data: { turbo_confirm: "Delete this transaction?" }, class: action_button_classes(:outline_danger, full_width: true) do %>
+          <%= icon_svg(:trash, classes: "h-4 w-4") %>
+          <span>Delete</span>
+        <% end %>
+      <% end %>
+    </aside>
+  </section>
+</div>

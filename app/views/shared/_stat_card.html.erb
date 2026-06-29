@@ -1,0 +1,14 @@
+<article class="rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-[#334155] dark:bg-[#1E293B] dark:hover:bg-[#334155]">
+  <div class="flex items-start gap-3">
+    <div class="grid h-12 w-12 shrink-0 place-items-center rounded-lg shadow-sm <%= stat_card_classes(local_assigns.fetch(:tone, "dark")) %>">
+      <%= icon_svg(local_assigns.fetch(:icon, :dashboard), classes: "h-6 w-6") %>
+    </div>
+    <div class="min-w-0 flex-1">
+      <p class="text-xs font-black text-[#64748B] dark:text-[#CBD5E1]"><%= label %></p>
+      <p class="mt-1 truncate text-2xl font-black tracking-tight text-[#0F172A] dark:text-[#F8FAFC]"><%= value %></p>
+    </div>
+  </div>
+  <% if local_assigns[:caption].present? %>
+    <p class="mt-4 text-xs font-bold <%= local_assigns.fetch(:caption_tone, "text-[#64748B] dark:text-[#CBD5E1]") %>"><%= caption %></p>
+  <% end %>
+</article>

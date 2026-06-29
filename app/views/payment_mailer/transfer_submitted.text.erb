@@ -1,0 +1,9 @@
+Payment pending verification
+
+<%= @payment.user.display_name %> submitted a bank transfer for <%= @payment.membership_plan.name %>.
+
+Amount: <%= number_to_currency(@payment.transfer_amount || @payment.amount, unit: "¥", precision: 0) %>
+Transfer date: <%= @payment.transferred_on&.strftime("%B %d, %Y") %>
+Reference name: <%= @payment.transfer_reference_name %>
+
+Please verify the transfer in the MSJ Portal and approve the payment after confirming the bank account.

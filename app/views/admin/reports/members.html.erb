@@ -1,0 +1,17 @@
+<% content_for :page_title, "Member Report" %>
+
+<div class="space-y-6">
+  <% export_action = policy(:report).export? ? link_to(safe_join([ icon_svg(:download, classes: "h-4 w-4"), tag.span("Export CSV") ]), members_admin_reports_path(format: :csv), class: action_button_classes(:primary)) : nil %>
+  <%= render "shared/page_header",
+    eyebrow: "Reports",
+    title: "Member Report",
+    subtitle: "Membership profile summary and CSV export.",
+    actions: export_action %>
+
+  <section class="grid gap-4 md:grid-cols-4">
+    <%= render "shared/stat_card", label: "Total Members", value: @summary[:total_members], tone: "red", icon: :members %>
+    <%= render "shared/stat_card", label: "Active Members", value: @summary[:active_members], tone: "green", icon: :members %>
+    <%= render "shared/stat_card", label: "Inactive Members", value: @summary[:inactive_members], tone: "dark", icon: :members %>
+    <%= render "shared/stat_card", label: "New This Month", value: @summary[:new_members_this_month], tone: "blue", icon: :members %>
+  </section>
+</div>

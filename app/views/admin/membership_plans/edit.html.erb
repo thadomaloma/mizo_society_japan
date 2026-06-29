@@ -1,0 +1,6 @@
+<% content_for :page_title, "Edit Payment Plan" %>
+
+<div class="space-y-6">
+  <%= render "shared/page_header", eyebrow: "Finance", title: "Edit Payment Plan", subtitle: @membership_plan.name %>
+  <%= render "form", membership_plan: @membership_plan %>
+</div>

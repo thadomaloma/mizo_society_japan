@@ -1,0 +1,10 @@
+<% content_for :page_title, "New Welfare Request" %>
+
+<div class="mx-auto max-w-3xl space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Confidential support",
+    title: "New Welfare Request",
+    subtitle: "Share only what is needed. Your request is visible to authorized welfare officers." %>
+
+  <%= render "form", welfare_case: @welfare_case %>
+</div>

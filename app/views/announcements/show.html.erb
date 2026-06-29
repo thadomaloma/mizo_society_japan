@@ -1,0 +1,21 @@
+<% content_for :page_title, @announcement.title %>
+
+<div class="mx-auto max-w-4xl space-y-6">
+  <% actions = capture do %>
+    <%= link_to announcements_path, class: action_button_classes(:secondary) do %><%= icon_svg(:arrow_left, classes: "h-4 w-4") %><span>Notices</span><% end %>
+    <% if policy(@announcement).update? %><%= link_to edit_announcement_path(@announcement), class: action_button_classes(:secondary) do %><%= icon_svg(:edit, classes: "h-4 w-4") %><span>Edit</span><% end %><% end %>
+    <% if policy(@announcement).publish? && @announcement.draft? %><%= button_to publish_announcement_path(@announcement), method: :patch, class: action_button_classes(:primary) do %><%= icon_svg(:upload, classes: "h-4 w-4") %><span>Publish</span><% end %><% end %>
+  <% end %>
+
+  <%= render "shared/page_header", eyebrow: "Official notice", title: @announcement.title, subtitle: @announcement.published_at&.strftime("Published %d %B %Y") || "Draft notice", actions: actions %>
+
+  <article class="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <div class="mb-6 flex flex-wrap items-center gap-2 border-b border-[#E2E8F0] pb-5 dark:border-[#334155]"><%= render "shared/status_badge", status: @announcement.status if current_user.content_admin? %><span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-black text-[#64748B] dark:bg-[#0F172A] dark:text-[#CBD5E1]"><%= @announcement.category.humanize %></span><% if @announcement.pinned? %><span class="rounded-full bg-red-100 px-2.5 py-1 text-xs font-black text-red-700 dark:bg-red-500/20 dark:text-red-200">Pinned notice</span><% end %><% if @announcement.expires_at.present? %><span class="text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Expires <%= @announcement.expires_at.strftime("%d %b %Y") %></span><% end %></div>
+    <div class="prose prose-sm max-w-none whitespace-pre-wrap font-semibold leading-7 text-[#334155] dark:prose-invert dark:text-[#CBD5E1]"><%= @announcement.body %></div>
+    <p class="mt-8 border-t border-[#E2E8F0] pt-4 text-sm font-semibold text-[#64748B] dark:border-[#334155] dark:text-[#CBD5E1]">Posted by <span class="font-black text-[#0F172A] dark:text-white"><%= @announcement.author.name %></span></p>
+  </article>
+
+  <% if policy(@announcement).archive? || policy(@announcement).destroy? %>
+    <div class="flex flex-wrap justify-end gap-2"><% if policy(@announcement).archive? && !@announcement.archived? %><%= button_to archive_announcement_path(@announcement), method: :patch, class: action_button_classes(:secondary) do %><%= icon_svg(:x_mark, classes: "h-4 w-4") %><span>Archive</span><% end %><% end %><% if policy(@announcement).destroy? %><%= button_to @announcement, method: :delete, data: { turbo_confirm: "Delete this notice?" }, class: action_button_classes(:outline_danger) do %><%= icon_svg(:trash, classes: "h-4 w-4") %><span>Delete</span><% end %><% end %></div>
+  <% end %>
+</div>

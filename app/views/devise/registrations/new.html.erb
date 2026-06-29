@@ -1,0 +1,62 @@
+<div class="overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl shadow-slate-950/40">
+  <div class="bg-[#1E293B] px-6 py-7 text-white">
+    <div class="grid h-14 w-14 place-items-center rounded-xl bg-red-700 text-sm font-black tracking-wide text-white">MSJ</div>
+    <h1 class="mt-6 text-2xl font-black tracking-tight">Create member account</h1>
+    <p class="mt-2 text-sm font-semibold text-slate-300">Join the portal with member access. Office roles can be assigned by admins later.</p>
+  </div>
+
+  <div class="p-6 sm:p-8">
+    <% if devise_mapping.omniauthable? && resource_class.omniauth_providers.include?(:google_oauth2) && google_oauth_configured? %>
+      <%= button_to user_google_oauth2_omniauth_authorize_path, method: :post, data: { turbo: false }, class: "flex w-full items-center justify-center gap-3 rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-black text-[#0F172A] shadow-sm transition hover:bg-slate-50" do %>
+        <span class="grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-black text-red-600">G</span>
+        <span>Sign up with Google</span>
+      <% end %>
+
+      <div class="my-6 flex items-center gap-3">
+        <div class="h-px flex-1 bg-[#E2E8F0]"></div>
+        <span class="text-xs font-black uppercase tracking-wide text-[#64748B]">or email</span>
+        <div class="h-px flex-1 bg-[#E2E8F0]"></div>
+      </div>
+    <% elsif devise_mapping.omniauthable? && resource_class.omniauth_providers.include?(:google_oauth2) %>
+      <div class="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold leading-5 text-amber-800">
+        Google sign-up is ready in code. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable the button.
+      </div>
+    <% end %>
+
+    <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: "space-y-4" }) do |f| %>
+      <%= render "devise/shared/error_messages", resource: resource %>
+
+      <div>
+        <%= f.label :name, class: "block text-sm font-bold text-[#334155]" %>
+        <%= f.text_field :name, autofocus: true, autocomplete: "name", class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] shadow-sm outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+      </div>
+
+      <div>
+        <%= f.label :email, class: "block text-sm font-bold text-[#334155]" %>
+        <%= f.email_field :email, autocomplete: "email", class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] shadow-sm outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between gap-3">
+          <%= f.label :password, class: "block text-sm font-bold text-[#334155]" %>
+          <% if @minimum_password_length %>
+            <span class="text-xs font-semibold text-[#64748B]"><%= @minimum_password_length %> characters minimum</span>
+          <% end %>
+        </div>
+        <%= render "shared/password_input", form: f, attribute: :password, autocomplete: "new-password" %>
+      </div>
+
+      <div>
+        <%= f.label :password_confirmation, class: "block text-sm font-bold text-[#334155]" %>
+        <%= render "shared/password_input", form: f, attribute: :password_confirmation, autocomplete: "new-password" %>
+      </div>
+
+      <%= f.button type: :submit, class: action_button_classes(:primary, full_width: true) do %>
+        <%= icon_svg(:user_plus, classes: "h-4 w-4") %>
+        <span>Create account</span>
+      <% end %>
+    <% end %>
+
+    <%= render "devise/shared/links" %>
+  </div>
+</div>

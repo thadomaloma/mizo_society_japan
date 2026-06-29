@@ -1,0 +1,23 @@
+<% content_for :page_title, "Edit User" %>
+
+<div class="mx-auto max-w-3xl space-y-6">
+  <% edit_user_actions = capture do %>
+    <%= link_to admin_user_roles_path, class: action_button_classes(:secondary) do %>
+      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+      <span>Back</span>
+    <% end %>
+  <% end %>
+
+  <%= render "shared/page_header",
+    eyebrow: "Settings",
+    title: "Edit User",
+    subtitle: "Update account details and portal role for #{@user.display_name}.",
+    actions: edit_user_actions %>
+
+  <%= render "form",
+    user: @user,
+    form_url: admin_user_role_path(@user),
+    role_options: @role_options,
+    submit_label: "Save Changes",
+    submit_icon: :save %>
+</div>

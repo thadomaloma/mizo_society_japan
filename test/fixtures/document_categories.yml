@@ -1,0 +1,5 @@
+forms:
+  name: Forms
+  description: Member forms and official applications.
+  active: true
+  position: 0

@@ -1,0 +1,39 @@
+<% content_for :page_title, "Finance Report" %>
+
+<div class="space-y-6">
+  <% export_action = policy(:report).export? ? link_to(safe_join([ icon_svg(:download, classes: "h-4 w-4"), tag.span("Export CSV") ]), finance_admin_reports_path(format: :csv, start_date: params[:start_date], end_date: params[:end_date]), class: action_button_classes(:primary)) : nil %>
+  <%= render "shared/page_header",
+    eyebrow: "Reports",
+    title: "Finance Report",
+    subtitle: "Approved finance transactions with CSV export.",
+    actions: export_action %>
+
+  <%= form_with url: finance_admin_reports_path, method: :get, class: "grid gap-3 rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-sm md:grid-cols-[1fr_1fr_auto] dark:border-[#334155] dark:bg-[#1E293B]" do |form| %>
+    <%= form.date_field :start_date, value: params[:start_date], class: "rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" %>
+    <%= form.date_field :end_date, value: params[:end_date], class: "rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" %>
+    <%= form.button type: :submit, class: action_button_classes(:dark) do %>
+      <%= icon_svg(:filter, classes: "h-4 w-4") %>
+      <span>Filter</span>
+    <% end %>
+  <% end %>
+
+  <section class="grid gap-4 md:grid-cols-3">
+    <%= render "shared/stat_card", label: "Total Income", value: yen(@summary[:total_income]), tone: "red", icon: :finance %>
+    <%= render "shared/stat_card", label: "Total Expense", value: yen(@summary[:total_expense]), tone: "dark", icon: :finance %>
+    <%= render "shared/stat_card", label: "Current Balance", value: yen(@summary[:current_balance]), tone: "green", icon: :finance %>
+  </section>
+
+  <%= render "shared/section_card", title: "Recent Approved Transactions", body_class: "p-0" do %>
+    <div class="divide-y divide-[#E2E8F0] dark:divide-[#334155]">
+      <% @summary[:recent_transactions].each do |transaction| %>
+        <div class="flex items-center justify-between gap-4 p-4">
+          <div>
+            <p class="font-black text-gray-950 dark:text-white"><%= transaction.finance_category.name %></p>
+            <p class="text-sm font-semibold text-gray-500"><%= transaction.transaction_date.strftime("%b %d, %Y") %></p>
+          </div>
+          <p class="font-black <%= transaction.income? ? "text-emerald-700" : "text-red-700" %>"><%= yen(transaction.amount) %></p>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

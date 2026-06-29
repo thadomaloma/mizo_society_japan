@@ -1,0 +1,25 @@
+<% actions = [] %>
+<% actions << { label: "New Minute", path: new_meeting_minute_path, icon: :documents } if policy(MeetingMinute).create? %>
+<% actions << { label: "New Transaction", path: new_admin_finance_transaction_path, icon: :finance } if current_user.finance_team? %>
+<% if current_user.welfare_manager? %>
+  <% actions << { label: "New Welfare Case", path: new_admin_welfare_case_path, icon: :welfare } %>
+<% elsif !current_user.advisory_viewer? %>
+  <% actions << { label: "Request Welfare Support", path: new_welfare_case_path, icon: :welfare } %>
+<% end %>
+
+<details class="group relative hidden sm:block">
+  <summary class="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-lg border border-[#E2E8F0] bg-white px-2.5 text-xs font-black text-[#0F172A] transition hover:border-red-200 hover:text-red-700 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:text-red-400">
+    <%= icon_svg(:plus, classes: "h-4 w-4") %>
+    <span>Quick Actions</span>
+    <%= icon_svg(:chevron_down, classes: "h-3 w-3") %>
+  </summary>
+
+  <div class="absolute right-0 mt-2 w-56 rounded-xl border border-[#E2E8F0] bg-white p-2 shadow-xl dark:border-[#334155] dark:bg-[#1E293B]">
+    <% actions.each do |action| %>
+      <%= link_to action[:path], class: "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-black text-[#0F172A] transition hover:bg-red-50 hover:text-red-700 dark:text-[#F8FAFC] dark:hover:bg-red-500/10 dark:hover:text-red-300" do %>
+        <%= icon_svg(action[:icon], classes: "h-4 w-4") %>
+        <span><%= action[:label] %></span>
+      <% end %>
+    <% end %>
+  </div>
+</details>

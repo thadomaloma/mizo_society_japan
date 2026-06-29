@@ -1,0 +1,42 @@
+<article class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+  <div class="flex items-start justify-between gap-3">
+    <div>
+      <p class="text-xs font-bold uppercase tracking-wide text-red-700">Case #<%= welfare_case.id %></p>
+      <h3 class="mt-2 font-black text-gray-950"><%= welfare_case.title %></h3>
+      <p class="mt-1 text-sm text-gray-500"><%= user_label(welfare_case.user) %></p>
+    </div>
+    <%= render "shared/status_badge", status: welfare_case.status %>
+  </div>
+
+  <dl class="mt-5 grid grid-cols-2 gap-3 text-sm">
+    <div>
+      <dt class="font-bold text-gray-400">Category</dt>
+      <dd class="mt-1 font-black text-gray-950"><%= welfare_case.welfare_category.name %></dd>
+    </div>
+    <div>
+      <dt class="font-bold text-gray-400">Priority</dt>
+      <dd class="mt-1 font-black text-gray-950"><%= welfare_case.priority.humanize %></dd>
+    </div>
+    <div>
+      <dt class="font-bold text-gray-400">Assigned</dt>
+      <dd class="mt-1 font-black text-gray-950"><%= welfare_case.assigned_to&.display_name || "Unassigned" %></dd>
+    </div>
+    <div>
+      <dt class="font-bold text-gray-400">Submitted</dt>
+      <dd class="mt-1 font-black text-gray-950"><%= welfare_case.submitted_at.strftime("%b %d, %Y") %></dd>
+    </div>
+  </dl>
+
+  <div class="mt-5 grid grid-cols-2 gap-2">
+    <%= link_to admin_welfare_case_path(welfare_case), class: action_button_classes(:secondary, full_width: true) do %>
+      <%= icon_svg(:eye, classes: "h-4 w-4") %>
+      <span>View</span>
+    <% end %>
+    <% if policy(welfare_case).edit? %>
+      <%= link_to edit_admin_welfare_case_path(welfare_case), class: action_button_classes(:dark, full_width: true) do %>
+        <%= icon_svg(:edit, classes: "h-4 w-4") %>
+        <span>Edit</span>
+      <% end %>
+    <% end %>
+  </div>
+</article>

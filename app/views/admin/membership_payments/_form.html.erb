@@ -1,0 +1,72 @@
+<%= form_with model: [ :admin, membership_payment ], class: "rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6" do |form| %>
+  <%= render "devise/shared/error_messages", resource: membership_payment %>
+
+  <div class="grid gap-5 md:grid-cols-2">
+    <div>
+      <%= form.label :user_id, "Member", class: "block text-sm font-bold text-gray-700" %>
+      <%= form.select :user_id, @users.map { |user| [ user_label(user), user.id ] }, { prompt: "Select member" }, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    </div>
+
+    <div>
+      <%= form.label :membership_plan_id, "Payment Plan", class: "block text-sm font-bold text-gray-700" %>
+      <%= form.select :membership_plan_id, @membership_plans.map { |plan| [ "#{plan.name} - #{plan.plan_type_label} (#{yen(plan.amount)})", plan.id ] }, { prompt: "Select payment plan" }, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    </div>
+
+    <div>
+      <%= form.label :amount, class: "block text-sm font-bold text-gray-700" %>
+      <%= form.number_field :amount, step: 1, min: 0, inputmode: "numeric", value: yen_input_value(membership_payment.amount), class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    </div>
+
+    <div>
+      <%= form.label :payment_method, class: "block text-sm font-bold text-gray-700" %>
+      <%= form.select :payment_method, MembershipPayment.payment_methods.keys.map { |method| [ method.humanize, method ] }, {}, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    </div>
+
+    <div>
+      <%= form.label :payment_year, class: "block text-sm font-bold text-gray-700" %>
+      <%= form.number_field :payment_year, min: 2000, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    </div>
+
+    <div>
+      <%= form.label :payment_month, class: "block text-sm font-bold text-gray-700" %>
+      <%= form.select :payment_month, options_for_select([ [ "No month", "" ] ] + (1..12).map { |month| [ Date::MONTHNAMES[month], month ] }, membership_payment.payment_month), {}, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    </div>
+
+    <% if current_user.finance_approver? %>
+      <div>
+        <%= form.label :status, class: "block text-sm font-bold text-gray-700" %>
+        <%= form.select :status, MembershipPayment.statuses.keys.map { |status| [ status.humanize, status ] }, {}, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+      </div>
+    <% else %>
+      <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800">
+        New records are submitted as pending for approval.
+      </div>
+    <% end %>
+
+    <div>
+      <%= form.label :paid_on, class: "block text-sm font-bold text-gray-700" %>
+      <%= form.date_field :paid_on, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    </div>
+
+    <div class="md:col-span-2">
+      <%= form.label :reference_number, class: "block text-sm font-bold text-gray-700" %>
+      <%= form.text_field :reference_number, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    </div>
+
+    <div class="md:col-span-2">
+      <%= form.label :notes, class: "block text-sm font-bold text-gray-700" %>
+      <%= form.text_area :notes, rows: 4, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    </div>
+  </div>
+
+  <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+    <%= link_to admin_membership_payments_path, class: action_button_classes(:secondary) do %>
+      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+      <span>Cancel</span>
+    <% end %>
+    <%= form.button type: :submit, class: action_button_classes(:primary) do %>
+      <%= icon_svg(:save, classes: "h-4 w-4") %>
+      <span><%= membership_payment.persisted? ? "Update Payment" : "Create Payment" %></span>
+    <% end %>
+  </div>
+<% end %>

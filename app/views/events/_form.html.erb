@@ -1,0 +1,53 @@
+<%= form_with model: event, class: "space-y-5" do |form| %>
+  <% if event.errors.any? %>
+    <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"><%= event.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div class="md:col-span-2 xl:col-span-3">
+        <%= form.label :title, class: "text-sm font-black text-[#0F172A] dark:text-white" do %>Event Title <span class="text-red-600">*</span><% end %>
+        <%= form.text_field :title, required: true, placeholder: "e.g. MSJ Summer Sports Day", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      </div>
+      <div>
+        <%= form.label :event_date, class: "text-sm font-black text-[#0F172A] dark:text-white" do %>Event Date <span class="text-red-600">*</span><% end %>
+        <%= form.date_field :event_date, required: true, class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      </div>
+      <div>
+        <%= form.label :start_time_of_day, "Start Time", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+        <%= form.time_field :start_time_of_day, required: true, class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      </div>
+      <div>
+        <%= form.label :event_category_id, "Event Category", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+        <%= form.select :event_category_id, @event_category_options.map { |category| [ category.name, category.id ] }, {}, class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      </div>
+      <div class="md:col-span-2 xl:col-span-3">
+        <%= form.label :venue, class: "text-sm font-black text-[#0F172A] dark:text-white" do %>Venue <span class="text-red-600">*</span><% end %>
+        <%= form.text_field :venue, required: true, placeholder: "e.g. Shinjuku Sports Centre, Tokyo", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      </div>
+      <div class="md:col-span-2 xl:col-span-3">
+        <%= form.label :description, class: "text-sm font-black text-[#0F172A] dark:text-white" do %>Description <span class="text-red-600">*</span><% end %>
+        <%= form.text_area :description, required: true, rows: 6, placeholder: "Share the key details for members.", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold leading-6 text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid gap-5 lg:grid-cols-2">
+    <div class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <label class="flex items-center gap-3 text-sm font-black text-[#0F172A] dark:text-white"><%= form.check_box :registration_required, class: "h-5 w-5 rounded border-slate-300 text-red-700 focus:ring-red-600" %> Registration required</label>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2"><div><%= form.label :max_participants, "Maximum Participants", class: "text-sm font-black text-[#0F172A] dark:text-white" %><%= form.number_field :max_participants, min: 1, placeholder: "No limit", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %></div><div><%= form.label :registration_deadline, "Registration Deadline", class: "text-sm font-black text-[#0F172A] dark:text-white" %><%= form.datetime_local_field :registration_deadline, class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %></div></div>
+    </div>
+    <div class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <%= form.label :cover_image, "Event Cover Image", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+      <%= form.file_field :cover_image, accept: "image/png,image/jpeg,image/webp", class: "mt-3 block w-full text-sm font-semibold text-[#0F172A] file:mr-3 file:rounded-lg file:border-0 file:bg-red-700 file:px-3 file:py-2 file:text-xs file:font-black file:text-white hover:file:bg-red-800 dark:text-white" %>
+      <%= form.label :photos, "Gallery Images", class: "mt-4 block text-sm font-black text-[#0F172A] dark:text-white" %>
+      <%= form.file_field :photos, multiple: true, accept: "image/png,image/jpeg,image/webp", class: "mt-3 block w-full text-sm font-semibold text-[#0F172A] file:mr-3 file:rounded-lg file:border-0 file:bg-red-700 file:px-3 file:py-2 file:text-xs file:font-black file:text-white hover:file:bg-red-800 dark:text-white" %>
+    </div>
+  </section>
+
+  <% if event.persisted? && event.photos.attached? %>
+    <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]"><h2 class="font-black text-[#0F172A] dark:text-white">Event Gallery</h2><div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4"><% event.photos.each do |photo| %><div class="relative overflow-hidden rounded-xl"><%= image_tag photo, class: "h-28 w-full object-cover" %><%= button_to event_photo_path(event, photo), method: :delete, class: "absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-lg bg-white/90 text-red-700 shadow-sm", title: "Remove image" do %><%= icon_svg(:trash, classes: "h-4 w-4") %><% end %></div><% end %></div></section>
+  <% end %>
+
+  <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><%= link_to events_path, class: action_button_classes(:secondary) do %><%= icon_svg(:arrow_left, classes: "h-4 w-4") %><span>Cancel</span><% end %><%= form.button type: :submit, class: action_button_classes(:primary) do %><%= icon_svg(:save, classes: "h-4 w-4") %><span><%= event.persisted? ? "Update Event" : "Save Draft" %></span><% end %></div>
+<% end %>

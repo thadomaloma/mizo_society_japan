@@ -1,0 +1,54 @@
+<% content_for :page_title, "Notifications" %>
+<% notification_actions = capture do %>
+  <% if @notifications.unread.exists? %>
+    <%= button_to mark_all_as_read_notifications_path, method: :patch, class: action_button_classes(:primary) do %>
+      <%= icon_svg(:check, classes: "h-4 w-4") %>
+      <span>Mark all read</span>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="space-y-6">
+  <%= render "shared/page_header",
+    eyebrow: "Portal updates",
+    title: "Notifications",
+    subtitle: "Recent MSJ updates visible to your account.",
+    actions: notification_actions %>
+
+  <% if @notifications.any? %>
+    <section class="overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <div class="divide-y divide-[#E2E8F0] dark:divide-[#334155]">
+        <% @notifications.each do |notification| %>
+          <article class="flex flex-col gap-3 p-5 sm:flex-row sm:items-start sm:justify-between <%= notification.unread? ? "bg-red-50/60 dark:bg-red-500/10" : "" %>">
+            <div class="flex gap-3">
+              <div class="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-400">
+                <%= icon_svg(:notifications, classes: "h-4 w-4") %>
+              </div>
+              <div>
+                <p class="font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= notification.title %></p>
+                <% if notification.body.present? %>
+                  <p class="mt-1 text-sm font-semibold leading-6 text-[#64748B] dark:text-[#CBD5E1]"><%= notification.body %></p>
+                <% end %>
+                <p class="mt-2 text-xs font-bold text-[#64748B] dark:text-[#CBD5E1]">
+                  <%= notification.created_at.strftime("%b %d, %Y %H:%M") %>
+                  <% if notification.actor.present? %>
+                    · <%= notification.actor.display_name %>
+                  <% end %>
+                </p>
+              </div>
+            </div>
+
+            <% if notification.unread? %>
+              <%= button_to mark_as_read_notification_path(notification), method: :patch, class: action_button_classes(:outline_danger, size: :xs) do %>
+                <%= icon_svg(:check, classes: "h-3.5 w-3.5") %>
+                <span>Mark read</span>
+              <% end %>
+            <% end %>
+          </article>
+        <% end %>
+      </div>
+    </section>
+  <% else %>
+    <%= render "shared/empty_state", title: "No notifications yet", message: "New MSJ updates will appear here." %>
+  <% end %>
+</div>
