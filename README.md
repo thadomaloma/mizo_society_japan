@@ -88,6 +88,15 @@ SEED_SUPER_ADMIN_PASSWORD=<new secure password>
 
 Then run `bin/rails db:seed` once and set `RESET_SEED_SUPER_ADMIN_PASSWORD=false` again.
 
+On hosts where running a one-off command is difficult, temporarily set:
+
+```text
+RUN_DB_SEED_ON_BOOT=true
+RESET_SEED_SUPER_ADMIN_PASSWORD=true
+```
+
+Redeploy once, confirm login works, then set both values back to `false` and redeploy again.
+
 ## Environment
 
 Keep secrets in `.env` or production environment variables.
