@@ -1,5 +1,6 @@
-default_password = ENV.fetch("SEED_USER_PASSWORD", "password123")
+default_password = ENV["SEED_SUPER_ADMIN_PASSWORD"].presence || ENV.fetch("SEED_USER_PASSWORD", "password123")
 super_admin_email = ENV.fetch("SEED_SUPER_ADMIN_EMAIL", "president@msj.local")
+reset_password = ActiveModel::Type::Boolean.new.cast(ENV["RESET_SEED_SUPER_ADMIN_PASSWORD"])
 
 super_admin = User.find_or_initialize_by(email: super_admin_email)
 super_admin.assign_attributes(
@@ -7,7 +8,7 @@ super_admin.assign_attributes(
   role: :president,
   active: true
 )
-super_admin.password = default_password if super_admin.encrypted_password.blank?
+super_admin.password = default_password if super_admin.encrypted_password.blank? || reset_password
 super_admin.save!
 
 profile = super_admin.member_profile || super_admin.build_member_profile

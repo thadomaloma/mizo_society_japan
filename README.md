@@ -73,6 +73,21 @@ Password: password123
 
 For production, set your own seed values with environment variables before running `bin/rails db:seed`.
 
+On a new production database, run:
+
+```bash
+bin/rails db:seed
+```
+
+If the seed account already exists and you need to reset its password, temporarily set:
+
+```text
+RESET_SEED_SUPER_ADMIN_PASSWORD=true
+SEED_SUPER_ADMIN_PASSWORD=<new secure password>
+```
+
+Then run `bin/rails db:seed` once and set `RESET_SEED_SUPER_ADMIN_PASSWORD=false` again.
+
 ## Environment
 
 Keep secrets in `.env` or production environment variables.
