@@ -91,6 +91,7 @@ For Railway production, add these variables in the Railway service settings:
 RAILS_ENV=production
 RAILS_SERVE_STATIC_FILES=true
 SECRET_KEY_BASE=<output from bin/rails secret>
+DATABASE_URL=<Railway PostgreSQL connection URL>
 APP_HOST=<your Railway domain>
 APP_PROTOCOL=https
 ```
@@ -101,7 +102,7 @@ If you use encrypted Rails credentials in production, also add:
 RAILS_MASTER_KEY=<contents of config/master.key>
 ```
 
-PostgreSQL should provide `DATABASE_URL` automatically when the Railway database is connected.
+PostgreSQL should provide `DATABASE_URL` automatically when the Railway database is connected to the Rails service. If it does not appear in the Rails service variables, copy the `DATABASE_URL` from the PostgreSQL service and add it to the Rails service manually.
 
 ## License
 
