@@ -1,4 +1,4 @@
-<% content_for :page_title, "Updates" %>
+<% content_for :page_title, "Events" %>
 
 <div class="space-y-5 lg:space-y-6">
   <% actions = capture do %>
@@ -19,9 +19,9 @@
   <section class="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
     <div class="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_auto] lg:items-center">
       <div class="min-w-0">
-        <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400">MSJ Updates</p>
-        <h1 class="mt-1 text-2xl font-black tracking-tight text-[#0F172A] dark:text-[#F8FAFC] sm:text-3xl">Updates</h1>
-        <p class="mt-2 max-w-2xl text-sm font-semibold leading-6 text-[#64748B] dark:text-[#CBD5E1]">Events, programmes, and official notices in one simple place.</p>
+        <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400">MSJ Events</p>
+        <h1 class="mt-1 text-[1.65rem] font-black leading-8 text-[#0F172A] dark:text-[#F8FAFC] sm:text-3xl sm:leading-9">Events</h1>
+        <p class="mt-2 max-w-2xl text-[13px] font-semibold leading-6 text-[#64748B] dark:text-[#CBD5E1] sm:text-sm">Programmes, gatherings, and official notices in one simple place.</p>
       </div>
       <div class="flex flex-wrap gap-2 lg:justify-end">
         <%= actions %>
@@ -48,7 +48,7 @@
     <div class="space-y-4">
       <div class="flex items-center justify-between gap-3 rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
         <div>
-          <h2 class="text-lg font-black text-[#0F172A] dark:text-white"><%= @timeframe == "past" ? "Past Events" : "Upcoming Events" %></h2>
+          <h2 class="text-[17px] font-black leading-6 text-[#0F172A] dark:text-white sm:text-lg"><%= @timeframe == "past" ? "Past Events" : "Upcoming Events" %></h2>
           <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= pluralize(@events.size, "event") %> found</p>
         </div>
         <span class="grid h-10 w-10 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:events, classes: "h-5 w-5") %></span>

@@ -1,11 +1,11 @@
 <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
   <div>
     <% if local_assigns[:eyebrow].present? %>
-      <p class="text-sm font-black uppercase tracking-wide text-red-700 dark:text-red-400"><%= eyebrow %></p>
+      <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400 sm:text-sm"><%= eyebrow %></p>
     <% end %>
-    <h2 class="mt-1 text-2xl font-black tracking-tight text-[#0F172A] dark:text-[#F8FAFC] sm:text-3xl"><%= title %></h2>
+    <h2 class="mt-1 text-[1.65rem] font-black leading-8 text-[#0F172A] dark:text-[#F8FAFC] sm:text-3xl sm:leading-9"><%= title %></h2>
     <% if local_assigns[:subtitle].present? %>
-      <p class="mt-2 max-w-3xl text-sm leading-6 text-[#64748B] dark:text-[#CBD5E1]"><%= subtitle %></p>
+      <p class="mt-2 max-w-3xl text-[13px] font-semibold leading-6 text-[#64748B] dark:text-[#CBD5E1] sm:text-sm"><%= subtitle %></p>
     <% end %>
   </div>
 

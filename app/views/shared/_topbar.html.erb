@@ -4,8 +4,8 @@
       <%= link_to(dashboard_home_path, class: "flex min-w-0 items-center gap-2.5 lg:hidden", aria: { label: "Go to dashboard" }) do %>
         <span class="h-9 w-1 shrink-0 rounded-full bg-red-600 shadow-sm shadow-red-950/10 dark:bg-red-500"></span>
         <span class="min-w-0">
-          <span class="block truncate text-[13px] font-black tracking-wide text-[#0F172A] dark:text-[#F8FAFC]">MIZO SOCIETY OF JAPAN</span>
-          <span class="mt-0.5 block truncate text-[11px] font-extrabold tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Unity <span class="px-0.5 text-red-600 dark:text-red-300">•</span> Culture <span class="px-0.5 text-red-600 dark:text-red-300">•</span> Welfare</span>
+          <span class="block truncate text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]">MIZO SOCIETY OF JAPAN</span>
+          <span class="mt-0.5 block truncate text-xs font-extrabold text-[#64748B] dark:text-[#CBD5E1]">Unity <span class="px-0.5 text-red-600 dark:text-red-300">•</span> Culture <span class="px-0.5 text-red-600 dark:text-red-300">•</span> Welfare</span>
         </span>
       <% end %>
       <button type="button" data-action="global-search#open" class="hidden h-11 w-full max-w-md items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 text-left text-sm font-semibold text-[#64748B] transition hover:border-red-200 hover:bg-white hover:text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#CBD5E1] dark:hover:bg-[#334155] dark:hover:text-[#F8FAFC] lg:flex" aria-label="Search members, events, letters, and announcements">
@@ -78,10 +78,8 @@
       </details>
 
       <details class="group relative">
-        <summary class="grid h-9 w-9 cursor-pointer list-none place-items-center rounded-full bg-[#0F172A] text-sm font-black text-white ring-2 ring-white transition hover:ring-red-200 active:scale-95 dark:bg-[#334155] dark:text-[#F8FAFC] dark:ring-[#1E293B] sm:h-10 sm:w-10" aria-label="Open user menu">
-          <div class="grid h-9 w-9 place-items-center rounded-full bg-[#0F172A] text-sm font-black text-white ring-2 ring-white dark:bg-[#334155] dark:text-[#F8FAFC] sm:h-10 sm:w-10">
-            <%= current_user.display_name.first&.upcase || "M" %>
-          </div>
+        <summary class="grid h-9 w-9 cursor-pointer list-none place-items-center rounded-full ring-2 ring-white transition hover:ring-red-200 active:scale-95 dark:ring-[#1E293B] sm:h-10 sm:w-10" aria-label="Open user menu">
+          <%= user_avatar(current_user, classes: "h-9 w-9 sm:h-10 sm:w-10", text_classes: "text-sm") %>
         </summary>
 
         <div class="absolute right-0 mt-2 w-44 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white p-1.5 shadow-xl dark:border-[#334155] dark:bg-[#1E293B]">

@@ -9,11 +9,11 @@
 
     <div class="min-w-0 flex-1">
       <div class="flex min-w-0 items-center justify-between gap-2">
-        <h3 class="min-w-0 truncate text-sm font-black text-[#0F172A] dark:text-white"><%= payment.membership_plan.name %></h3>
-        <p class="shrink-0 text-sm font-black tabular-nums text-[#0F172A] dark:text-white sm:text-lg"><%= yen(payment.amount) %></p>
+        <h3 class="min-w-0 truncate text-[15px] font-black leading-5 text-[#0F172A] dark:text-white sm:text-sm"><%= payment.membership_plan.name %></h3>
+        <p class="shrink-0 text-base font-black tabular-nums text-[#0F172A] dark:text-white sm:text-lg"><%= yen(payment.amount) %></p>
       </div>
       <div class="mt-1 flex min-w-0 items-center justify-between gap-2">
-        <p class="min-w-0 truncate text-[11px] font-semibold text-[#64748B] dark:text-[#CBD5E1] sm:text-xs">
+        <p class="min-w-0 truncate text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]">
           <%= payment.period_label %>
         </p>
         <%= render "shared/status_badge", status: payment.status, compact: true %>

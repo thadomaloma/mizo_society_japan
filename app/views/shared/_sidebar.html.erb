@@ -45,9 +45,7 @@
   <div class="space-y-4 p-4">
     <div class="rounded-xl border border-slate-500/30 bg-[#334155] p-4 dark:border-slate-700 dark:bg-[#1E293B]">
       <div class="flex items-center gap-3">
-        <div class="grid h-11 w-11 place-items-center rounded-full bg-slate-100 text-sm font-black text-[#0F172A]">
-          <%= current_user.display_name.first&.upcase || "M" %>
-        </div>
+        <%= user_avatar(current_user, classes: "h-11 w-11 ring-1 ring-white/20", text_classes: "text-sm") %>
         <div class="min-w-0">
           <p class="truncate text-sm font-black text-white"><%= current_user.display_name %></p>
           <p class="mt-0.5 truncate text-xs font-semibold text-slate-300"><%= role_label(current_user.role) %></p>

@@ -335,6 +335,21 @@ module ApplicationHelper
     user&.profile_complete? || false
   end
 
+  def user_avatar(user = current_user, classes: "h-9 w-9", text_classes: "text-sm")
+    base_classes = "#{classes} overflow-hidden rounded-full bg-[#0F172A] text-white dark:bg-[#334155] dark:text-[#F8FAFC]"
+    profile = user&.member_profile
+
+    if profile&.avatar&.attached?
+      image_tag profile.avatar,
+        alt: user.display_name,
+        class: "#{base_classes} object-cover"
+    else
+      content_tag :span,
+        (user&.display_name&.first&.upcase || "M"),
+        class: "grid place-items-center font-black #{text_classes} #{base_classes}"
+    end
+  end
+
   def whatsapp_url_for(profile)
     profile&.whatsapp_url
   end

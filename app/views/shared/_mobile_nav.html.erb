@@ -1,41 +1,42 @@
-<div class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.65rem)] lg:hidden">
-  <nav class="pointer-events-auto mx-auto max-w-md rounded-2xl border border-slate-700/80 bg-[#0F172A]/95 p-1.5 shadow-[0_16px_34px_rgba(15,23,42,0.32)] backdrop-blur-xl dark:border-[#334155] dark:bg-[#020617]/95" aria-label="Mobile navigation">
-  <div class="relative grid grid-cols-5 gap-1">
-    <% content_item =
-      if admin_portal_user? && current_user.finance_viewer?
-        { label: "Finance", path: admin_finance_transactions_path, icon: :finance }
-      elsif current_user.minutes_access?
-        { label: "Minutes", path: meeting_minutes_path, icon: :documents }
-      else
-        { label: "Events", path: events_path, icon: :events }
-      end %>
-    <% last_item =
-      if admin_portal_user?
-        { label: "Events", path: events_path, icon: :events }
-      elsif current_user.welfare_viewer?
-        { label: "Welfare", path: admin_portal_user? ? admin_welfare_cases_path : welfare_cases_path, icon: :welfare }
-      else
-        { label: "Profile", path: profile_path, icon: :members }
-      end %>
-    <% mobile_items = [
-      { label: "Home", path: dashboard_home_path, icon: :dashboard },
-      { label: "Payments", path: membership_payments_path, icon: :credit_card },
-      content_item,
-      last_item
-    ] %>
+<div class="pointer-events-none fixed inset-x-0 bottom-0 z-40 lg:hidden">
+  <nav class="pointer-events-auto border-t border-[#E2E8F0]/90 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 shadow-[0_-10px_28px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-[#334155]/90 dark:bg-[#020617]/95" aria-label="Mobile navigation">
+    <div class="mx-auto grid h-16 max-w-md grid-cols-5 gap-1">
+      <% content_item =
+        if admin_portal_user? && current_user.finance_viewer?
+          { label: "Finance", path: admin_finance_transactions_path, icon: :finance }
+        elsif current_user.minutes_access?
+          { label: "Minutes", path: meeting_minutes_path, icon: :documents }
+        else
+          { label: "Events", path: events_path, icon: :events }
+        end %>
+      <% last_item =
+        if admin_portal_user?
+          { label: "Events", path: events_path, icon: :events }
+        elsif current_user.welfare_viewer?
+          { label: "Welfare", path: admin_portal_user? ? admin_welfare_cases_path : welfare_cases_path, icon: :welfare }
+        else
+          { label: "Profile", path: profile_path, icon: :members }
+        end %>
+      <% mobile_items = [
+        { label: "Home", path: dashboard_home_path, icon: :dashboard },
+        { label: "Payments", path: membership_payments_path, icon: :credit_card },
+        content_item,
+        last_item
+      ] %>
 
-    <% mobile_items.each do |item| %>
-      <% active = nav_active?(item) %>
-      <%= link_to item[:path], aria: { current: ("page" if active) }, class: "flex min-w-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-black transition active:scale-95 #{active ? "text-red-200" : "text-slate-400 hover:text-slate-100 dark:text-slate-400 dark:hover:text-white"}" do %>
-        <span class="grid h-9 w-11 place-items-center rounded-xl transition <%= active ? "bg-red-600 text-white shadow-sm shadow-red-950/40 dark:bg-red-500" : "text-current" %>"><%= icon_svg(item[:icon], classes: "h-5 w-5") %></span>
-        <span class="max-w-full truncate"><%= item[:label] %></span>
+      <% mobile_items.each do |item| %>
+        <% active = nav_active?(item) %>
+        <%= link_to item[:path], aria: { current: ("page" if active) }, class: "relative flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[11px] font-black leading-4 transition active:scale-95 #{active ? "text-red-700 dark:text-red-300" : "text-slate-500 hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white"}" do %>
+          <span class="absolute top-0 h-1 w-6 rounded-full transition <%= active ? "bg-red-600 dark:bg-red-400" : "bg-transparent" %>"></span>
+          <span class="grid h-7 w-9 place-items-center rounded-xl transition <%= active ? "bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300" : "text-current" %>"><%= icon_svg(item[:icon], classes: "h-5 w-5") %></span>
+          <span class="max-w-full truncate"><%= item[:label] %></span>
+        <% end %>
       <% end %>
-    <% end %>
 
-    <button type="button" data-action="mobile-menu#open" class="flex min-w-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-black text-slate-400 transition active:scale-95 hover:text-white" aria-label="Open menu">
-      <span class="grid h-9 w-11 place-items-center rounded-xl"><%= icon_svg(:more, classes: "h-5 w-5") %></span>
-      <span>Menu</span>
-    </button>
-  </div>
+      <button type="button" data-action="mobile-menu#open" class="relative flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[11px] font-black leading-4 text-slate-500 transition active:scale-95 hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white" aria-label="Open menu">
+        <span class="grid h-7 w-9 place-items-center rounded-xl"><%= icon_svg(:more, classes: "h-5 w-5") %></span>
+        <span>Menu</span>
+      </button>
+    </div>
   </nav>
 </div>
