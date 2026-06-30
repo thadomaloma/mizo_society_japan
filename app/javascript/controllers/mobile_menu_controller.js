@@ -15,15 +15,18 @@ export default class extends Controller {
 
   open(event) {
     event?.preventDefault()
+    if (!this.drawerTarget.classList.contains("hidden")) return
+
     this.drawerTarget.classList.remove("hidden")
     document.body.classList.add("overflow-hidden")
-    requestAnimationFrame(() => this.panelTarget.classList.remove("-translate-x-full"))
+    this.panelTarget.offsetHeight
+    this.panelTarget.classList.remove("-translate-x-full")
   }
 
   close(event) {
     this.panelTarget.classList.add("-translate-x-full")
     document.body.classList.remove("overflow-hidden")
-    window.setTimeout(() => this.drawerTarget.classList.add("hidden"), 200)
+    window.setTimeout(() => this.drawerTarget.classList.add("hidden"), 150)
   }
 
   closeFromBackdrop(event) {

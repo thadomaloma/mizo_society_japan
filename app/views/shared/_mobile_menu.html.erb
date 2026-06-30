@@ -1,5 +1,5 @@
-<div data-mobile-menu-target="drawer" data-action="click->mobile-menu#closeFromBackdrop" class="fixed inset-0 z-50 hidden bg-slate-950/55 backdrop-blur-sm lg:hidden">
-  <aside data-mobile-menu-target="panel" class="flex h-full w-[min(16.5rem,72vw)] -translate-x-full flex-col bg-[#0F172A] text-white shadow-2xl ring-1 ring-white/10 transition-transform duration-200 ease-out dark:bg-[#020617]">
+<div data-mobile-menu-target="drawer" data-action="click->mobile-menu#closeFromBackdrop" class="fixed inset-0 z-50 hidden bg-slate-950/55 lg:hidden">
+  <aside data-mobile-menu-target="panel" class="flex h-full w-[min(16.5rem,72vw)] -translate-x-full flex-col bg-[#0F172A] text-white shadow-2xl ring-1 ring-white/10 transition-transform duration-150 ease-out dark:bg-[#020617]">
     <div class="flex items-center justify-between border-b border-white/10 px-3.5 pb-3 pt-[max(0.9rem,env(safe-area-inset-top))]">
       <%= link_to(dashboard_home_path, class: "min-w-0", data: { action: "click->mobile-menu#close" }) do %>
         <span class="block truncate text-xs font-black tracking-[0.06em] text-[#F8FAFC]">MIZO SOCIETY OF JAPAN</span>
