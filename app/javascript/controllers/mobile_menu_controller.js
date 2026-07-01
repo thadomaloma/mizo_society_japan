@@ -15,8 +15,10 @@ export default class extends Controller {
 
   open(event) {
     event?.preventDefault()
+    event?.stopPropagation()
     if (!this.drawerTarget.classList.contains("hidden")) return
 
+    this.openedAt = Date.now()
     this.drawerTarget.classList.remove("hidden")
     document.body.classList.add("overflow-hidden")
     this.panelTarget.offsetHeight
@@ -24,12 +26,15 @@ export default class extends Controller {
   }
 
   close(event) {
+    event?.stopPropagation()
     this.panelTarget.classList.add("-translate-x-full")
     document.body.classList.remove("overflow-hidden")
     window.setTimeout(() => this.drawerTarget.classList.add("hidden"), 150)
   }
 
   closeFromBackdrop(event) {
+    if (Date.now() - (this.openedAt || 0) < 250) return
+
     if (event.target === this.drawerTarget) this.close(event)
   }
 

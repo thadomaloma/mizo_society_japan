@@ -2,14 +2,16 @@
 
 <div class="space-y-6">
   <% actions = capture do %>
-    <%= link_to documents_path, class: action_button_classes(:secondary, size: :sm) do %>
-      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
-      <span>Letters</span>
-    <% end %>
-    <%= link_to new_admin_document_category_path, class: action_button_classes(:primary, size: :sm) do %>
-      <%= icon_svg(:plus, classes: "h-4 w-4") %>
-      <span>New Category</span>
-    <% end %>
+    <div class="flex w-full gap-2 sm:w-auto">
+      <%= link_to documents_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "flex-1 px-2 sm:w-auto sm:flex-none sm:px-3") do %>
+        <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+        <span>Letters</span>
+      <% end %>
+      <%= link_to new_admin_document_category_path, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "flex-1 px-2 sm:w-auto sm:flex-none sm:px-3") do %>
+        <%= icon_svg(:plus, classes: "h-4 w-4") %>
+        <span>New Category</span>
+      <% end %>
+    </div>
   <% end %>
 
   <%= render "shared/page_header",

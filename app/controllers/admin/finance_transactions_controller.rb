@@ -14,6 +14,11 @@ module Admin
         .by_status(@status)
         .by_type(@transaction_type)
         .latest
+      @finance_summary = {
+        income: @finance_transactions.select(&:income?).sum(&:amount),
+        expense: @finance_transactions.select(&:expense?).sum(&:amount),
+        pending: @finance_transactions.count(&:pending?)
+      }
     end
 
     def show

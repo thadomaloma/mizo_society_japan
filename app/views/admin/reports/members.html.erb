@@ -1,17 +1,123 @@
 <% content_for :page_title, "Member Report" %>
 
-<div class="space-y-6">
-  <% export_action = policy(:report).export? ? link_to(safe_join([ icon_svg(:download, classes: "h-4 w-4"), tag.span("Export CSV") ]), members_admin_reports_path(format: :csv), class: action_button_classes(:primary)) : nil %>
+<div class="space-y-5 sm:space-y-6">
+  <% export_action = policy(:report).export? ? link_to(safe_join([ icon_svg(:download, classes: "h-4 w-4"), tag.span("Export CSV") ]), members_admin_reports_path(format: :csv), class: action_button_classes(:primary, size: :sm, extra: "px-3")) : nil %>
   <%= render "shared/page_header",
     eyebrow: "Reports",
     title: "Member Report",
-    subtitle: "Membership profile summary and CSV export.",
+    subtitle: "Membership profile summary, location spread, and recent registrations.",
     actions: export_action %>
 
-  <section class="grid gap-4 md:grid-cols-4">
-    <%= render "shared/stat_card", label: "Total Members", value: @summary[:total_members], tone: "red", icon: :members %>
-    <%= render "shared/stat_card", label: "Active Members", value: @summary[:active_members], tone: "green", icon: :members %>
-    <%= render "shared/stat_card", label: "Inactive Members", value: @summary[:inactive_members], tone: "dark", icon: :members %>
-    <%= render "shared/stat_card", label: "New This Month", value: @summary[:new_members_this_month], tone: "blue", icon: :members %>
+  <% total_profiles = @summary[:active_members].to_i + @summary[:inactive_members].to_i %>
+  <% active_percent = total_profiles.positive? ? ((@summary[:active_members].to_f / total_profiles) * 100).round : 0 %>
+  <% top_prefectures = @summary[:by_prefecture].to_h.reject { |name, _count| name.blank? }.sort_by { |_name, count| -count }.first(6) %>
+  <% recent_members = Array(@summary[:recent_members]) %>
+
+  <section class="grid min-w-0 grid-cols-2 gap-2 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <%= render "shared/stat_card", label: "Total Accounts", value: @summary[:total_members], tone: "red", icon: :members, caption: "#{total_profiles} completed profiles" %>
+    <%= render "shared/stat_card", label: "Active Profiles", value: @summary[:active_members], tone: "green", icon: :check, caption: "#{active_percent}% active" %>
+    <%= render "shared/stat_card", label: "Inactive Profiles", value: @summary[:inactive_members], tone: "dark", icon: :lock, caption: "Needs follow-up" %>
+    <%= render "shared/stat_card", label: "Joined This Month", value: @summary[:new_members_this_month], tone: "blue", icon: :user_plus, caption: Date.current.strftime("%B %Y") %>
+  </section>
+
+  <section class="grid min-w-0 gap-3 sm:gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+    <article class="min-w-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <div class="border-b border-[#E2E8F0] px-3 py-3 dark:border-[#334155] sm:px-5 sm:py-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h3 class="truncate text-base font-black text-[#0F172A] dark:text-white">Profile Health</h3>
+            <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Active and inactive profile balance.</p>
+          </div>
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300 sm:h-10 sm:w-10">
+            <%= icon_svg(:members, classes: "h-4 w-4 sm:h-5 sm:w-5") %>
+          </span>
+        </div>
+      </div>
+
+      <div class="p-3 sm:p-5">
+        <div class="flex items-end justify-between gap-4">
+          <div>
+            <p class="text-2xl font-black tracking-tight text-[#0F172A] dark:text-white sm:text-3xl"><%= active_percent %>%</p>
+            <p class="mt-1 text-xs font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Active profiles</p>
+          </div>
+          <p class="text-right text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1] sm:text-sm sm:leading-6">
+            <%= pluralize(@summary[:active_members], "active") %><br>
+            <%= pluralize(@summary[:inactive_members], "inactive") %>
+          </p>
+        </div>
+
+        <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-[#0F172A] sm:mt-5 sm:h-3">
+          <div class="h-full rounded-full bg-emerald-500" style="width: <%= active_percent %>%"></div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-2 sm:mt-5">
+          <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-2.5 dark:border-emerald-500/20 dark:bg-emerald-500/10 sm:p-3">
+            <p class="text-xs font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Active</p>
+            <p class="mt-1 text-lg font-black text-[#0F172A] dark:text-white sm:text-xl"><%= @summary[:active_members] %></p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-[#334155] dark:bg-[#0F172A] sm:p-3">
+            <p class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Inactive</p>
+            <p class="mt-1 text-lg font-black text-[#0F172A] dark:text-white sm:text-xl"><%= @summary[:inactive_members] %></p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="min-w-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <div class="border-b border-[#E2E8F0] px-3 py-3 dark:border-[#334155] sm:px-5 sm:py-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h3 class="truncate text-base font-black text-[#0F172A] dark:text-white">Members by Prefecture</h3>
+            <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Top locations from member profiles.</p>
+          </div>
+          <span class="rounded-full bg-[#F8FAFC] px-2.5 py-1 text-xs font-black text-[#64748B] dark:bg-[#0F172A] dark:text-[#CBD5E1]"><%= top_prefectures.size %> shown</span>
+        </div>
+      </div>
+
+      <div class="space-y-2.5 p-3 sm:space-y-3 sm:p-5">
+        <% if top_prefectures.any? %>
+          <% top_prefectures.each do |prefecture, count| %>
+            <% percent = total_profiles.positive? ? ((count.to_f / total_profiles) * 100).round : 0 %>
+            <div>
+              <div class="flex items-center justify-between gap-3 text-sm">
+                <p class="min-w-0 truncate font-black text-[#0F172A] dark:text-white"><%= prefecture_romaji(prefecture) %></p>
+                <p class="shrink-0 font-black text-[#64748B] dark:text-[#CBD5E1]"><%= count %></p>
+              </div>
+              <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-[#0F172A] sm:mt-2">
+                <div class="h-full rounded-full bg-red-600 dark:bg-red-500" style="width: <%= percent %>%"></div>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="rounded-xl border border-dashed border-[#E2E8F0] p-4 text-sm font-semibold text-[#64748B] dark:border-[#334155] dark:text-[#CBD5E1]">No prefecture data yet.</p>
+        <% end %>
+      </div>
+    </article>
+  </section>
+
+  <section class="min-w-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <div class="border-b border-[#E2E8F0] px-3 py-3 dark:border-[#334155] sm:px-5 sm:py-4">
+      <h3 class="text-base font-black text-[#0F172A] dark:text-white">Recent Members</h3>
+      <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Latest completed profile records.</p>
+    </div>
+
+    <div class="divide-y divide-[#E2E8F0] dark:divide-[#334155]">
+      <% if recent_members.any? %>
+        <% recent_members.each do |profile| %>
+          <div class="grid min-w-0 gap-2 px-3 py-2.5 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-3 sm:px-5 sm:py-3">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-black text-[#0F172A] dark:text-white"><%= profile.full_name %></p>
+              <p class="mt-0.5 truncate text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1] sm:mt-1"><%= profile.membership_number %> · <%= profile.city.presence || "City not set" %>, <%= prefecture_romaji(profile.prefecture) || "Prefecture not set" %></p>
+            </div>
+            <div class="flex items-center justify-between gap-3 sm:justify-end">
+              <%= render "shared/status_badge", status: profile.status, compact: true %>
+              <span class="text-xs font-black text-[#64748B] dark:text-[#CBD5E1]"><%= profile.joined_on&.strftime("%b %d, %Y") || "No date" %></span>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="p-5 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">No member profiles found.</p>
+      <% end %>
+    </div>
   </section>
 </div>

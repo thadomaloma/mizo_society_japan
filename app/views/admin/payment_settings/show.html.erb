@@ -56,13 +56,13 @@
         <% end %>
       </div>
 
-      <div class="flex flex-col gap-2 border-t border-[#E2E8F0] p-4 dark:border-[#334155] sm:flex-row sm:justify-end">
-        <%= link_to admin_dashboard_path, class: action_button_classes(:secondary) do %>
+      <div class="grid <%= policy(AppSetting).update_payment? ? "grid-cols-2" : "grid-cols-1" %> gap-2 border-t border-[#E2E8F0] p-4 dark:border-[#334155] sm:flex sm:justify-end">
+        <%= link_to admin_dashboard_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
           <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
           <span>Cancel</span>
         <% end %>
         <% if policy(AppSetting).update_payment? %>
-          <%= button_tag type: :submit, class: action_button_classes(:primary) do %>
+          <%= button_tag type: :submit, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
             <%= icon_svg(:save, classes: "h-4 w-4") %>
             <span>Save Bank Details</span>
           <% end %>

@@ -64,17 +64,7 @@
     </div>
   </section>
 
-  <section class="grid grid-cols-2 gap-3 rounded-2xl border border-[#E2E8F0] bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:grid-cols-4 lg:hidden">
-    <% @member_stats.each do |stat| %>
-      <div class="border-r border-[#E2E8F0] px-2 py-3 text-center last:border-r-0 dark:border-[#334155]">
-        <div class="mx-auto grid h-8 w-8 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-600/15 dark:text-red-300">
-          <%= icon_svg(stat[:icon], classes: "h-4 w-4") %>
-        </div>
-        <p class="mt-2 text-[11px] font-black leading-4 text-gray-500 dark:text-gray-400"><%= stat[:label] %></p>
-        <p class="mt-1 text-xl font-black text-gray-950 dark:text-white"><%= stat[:value] %></p>
-      </div>
-    <% end %>
-  </section>
+  <%= render "shared/mobile_stats_panel", stats: @member_stats, title: "Member Overview", subtitle: "Your useful portal shortcuts" %>
 
   <section class="hidden gap-4 lg:grid lg:grid-cols-4">
     <% @member_stats.each do |stat| %>

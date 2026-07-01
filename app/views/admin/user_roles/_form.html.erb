@@ -31,12 +31,12 @@
       <% end %>
     </div>
 
-    <div class="flex flex-col gap-2 border-t border-[#E2E8F0] pt-5 dark:border-[#334155] sm:flex-row sm:justify-end">
-      <%= link_to admin_user_roles_path, class: action_button_classes(:secondary) do %>
+    <div class="grid grid-cols-2 gap-2 border-t border-[#E2E8F0] pt-5 dark:border-[#334155] sm:flex sm:justify-end">
+      <%= link_to admin_user_roles_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
         <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
         <span>Cancel</span>
       <% end %>
-      <%= form.button type: :submit, class: action_button_classes(:primary) do %>
+      <%= form.button type: :submit, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
         <%= icon_svg(submit_icon, classes: "h-4 w-4") %>
         <span><%= submit_label %></span>
       <% end %>

@@ -21,7 +21,7 @@
         <span data-theme-target="sunIcon" class="hidden"><%= icon_svg(:sun, classes: "h-5 w-5") %></span>
       </button>
 
-      <%= render "shared/quick_actions" %>
+      <%= render "shared/quick_actions" unless current_user.member? %>
 
       <% unread_count = current_user.unread_notifications_count %>
       <% recent_notifications = current_user.notifications.latest.limit(5) %>

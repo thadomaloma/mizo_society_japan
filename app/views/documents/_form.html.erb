@@ -167,8 +167,8 @@
     </div>
   </section>
 
-  <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-    <%= link_to documents_path, class: action_button_classes(:secondary) do %><%= icon_svg(:arrow_left, classes: "h-4 w-4") %><span>Cancel</span><% end %>
-    <%= form.button type: :submit, class: action_button_classes(:primary) do %><%= icon_svg(:save, classes: "h-4 w-4") %><span><%= document.persisted? ? "Update Letter" : "Save Draft" %></span><% end %>
+  <div class="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+    <%= link_to documents_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %><%= icon_svg(:arrow_left, classes: "h-4 w-4") %><span>Cancel</span><% end %>
+    <%= form.button type: :submit, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %><%= icon_svg(:save, classes: "h-4 w-4") %><span><%= document.persisted? ? "Update Letter" : "Save Draft" %></span><% end %>
   </div>
 <% end %>

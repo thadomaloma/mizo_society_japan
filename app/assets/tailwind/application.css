@@ -106,3 +106,101 @@ body {
 .dark textarea::placeholder {
   color: #CBD5E1;
 }
+
+@media (max-width: 639px) {
+  body > div main :where(.rounded-2xl) {
+    border-radius: 0.875rem !important;
+  }
+
+  body > div main :where(.p-8, .p-6, .p-5) {
+    padding: 1rem !important;
+  }
+
+  body > div main :where(.p-4) {
+    padding: 0.875rem !important;
+  }
+
+  body > div main :where(.px-6, .px-5) {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  body > div main :where(.py-6, .py-5) {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  body > div main :where(.py-4) {
+    padding-top: 0.875rem !important;
+    padding-bottom: 0.875rem !important;
+  }
+
+  body > div main :where(.gap-6, .gap-5) {
+    gap: 1rem !important;
+  }
+
+  body > div main :where(.gap-4) {
+    gap: 0.875rem !important;
+  }
+
+  body > div main :where(.space-y-6 > :not([hidden]) ~ :not([hidden]),
+  .space-y-5 > :not([hidden]) ~ :not([hidden])) {
+    margin-top: 1rem !important;
+  }
+
+  body > div main :where(.space-y-4 > :not([hidden]) ~ :not([hidden])) {
+    margin-top: 0.875rem !important;
+  }
+
+  body > div main :where(.shadow-lg, .shadow-xl, .shadow-2xl) {
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.08) !important;
+  }
+
+  body > div main :where(input, select, textarea) {
+    min-height: 2.35rem;
+    font-size: 0.875rem;
+  }
+
+  body > div main :where(form.rounded-2xl, form.rounded-xl) {
+    border-radius: 0.875rem !important;
+  }
+
+  body > div main :where(form.grid, form.flex) {
+    gap: 0.625rem !important;
+  }
+
+  body > div main :where(a.inline-flex.shrink-0, button.inline-flex.shrink-0) {
+    width: auto !important;
+    max-width: 100%;
+    flex: 0 1 auto !important;
+    align-self: flex-start;
+    justify-self: start;
+  }
+
+  body > div main :where(form.button_to) {
+    width: auto !important;
+    max-width: 100%;
+    align-self: flex-start;
+    justify-self: start;
+  }
+
+  body > div main :where(.grid > a.inline-flex.shrink-0, .grid > button.inline-flex.shrink-0) {
+    width: 100% !important;
+    align-self: stretch;
+    justify-self: stretch;
+  }
+
+  body > div main :where(.grid > form.button_to) {
+    width: 100% !important;
+    align-self: stretch;
+    justify-self: stretch;
+  }
+
+  body > div main :where(.grid > form.button_to > button.inline-flex.shrink-0) {
+    width: 100% !important;
+  }
+
+  body > div main :where(h2) {
+    letter-spacing: 0;
+  }
+}

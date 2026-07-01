@@ -12,13 +12,15 @@
       </p>
     </div>
 
-    <div class="inline-flex items-center gap-3 rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-black text-[#0F172A] shadow-sm dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#F8FAFC]">
+    <div class="hidden items-center gap-3 rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-black text-[#0F172A] shadow-sm dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#F8FAFC] lg:inline-flex">
       <span><%= Date.current.strftime("%b %d, %Y") %></span>
       <%= icon_svg(:events, classes: "h-4 w-4 text-gray-400") %>
     </div>
   </section>
 
-  <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+  <%= render "shared/mobile_stats_panel", stats: @stats, title: "Dashboard Overview", subtitle: "Key numbers at a glance" %>
+
+  <section class="hidden gap-4 lg:grid lg:grid-cols-3 xl:grid-cols-6">
     <% @stats.each do |stat| %>
       <%= render "shared/stat_card",
         label: stat[:label],
@@ -50,18 +52,18 @@
       <% expense_area_points = "#{chart_left},#{chart_bottom} #{expense_points} #{chart_right},#{chart_bottom}" %>
       <% net_balance = @finance_summary[:income].to_i - @finance_summary[:expense].to_i %>
 
-      <div class="mb-5 grid gap-3 sm:grid-cols-3">
-        <div class="rounded-xl border border-emerald-100 bg-emerald-50/80 px-3 py-2.5 dark:border-emerald-400/20 dark:bg-emerald-400/10">
-          <p class="text-[11px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Income</p>
-          <p class="mt-1 text-base font-black text-[#0F172A] dark:text-white"><%= yen(@finance_summary[:income]) %></p>
+      <div class="mb-4 grid grid-cols-3 gap-2 sm:mb-5 sm:gap-3">
+        <div class="min-w-0 rounded-lg border border-emerald-100 bg-emerald-50/80 px-2 py-2 dark:border-emerald-400/20 dark:bg-emerald-400/10 sm:rounded-xl sm:px-3 sm:py-2.5">
+          <p class="truncate text-[10px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300 sm:text-[11px]">Income</p>
+          <p class="mt-0.5 truncate text-sm font-black text-[#0F172A] dark:text-white sm:mt-1 sm:text-base"><%= yen(@finance_summary[:income]) %></p>
         </div>
-        <div class="rounded-xl border border-red-100 bg-red-50/80 px-3 py-2.5 dark:border-red-400/20 dark:bg-red-400/10">
-          <p class="text-[11px] font-black uppercase tracking-wide text-red-700 dark:text-red-300">Expense</p>
-          <p class="mt-1 text-base font-black text-[#0F172A] dark:text-white"><%= yen(@finance_summary[:expense]) %></p>
+        <div class="min-w-0 rounded-lg border border-red-100 bg-red-50/80 px-2 py-2 dark:border-red-400/20 dark:bg-red-400/10 sm:rounded-xl sm:px-3 sm:py-2.5">
+          <p class="truncate text-[10px] font-black uppercase tracking-wide text-red-700 dark:text-red-300 sm:text-[11px]">Expense</p>
+          <p class="mt-0.5 truncate text-sm font-black text-[#0F172A] dark:text-white sm:mt-1 sm:text-base"><%= yen(@finance_summary[:expense]) %></p>
         </div>
-        <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-600 dark:bg-slate-800/70">
-          <p class="text-[11px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-300">Net</p>
-          <p class="mt-1 text-base font-black <%= net_balance.negative? ? "text-red-700 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300" %>"><%= yen(net_balance) %></p>
+        <div class="min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-600 dark:bg-slate-800/70 sm:rounded-xl sm:px-3 sm:py-2.5">
+          <p class="truncate text-[10px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-300 sm:text-[11px]">Net</p>
+          <p class="mt-0.5 truncate text-sm font-black sm:mt-1 sm:text-base <%= net_balance.negative? ? "text-red-700 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300" %>"><%= yen(net_balance) %></p>
         </div>
       </div>
 

@@ -24,7 +24,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "My Welfare Requests"
     assert_not_includes response.body, 'href="/meeting_minutes"'
     assert_not_includes response.body, 'href="/documents"'
-    assert_not_includes response.body, 'href="/welfare_cases"'
+    assert_includes response.body, 'href="/welfare_cases"'
   end
 
   test "member dashboard keeps documents low priority even when a visible document exists" do

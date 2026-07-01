@@ -20,12 +20,12 @@
     </label>
   </div>
 
-  <div class="mt-6 flex flex-col-reverse gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A] sm:flex-row sm:justify-end">
-    <%= link_to admin_welfare_categories_path, class: action_button_classes(:secondary, full_width: true, extra: "sm:w-auto") do %>
+  <div class="mt-6 grid grid-cols-2 gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A] sm:flex sm:justify-end">
+    <%= link_to admin_welfare_categories_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
       <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
       <span>Cancel</span>
     <% end %>
-    <%= form.button type: :submit, class: action_button_classes(:primary, full_width: true, extra: "sm:w-auto") do %>
+    <%= form.button type: :submit, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
       <%= icon_svg(:save, classes: "h-4 w-4") %>
       <span><%= welfare_category.persisted? ? "Update Category" : "Create Category" %></span>
     <% end %>

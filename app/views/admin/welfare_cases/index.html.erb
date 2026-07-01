@@ -2,18 +2,20 @@
 
 <div class="space-y-6">
   <% header_actions = capture do %>
+    <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
     <% if policy(WelfareCategory).index? %>
-      <%= link_to admin_welfare_categories_path, class: action_button_classes(:secondary, size: :sm) do %>
+      <%= link_to admin_welfare_categories_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
         <%= icon_svg(:tag, classes: "h-4 w-4") %>
         <span>Categories</span>
       <% end %>
     <% end %>
     <% if policy(WelfareCase).admin_create? %>
-      <%= link_to new_admin_welfare_case_path, class: action_button_classes(:primary, size: :sm) do %>
+      <%= link_to new_admin_welfare_case_path, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
         <%= icon_svg(:plus, classes: "h-4 w-4") %>
         <span>New Case</span>
       <% end %>
     <% end %>
+    </div>
   <% end %>
   <%= render "shared/page_header",
     eyebrow: "Confidential welfare",
@@ -54,7 +56,7 @@
       </table>
     </div>
 
-    <div class="grid gap-4 lg:hidden">
+    <div class="grid gap-2 lg:hidden">
       <%= render partial: "case_card", collection: @welfare_cases, as: :welfare_case %>
     </div>
   <% else %>

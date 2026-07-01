@@ -17,7 +17,39 @@
     <% end %>
   <% end %>
 
-  <section class="grid gap-4 md:grid-cols-3">
+  <section class="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:hidden">
+    <div class="flex items-center justify-between gap-3 border-b border-[#E2E8F0] px-3 py-3 dark:border-[#334155]">
+      <div class="min-w-0">
+        <h3 class="truncate text-base font-black text-[#0F172A] dark:text-white">Financial Summary</h3>
+        <p class="mt-0.5 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Approved transaction totals</p>
+      </div>
+      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
+        <%= icon_svg(:finance, classes: "h-4 w-4") %>
+      </span>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2 p-3">
+      <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-3 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+        <p class="text-[11px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Income</p>
+        <p class="mt-1 truncate text-xl font-black text-[#0F172A] dark:text-white"><%= yen(@summary[:total_income]) %></p>
+      </div>
+      <div class="rounded-xl border border-red-100 bg-red-50 p-3 dark:border-red-500/20 dark:bg-red-500/10">
+        <p class="text-[11px] font-black uppercase tracking-wide text-red-700 dark:text-red-300">Expense</p>
+        <p class="mt-1 truncate text-xl font-black text-[#0F172A] dark:text-white"><%= yen(@summary[:total_expense]) %></p>
+      </div>
+      <div class="col-span-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
+        <div class="flex items-end justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Current Balance</p>
+            <p class="mt-1 truncate text-2xl font-black text-emerald-700 dark:text-emerald-300"><%= yen(@summary[:current_balance]) %></p>
+          </div>
+          <span class="rounded-full bg-white px-2.5 py-1 text-xs font-black text-[#64748B] shadow-sm dark:bg-[#1E293B] dark:text-[#CBD5E1]">Net</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hidden gap-4 sm:grid md:grid-cols-3">
     <%= render "shared/stat_card", label: "Total Income", value: yen(@summary[:total_income]), tone: "red", icon: :finance %>
     <%= render "shared/stat_card", label: "Total Expense", value: yen(@summary[:total_expense]), tone: "dark", icon: :finance %>
     <%= render "shared/stat_card", label: "Current Balance", value: yen(@summary[:current_balance]), tone: "green", icon: :finance %>

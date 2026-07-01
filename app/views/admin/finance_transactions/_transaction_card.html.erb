@@ -1,25 +1,25 @@
-<article class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+<article class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:p-5">
   <div class="flex items-start justify-between gap-3">
-    <div>
-      <h3 class="font-black text-gray-950"><%= transaction.finance_category.name %></h3>
-      <p class="mt-1 text-sm font-semibold text-gray-500"><%= transaction.transaction_date.strftime("%b %d, %Y") %></p>
+    <div class="min-w-0">
+      <h3 class="truncate text-[15px] font-black leading-5 text-gray-950 dark:text-white sm:text-base"><%= transaction.finance_category.name %></h3>
+      <p class="mt-0.5 text-xs font-semibold text-gray-500 dark:text-[#CBD5E1] sm:mt-1 sm:text-sm"><%= transaction.transaction_date.strftime("%b %d, %Y") %></p>
     </div>
-    <%= render "shared/status_badge", status: transaction.status %>
+    <%= render "shared/status_badge", status: transaction.status, compact: true %>
   </div>
-  <div class="mt-5 flex items-end justify-between gap-4">
-    <div>
-      <p class="text-xs font-bold uppercase tracking-wide text-gray-400"><%= transaction.transaction_type.humanize %></p>
-      <p class="mt-1 text-2xl font-black text-gray-950"><%= yen(transaction.amount) %></p>
+  <div class="mt-3 flex items-end justify-between gap-3 sm:mt-5 sm:gap-4">
+    <div class="min-w-0">
+      <p class="text-[11px] font-bold uppercase tracking-wide <%= transaction.income? ? "text-emerald-600 dark:text-emerald-300" : "text-red-600 dark:text-red-300" %> sm:text-xs"><%= transaction.transaction_type.humanize %></p>
+      <p class="mt-0.5 truncate text-xl font-black text-gray-950 dark:text-white sm:mt-1 sm:text-2xl"><%= yen(transaction.amount) %></p>
     </div>
-    <p class="text-sm font-semibold text-gray-500"><%= transaction.reference_number.presence || "No reference" %></p>
+    <p class="max-w-[45%] truncate text-right text-xs font-semibold text-gray-500 dark:text-[#CBD5E1] sm:text-sm"><%= transaction.reference_number.presence || "No reference" %></p>
   </div>
-  <div class="mt-5 grid gap-2 <%= policy(transaction).update? ? "grid-cols-2" : "grid-cols-1" %>">
-    <%= link_to admin_finance_transaction_path(transaction), class: action_button_classes(:secondary, full_width: true) do %>
+  <div class="mt-3 grid gap-2 <%= policy(transaction).update? ? "grid-cols-2" : "grid-cols-1" %> sm:mt-5">
+    <%= link_to admin_finance_transaction_path(transaction), class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "py-2 sm:py-2") do %>
       <%= icon_svg(:eye, classes: "h-4 w-4") %>
       <span>View</span>
     <% end %>
     <% if policy(transaction).update? %>
-      <%= link_to edit_admin_finance_transaction_path(transaction), class: action_button_classes(:dark, full_width: true) do %>
+      <%= link_to edit_admin_finance_transaction_path(transaction), class: action_button_classes(:dark, size: :sm, full_width: true, extra: "py-2 sm:py-2") do %>
         <%= icon_svg(:edit, classes: "h-4 w-4") %>
         <span>Edit</span>
       <% end %>

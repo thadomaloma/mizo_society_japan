@@ -16,6 +16,11 @@ module Admin
         .by_year(@year)
         .by_plan_type(@plan_type_id)
         .latest
+      @payment_summary = {
+        total: @membership_payments.count,
+        pending: @membership_payments.count(&:pending_verification?),
+        amount: @membership_payments.sum(&:amount)
+      }
       @years = MembershipPayment.distinct.order(payment_year: :desc).pluck(:payment_year)
       @plan_type_options = MembershipPlanType.active.latest
     end

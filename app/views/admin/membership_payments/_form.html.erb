@@ -1,72 +1,178 @@
-<%= form_with model: [ :admin, membership_payment ], class: "rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6" do |form| %>
+<% input_classes = "mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-50 dark:focus:border-red-500 dark:focus:ring-red-500/20" %>
+<% label_classes = "block text-sm font-black text-slate-800 dark:text-slate-100" %>
+<% hint_classes = "mt-1 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400" %>
+<% section_classes = "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5" %>
+
+<%= form_with model: [ :admin, membership_payment ], class: "space-y-4" do |form| %>
   <%= render "devise/shared/error_messages", resource: membership_payment %>
 
-  <div class="grid gap-5 md:grid-cols-2">
-    <div>
-      <%= form.label :user_id, "Member", class: "block text-sm font-bold text-gray-700" %>
-      <%= form.select :user_id, @users.map { |user| [ user_label(user), user.id ] }, { prompt: "Select member" }, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
-
-    <div>
-      <%= form.label :membership_plan_id, "Payment Plan", class: "block text-sm font-bold text-gray-700" %>
-      <%= form.select :membership_plan_id, @membership_plans.map { |plan| [ "#{plan.name} - #{plan.plan_type_label} (#{yen(plan.amount)})", plan.id ] }, { prompt: "Select payment plan" }, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
-
-    <div>
-      <%= form.label :amount, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.number_field :amount, step: 1, min: 0, inputmode: "numeric", value: yen_input_value(membership_payment.amount), class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
-
-    <div>
-      <%= form.label :payment_method, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.select :payment_method, MembershipPayment.payment_methods.keys.map { |method| [ method.humanize, method ] }, {}, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
-
-    <div>
-      <%= form.label :payment_year, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.number_field :payment_year, min: 2000, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
-
-    <div>
-      <%= form.label :payment_month, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.select :payment_month, options_for_select([ [ "No month", "" ] ] + (1..12).map { |month| [ Date::MONTHNAMES[month], month ] }, membership_payment.payment_month), {}, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
-
-    <% if current_user.finance_approver? %>
+  <div class="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-950 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100">
+    <div class="flex gap-3">
+      <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-700 text-white dark:bg-red-600">
+        <%= icon_svg(:credit_card, classes: "h-4 w-4") %>
+      </span>
       <div>
-        <%= form.label :status, class: "block text-sm font-bold text-gray-700" %>
-        <%= form.select :status, MembershipPayment.statuses.keys.map { |status| [ status.humanize, status ] }, {}, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+        <p class="font-black">Admin-created payment record</p>
+        <p class="mt-1 font-semibold leading-5 text-red-800 dark:text-red-100/80">
+          Use this form for manual cash records, corrections, or older payments. Member bank transfer submissions should normally be reviewed from Payment Records.
+        </p>
       </div>
-    <% else %>
-      <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800">
-        New records are submitted as pending for approval.
-      </div>
-    <% end %>
-
-    <div>
-      <%= form.label :paid_on, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.date_field :paid_on, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
-
-    <div class="md:col-span-2">
-      <%= form.label :reference_number, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.text_field :reference_number, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
-
-    <div class="md:col-span-2">
-      <%= form.label :notes, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.text_area :notes, rows: 4, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
     </div>
   </div>
 
-  <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-    <%= link_to admin_membership_payments_path, class: action_button_classes(:secondary) do %>
-      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
-      <span>Cancel</span>
-    <% end %>
-    <%= form.button type: :submit, class: action_button_classes(:primary) do %>
-      <%= icon_svg(:save, classes: "h-4 w-4") %>
-      <span><%= membership_payment.persisted? ? "Update Payment" : "Create Payment" %></span>
-    <% end %>
+  <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="space-y-4">
+      <section class="<%= section_classes %>">
+        <div class="mb-4 flex items-start gap-3">
+          <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100">1</span>
+          <div>
+            <h2 class="text-base font-black text-slate-950 dark:text-slate-50">Member and payment plan</h2>
+            <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Select the person and the fee, donation, or fund this record belongs to.</p>
+          </div>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2">
+          <div>
+            <%= form.label :user_id, "Member", class: label_classes %>
+            <%= form.select :user_id, @users.map { |user| [ user_label(user), user.id ] }, { prompt: "Select member" }, class: input_classes, required: true %>
+            <p class="<%= hint_classes %>">Choose the member who paid or needs this record.</p>
+          </div>
+
+          <div>
+            <%= form.label :membership_plan_id, "Payment Plan", class: label_classes %>
+            <%= form.select :membership_plan_id, @membership_plans.map { |plan| [ "#{plan.name} - #{plan.plan_type_label} (#{yen(plan.amount)})", plan.id ] }, { prompt: "Select payment plan" }, class: input_classes, required: true %>
+            <p class="<%= hint_classes %>">The plan controls the default amount and payment type.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="<%= section_classes %>">
+        <div class="mb-4 flex items-start gap-3">
+          <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100">2</span>
+          <div>
+            <h2 class="text-base font-black text-slate-950 dark:text-slate-50">Amount and period</h2>
+            <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Keep it simple: most MSJ payments are yearly or one-time records.</p>
+          </div>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2">
+          <div>
+            <%= form.label :amount, "Amount (JPY)", class: label_classes %>
+            <%= form.number_field :amount, step: 1, min: 0, inputmode: "numeric", value: yen_input_value(membership_payment.amount), placeholder: "Use plan amount", class: input_classes %>
+            <p class="<%= hint_classes %>">Leave blank to use the payment plan amount.</p>
+          </div>
+
+          <div>
+            <%= form.label :payment_year, "Year", class: label_classes %>
+            <%= form.number_field :payment_year, min: 2000, class: input_classes %>
+            <p class="<%= hint_classes %>">Use the payment year. Monthly records are handled automatically when needed.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="<%= section_classes %>">
+        <div class="mb-4 flex items-start gap-3">
+          <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100">3</span>
+          <div>
+            <h2 class="text-base font-black text-slate-950 dark:text-slate-50">Payment status</h2>
+            <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Only mark as paid after cash or bank transfer has been confirmed.</p>
+          </div>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-3">
+          <div>
+            <%= form.label :payment_method, "Payment Method", class: label_classes %>
+            <%= form.select :payment_method, [
+              [ "Cash", "cash" ],
+              [ "Bank transfer", "bank_transfer" ],
+              [ "Online card", "online_card" ]
+            ], {}, class: input_classes %>
+            <p class="<%= hint_classes %>">Bank transfer is the normal MSJ method.</p>
+          </div>
+
+          <% if current_user.finance_approver? %>
+            <div>
+              <%= form.label :status, class: label_classes %>
+              <%= form.select :status, MembershipPayment.statuses.keys.map { |status| [ status.humanize, status ] }, {}, class: input_classes %>
+              <p class="<%= hint_classes %>">Use Paid only for verified payments.</p>
+            </div>
+          <% else %>
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm font-bold text-amber-800 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-100">
+              New records are submitted as pending for approval.
+            </div>
+          <% end %>
+
+          <div>
+            <%= form.label :paid_on, "Paid Date", class: label_classes %>
+            <%= form.date_field :paid_on, class: input_classes %>
+            <p class="<%= hint_classes %>">Fill when status is paid.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="<%= section_classes %>">
+        <div class="mb-4 flex items-start gap-3">
+          <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100">4</span>
+          <div>
+            <h2 class="text-base font-black text-slate-950 dark:text-slate-50">Reference and notes</h2>
+            <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Optional details help treasurers trace this record later.</p>
+          </div>
+        </div>
+
+        <div class="grid gap-4">
+          <div>
+            <%= form.label :reference_number, "Reference Number", class: label_classes %>
+            <%= form.text_field :reference_number, placeholder: "Bank reference, receipt number, or payer name", class: input_classes %>
+          </div>
+
+          <div>
+            <%= form.label :notes, class: label_classes %>
+            <%= form.text_area :notes, rows: 4, placeholder: "Add a short internal note if needed.", class: input_classes %>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="space-y-4">
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <h2 class="text-sm font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">Quick guide</h2>
+        <div class="mt-4 space-y-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <div class="flex gap-3">
+            <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">1</span>
+            <p>Select member and plan first.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">2</span>
+            <p>Leave amount blank if the plan amount is correct.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">3</span>
+            <p>Set status to Paid only after verification.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+        <p class="font-black text-slate-900 dark:text-slate-50">Best use cases</p>
+        <ul class="mt-3 list-disc space-y-2 pl-5">
+          <li>Cash payment received by an officer.</li>
+          <li>Older bank transfer record needs entry.</li>
+          <li>Correction for a member payment.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <div class="sticky bottom-[calc(env(safe-area-inset-bottom)+4.85rem)] z-20 -mx-4 border-t border-slate-200 bg-slate-50/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-700 dark:bg-slate-950/95 sm:-mx-6 sm:px-6 lg:bottom-0 lg:rounded-2xl lg:border lg:bg-white/95 lg:shadow-lg lg:dark:bg-slate-900/95">
+    <div class="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+      <%= link_to admin_membership_payments_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
+        <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+        <span>Cancel</span>
+      <% end %>
+      <%= form.button type: :submit, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
+        <%= icon_svg(:save, classes: "h-4 w-4") %>
+        <span><%= membership_payment.persisted? ? "Update Payment" : "Create Payment" %></span>
+      <% end %>
+    </div>
   </div>
 <% end %>

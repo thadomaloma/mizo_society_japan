@@ -39,16 +39,13 @@ class Admin::SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
-  test "vice president can view settings but cannot update them" do
+  test "vice president cannot view or update settings" do
     vice_president = User.create!(name: "Vice President", email: "vp_settings@example.test", password: "password123", role: :vice_president)
     ensure_profile_for(vice_president)
     sign_in vice_president
 
     get admin_settings_path
-    assert_response :success
-    assert_includes response.body, "Settings"
-    assert_not_includes response.body, "Save Settings"
-    assert_not_includes response.body, admin_user_roles_path
+    assert_redirected_to root_path
 
     patch admin_settings_path, params: { settings: valid_settings.merge(organization_name: "Blocked VP Update") }
 

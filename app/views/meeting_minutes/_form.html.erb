@@ -148,13 +148,13 @@
     </div>
   </section>
 
-  <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
-    <%= link_to meeting_minutes_path, class: action_button_classes(:secondary) do %><%= icon_svg(:x_mark, classes: "h-4 w-4") %><span>Cancel</span><% end %>
+  <div class="flex flex-row flex-wrap gap-2 sm:justify-end">
+    <%= link_to meeting_minutes_path, class: action_button_classes(:secondary, size: :sm, extra: "px-2 sm:px-3") do %><%= icon_svg(:x_mark, classes: "h-4 w-4") %><span>Cancel</span><% end %>
     <% if meeting_minute.new_record? || meeting_minute.draft? %>
-      <%= form.button type: :submit, name: :commit_action, value: "draft", class: action_button_classes(:secondary) do %><%= icon_svg(:save, classes: "h-4 w-4") %><span>Save Draft</span><% end %>
-      <%= form.button type: :submit, name: :commit_action, value: "publish", class: action_button_classes(:primary) do %><%= icon_svg(:upload, classes: "h-4 w-4") %><span>Publish</span><% end %>
+      <%= form.button type: :submit, name: :commit_action, value: "draft", class: action_button_classes(:secondary, size: :sm, extra: "px-2 sm:px-3") do %><%= icon_svg(:save, classes: "h-4 w-4") %><span>Save Draft</span><% end %>
+      <%= form.button type: :submit, name: :commit_action, value: "publish", class: action_button_classes(:primary, size: :sm, extra: "px-2 sm:px-3") do %><%= icon_svg(:upload, classes: "h-4 w-4") %><span>Publish</span><% end %>
     <% else %>
-      <%= form.button type: :submit, name: :commit_action, value: "update", class: action_button_classes(:primary) do %><%= icon_svg(:save, classes: "h-4 w-4") %><span>Update Minute</span><% end %>
+      <%= form.button type: :submit, name: :commit_action, value: "update", class: action_button_classes(:primary, size: :sm, extra: "px-2 sm:px-3") do %><%= icon_svg(:save, classes: "h-4 w-4") %><span>Update Minute</span><% end %>
     <% end %>
   </div>
 <% end %>

@@ -38,12 +38,12 @@
     </div>
   </div>
 
-  <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-    <%= link_to admin_finance_transactions_path, class: action_button_classes(:secondary) do %>
+  <div class="mt-6 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+    <%= link_to admin_finance_transactions_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
       <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
       <span>Cancel</span>
     <% end %>
-    <%= form.button type: :submit, class: action_button_classes(:primary) do %>
+    <%= form.button type: :submit, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
       <%= icon_svg(:save, classes: "h-4 w-4") %>
       <span><%= finance_transaction.persisted? ? "Update Transaction" : "Create Transaction" %></span>
     <% end %>

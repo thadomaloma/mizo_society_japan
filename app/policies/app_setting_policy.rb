@@ -1,6 +1,6 @@
 class AppSettingPolicy < ApplicationPolicy
   def show?
-    admin_user? || user&.office_bearer?
+    admin_user?
   end
 
   def update?

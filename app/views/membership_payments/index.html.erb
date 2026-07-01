@@ -6,36 +6,85 @@
     title: "Payments",
     subtitle: "Track dues, pay online or by bank transfer, and keep your payment history in one place." %>
 
-  <section class="grid gap-3 sm:grid-cols-3">
-    <div class="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
-      <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1] sm:text-xs">Due Now</p>
-      <p class="mt-2 text-2xl font-black text-[#0F172A] dark:text-white"><%= @current_payments.count %></p>
-    </div>
-    <div class="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
-      <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1] sm:text-xs">Amount Due</p>
-      <p class="mt-2 text-2xl font-black text-[#0F172A] dark:text-white"><%= yen(@current_payments.sum(&:amount)) %></p>
-    </div>
-    <div class="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
-      <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1] sm:text-xs">History</p>
-      <p class="mt-2 text-2xl font-black text-[#0F172A] dark:text-white"><%= @payment_history.count %></p>
-    </div>
+  <% current_total = @current_payments.sum(&:amount) %>
+  <% pending_action_count = @current_payments.count { |payment| policy(payment).submit_transfer? } %>
+  <% verification_count = @current_payments.count(&:pending_verification?) %>
+
+  <section class="grid min-w-0 gap-3 lg:grid-cols-[1fr_24rem]">
+    <article class="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <div class="border-b border-[#E2E8F0] px-4 py-3 dark:border-[#334155] sm:px-5 sm:py-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h2 class="truncate text-base font-black text-[#0F172A] dark:text-white">Payment Summary</h2>
+            <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Your current balance and payment status.</p>
+          </div>
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
+            <%= icon_svg(:credit_card, classes: "h-5 w-5") %>
+          </span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 p-3 sm:grid-cols-4 sm:p-5">
+        <div class="col-span-2 rounded-xl border border-red-100 bg-red-50 p-3 dark:border-red-500/20 dark:bg-red-500/10 sm:col-span-1">
+          <p class="text-[11px] font-black uppercase tracking-wide text-red-700 dark:text-red-300">Amount Due</p>
+          <p class="mt-1 truncate text-2xl font-black text-[#0F172A] dark:text-white"><%= yen(current_total) %></p>
+        </div>
+        <div class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
+          <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Due Now</p>
+          <p class="mt-1 text-xl font-black text-[#0F172A] dark:text-white"><%= pending_action_count %></p>
+        </div>
+        <div class="rounded-xl border border-amber-100 bg-amber-50 p-3 dark:border-amber-500/20 dark:bg-amber-500/10">
+          <p class="text-[11px] font-black uppercase tracking-wide text-amber-700 dark:text-amber-300">To Verify</p>
+          <p class="mt-1 text-xl font-black text-[#0F172A] dark:text-white"><%= verification_count %></p>
+        </div>
+        <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-3 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+          <p class="text-[11px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">History</p>
+          <p class="mt-1 text-xl font-black text-[#0F172A] dark:text-white"><%= @payment_history.count %></p>
+        </div>
+      </div>
+    </article>
+
+    <article class="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <h2 class="text-base font-black text-[#0F172A] dark:text-white">How to pay</h2>
+      <div class="mt-3 space-y-3">
+        <% [
+          [ "Pay Now", "Open a payment and choose online or bank transfer." ],
+          [ "Submit details", "For bank transfer, send date, amount, and reference name." ],
+          [ "Verification", "Treasurer confirms the transfer and marks it paid." ]
+        ].each_with_index do |(label, text), index| %>
+          <div class="flex gap-3">
+            <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#0F172A] text-xs font-black text-white dark:bg-[#334155]"><%= index + 1 %></span>
+            <p class="text-sm font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]"><span class="font-black text-[#0F172A] dark:text-white"><%= label %>:</span> <%= text %></p>
+          </div>
+        <% end %>
+      </div>
+    </article>
   </section>
 
   <section class="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
-    <div class="border-b border-[#E2E8F0] px-4 py-3 dark:border-[#334155]">
+    <div class="flex items-start justify-between gap-3 border-b border-[#E2E8F0] px-4 py-3 dark:border-[#334155]">
       <div>
         <h2 class="text-[17px] font-black leading-6 text-[#0F172A] dark:text-white sm:text-base">Current Payments</h2>
         <p class="mt-1 text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]">Unpaid payments and transfers waiting for verification.</p>
       </div>
+      <span class="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-black text-red-700 dark:bg-red-500/15 dark:text-red-300"><%= @current_payments.count %></span>
     </div>
 
     <% if @current_payments.any? %>
-      <div class="grid gap-0 divide-y divide-[#E2E8F0] p-3 dark:divide-[#334155] sm:gap-3 sm:divide-y-0 sm:p-4">
+      <div class="grid gap-3 p-3 sm:p-4 lg:grid-cols-2 xl:grid-cols-3">
         <%= render partial: "payment_card", collection: @current_payments, as: :payment, locals: { embedded: true } %>
       </div>
     <% else %>
-      <div class="p-4 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">
-        No unpaid payments.
+      <div class="p-4">
+        <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-100">
+          <div class="flex gap-3">
+            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-emerald-700 shadow-sm dark:bg-[#1E293B] dark:text-emerald-300"><%= icon_svg(:check, classes: "h-4 w-4") %></span>
+            <div>
+              <p class="font-black">No payment due right now.</p>
+              <p class="mt-1 leading-6">New required fees will appear here automatically.</p>
+            </div>
+          </div>
+        </div>
       </div>
     <% end %>
   </section>
@@ -45,27 +94,27 @@
       <div class="border-b border-[#E2E8F0] px-4 py-3 dark:border-[#334155]">
         <div>
           <h2 class="text-[17px] font-black leading-6 text-[#0F172A] dark:text-white sm:text-base">Optional Payment Plans</h2>
-          <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Donation, fundraiser, or other active society fund.</p>
+          <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Voluntary donations, fundraisers, and other active society fees.</p>
         </div>
       </div>
 
-      <div class="grid gap-3 p-3 sm:p-4 md:grid-cols-2 xl:grid-cols-3">
+      <div class="grid gap-2 p-2 sm:gap-3 sm:p-4 md:grid-cols-2 xl:grid-cols-3">
         <% @available_payment_plans.each do |plan| %>
-          <article class="flex h-full flex-col rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5 transition hover:border-red-200 hover:bg-red-50/40 dark:border-[#334155] dark:bg-[#0F172A] dark:hover:bg-[#334155] sm:p-4">
+          <article class="flex h-full flex-col rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 transition hover:border-red-200 hover:bg-red-50/40 dark:border-[#334155] dark:bg-[#0F172A] dark:hover:bg-[#334155] sm:p-4">
             <div class="flex items-start gap-3">
-              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:credit_card, classes: "h-4 w-4") %></span>
+              <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300 sm:h-9 sm:w-9"><%= icon_svg(:credit_card, classes: "h-4 w-4") %></span>
               <div class="min-w-0 flex-1">
                 <h3 class="line-clamp-1 text-[15px] font-black leading-5 text-[#0F172A] dark:text-white sm:line-clamp-2 sm:text-sm"><%= plan.name %></h3>
-                <div class="mt-1.5 flex flex-wrap items-center gap-2">
+                <div class="mt-1 flex flex-wrap items-center gap-2 sm:mt-1.5">
                   <span class="rounded-md bg-white px-2 py-0.5 text-[10px] font-black text-red-700 ring-1 ring-red-100 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20"><%= plan.plan_type_label %></span>
                 </div>
-                <p class="mt-2 line-clamp-1 text-[13px] font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1] sm:line-clamp-2 sm:text-xs"><%= plan.description.presence || "Support this MSJ payment plan." %></p>
+                <p class="mt-1.5 line-clamp-1 text-[12px] font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1] sm:mt-2 sm:line-clamp-2 sm:text-xs"><%= plan.description.presence || "Support this MSJ payment plan." %></p>
               </div>
             </div>
-            <div class="mt-3 flex items-center justify-between gap-3 border-t border-[#E2E8F0] pt-3 dark:border-[#334155] sm:mt-4">
-              <p class="text-lg font-black text-[#0F172A] dark:text-white"><%= yen(plan.amount) %></p>
-              <%= button_to start_membership_payments_path, method: :post, params: { membership_plan_id: plan.id }, class: action_button_classes(:primary, size: :xs) do %>
-                <%= icon_svg(:plus, classes: "h-3.5 w-3.5") %><span>Start</span>
+            <div class="mt-2.5 flex items-center justify-between gap-3 border-t border-[#E2E8F0] pt-2.5 dark:border-[#334155] sm:mt-4 sm:pt-3">
+              <p class="text-base font-black text-[#0F172A] dark:text-white sm:text-lg"><%= yen(plan.amount) %></p>
+              <%= button_to start_membership_payments_path, method: :post, params: { membership_plan_id: plan.id }, class: action_button_classes(:primary, size: :xs, extra: "px-2.5 py-1.5") do %>
+                <%= icon_svg(:plus, classes: "h-3.5 w-3.5") %><span>Add</span>
               <% end %>
             </div>
           </article>

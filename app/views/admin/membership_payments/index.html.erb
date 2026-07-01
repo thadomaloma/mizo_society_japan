@@ -16,14 +16,22 @@
     subtitle: "Record, review, approve, and reconcile membership, donation, fundraiser, and society fund payments.",
     actions: header_actions %>
 
+  <% payment_record_stats = [
+    { label: "Records", value: @payment_summary[:total], tone: "dark", icon: :credit_card, caption: "Filtered results" },
+    { label: "To Verify", value: @payment_summary[:pending], tone: "amber", icon: :notifications, caption: "Pending review" },
+    { label: "Amount", value: yen(@payment_summary[:amount]), tone: "green", icon: :finance, caption: "Filtered total" }
+  ] %>
+
+  <%= render "shared/mobile_stats_panel", stats: payment_record_stats, title: "Payment Records", subtitle: "Review summary" %>
+
   <%= form_with url: admin_membership_payments_path, method: :get, class: "grid grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] xl:grid-cols-[1fr_11rem_11rem_10rem_auto] xl:p-4" do |form| %>
     <%= form.search_field :query, value: @query, placeholder: "Search member, email, reference...", class: "col-span-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white dark:placeholder:text-slate-400 md:col-span-1 md:rounded-lg md:py-2" %>
     <%= form.select :status, options_for_select([ [ "All statuses", "" ] ] + MembershipPayment.statuses.keys.map { |status| [ status.humanize, status ] }, @status), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
     <%= form.select :year, options_for_select([ [ "All years", "" ] ] + @years.map { |year| [ year, year ] }, @year), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
     <%= form.select :plan_type_id, options_for_select([ [ "All plan types", "" ] ] + @plan_type_options.map { |type| [ type.name, type.id ] }, @plan_type_id), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
-    <%= form.button type: :submit, class: action_button_classes(:dark, full_width: true, extra: "col-span-2 xl:col-span-1 xl:w-auto") do %>
+    <%= form.button type: :submit, class: action_button_classes(:dark, full_width: true, extra: "col-span-2 px-3 xl:col-span-1 xl:w-auto") do %>
       <%= icon_svg(:filter, classes: "h-4 w-4") %>
-      <span>Filter</span>
+      <span class="sm:inline">Filter</span>
     <% end %>
   <% end %>
 
@@ -47,7 +55,7 @@
       </table>
     </div>
 
-    <div class="grid gap-4 lg:hidden">
+    <div class="grid gap-2 lg:hidden">
       <%= render partial: "payment_card", collection: @membership_payments, as: :payment %>
     </div>
   <% else %>

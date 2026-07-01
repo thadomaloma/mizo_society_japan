@@ -49,24 +49,33 @@
       </div>
     </div>
 
-    <aside class="space-y-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <h3 class="text-lg font-black text-gray-950">Review actions</h3>
+    <aside class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:p-5">
+      <div class="mb-3 flex items-center gap-2 sm:mb-4">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
+          <%= icon_svg(:lock, classes: "h-4 w-4") %>
+        </span>
+        <h3 class="text-base font-black text-gray-950 dark:text-white sm:text-lg">Review actions</h3>
+      </div>
+
+      <% review_button_classes = "inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-xs font-black leading-4 transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-[#0F172A] sm:px-3 sm:text-sm" %>
+      <div class="grid grid-cols-3 gap-2 sm:grid-cols-1">
       <% if policy(@finance_transaction).approve? %>
-        <%= button_to approve_admin_finance_transaction_path(@finance_transaction), method: :patch, class: action_button_classes(:success, full_width: true) do %>
+        <%= button_to approve_admin_finance_transaction_path(@finance_transaction), method: :patch, form: { class: "min-w-0" }, class: "#{review_button_classes} bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-600" do %>
           <%= icon_svg(:check, classes: "h-4 w-4") %>
           <span>Approve</span>
         <% end %>
-        <%= button_to reject_admin_finance_transaction_path(@finance_transaction), method: :patch, class: action_button_classes(:danger, full_width: true) do %>
+        <%= button_to reject_admin_finance_transaction_path(@finance_transaction), method: :patch, form: { class: "min-w-0" }, class: "#{review_button_classes} bg-red-700 text-white hover:bg-red-800 focus:ring-red-600 dark:bg-red-600 dark:hover:bg-red-500" do %>
           <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
           <span>Reject</span>
         <% end %>
       <% end %>
       <% if policy(@finance_transaction).destroy? %>
-        <%= button_to admin_finance_transaction_path(@finance_transaction), method: :delete, data: { turbo_confirm: "Delete this transaction?" }, class: action_button_classes(:outline_danger, full_width: true) do %>
+        <%= button_to admin_finance_transaction_path(@finance_transaction), method: :delete, data: { turbo_confirm: "Delete this transaction?" }, form: { class: "min-w-0" }, class: "#{review_button_classes} border border-red-200 bg-white text-red-700 hover:bg-red-50 focus:ring-red-600 dark:border-red-500/40 dark:bg-[#0F172A] dark:text-red-300 dark:hover:bg-red-500/10" do %>
           <%= icon_svg(:trash, classes: "h-4 w-4") %>
           <span>Delete</span>
         <% end %>
       <% end %>
+      </div>
     </aside>
   </section>
 </div>

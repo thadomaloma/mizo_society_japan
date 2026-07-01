@@ -1,18 +1,123 @@
 <% content_for :page_title, "Event Report" %>
 
 <div class="space-y-6">
-  <% export_action = policy(:report).export? ? link_to(safe_join([ icon_svg(:download, classes: "h-4 w-4"), tag.span("Export CSV") ]), events_admin_reports_path(format: :csv), class: action_button_classes(:primary)) : nil %>
+  <% export_action = policy(:report).export? ? link_to(safe_join([ icon_svg(:download, classes: "h-4 w-4"), tag.span("Export CSV") ]), events_admin_reports_path(format: :csv), class: action_button_classes(:primary, size: :sm, extra: "px-3")) : nil %>
   <%= render "shared/page_header",
     eyebrow: "Reports",
     title: "Event Report",
-    subtitle: "Events, RSVP, and attendance summary.",
+    subtitle: "Programme schedule, RSVP activity, and attendance summary.",
     actions: export_action %>
 
-  <section class="grid gap-4 md:grid-cols-5">
+  <% total_events = @summary[:total_events].to_i %>
+  <% completed_percent = total_events.positive? ? ((@summary[:completed_events].to_f / total_events) * 100).round : 0 %>
+  <% upcoming_percent = total_events.positive? ? ((@summary[:upcoming_events].to_f / total_events) * 100).round : 0 %>
+  <% upcoming_events = Array(@summary[:upcoming_list]) %>
+
+  <section class="grid min-w-0 grid-cols-2 gap-2 sm:hidden">
+    <div class="rounded-2xl border border-[#E2E8F0] bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Total Events</p>
+      <p class="mt-1 text-2xl font-black text-[#0F172A] dark:text-white"><%= @summary[:total_events] %></p>
+    </div>
+    <div class="rounded-2xl border border-sky-100 bg-sky-50 p-3 shadow-sm dark:border-sky-500/20 dark:bg-sky-500/10">
+      <p class="text-[11px] font-black uppercase tracking-wide text-sky-700 dark:text-sky-300">Upcoming</p>
+      <p class="mt-1 text-2xl font-black text-[#0F172A] dark:text-white"><%= @summary[:upcoming_events] %></p>
+    </div>
+    <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 shadow-sm dark:border-emerald-500/20 dark:bg-emerald-500/10">
+      <p class="text-[11px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Completed</p>
+      <p class="mt-1 text-2xl font-black text-[#0F172A] dark:text-white"><%= @summary[:completed_events] %></p>
+    </div>
+    <div class="rounded-2xl border border-[#E2E8F0] bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">RSVP / Attend</p>
+      <p class="mt-1 truncate text-xl font-black text-[#0F172A] dark:text-white"><%= @summary[:rsvp_count] %> / <%= @summary[:attendance_count] %></p>
+    </div>
+  </section>
+
+  <section class="hidden gap-4 sm:grid md:grid-cols-5">
     <%= render "shared/stat_card", label: "Total Events", value: @summary[:total_events], tone: "red", icon: :events %>
     <%= render "shared/stat_card", label: "Upcoming", value: @summary[:upcoming_events], tone: "blue", icon: :events %>
     <%= render "shared/stat_card", label: "Completed", value: @summary[:completed_events], tone: "green", icon: :events %>
     <%= render "shared/stat_card", label: "RSVPs", value: @summary[:rsvp_count], tone: "dark", icon: :members %>
     <%= render "shared/stat_card", label: "Attendance", value: @summary[:attendance_count], tone: "purple", icon: :members %>
+  </section>
+
+  <section class="grid min-w-0 gap-3 sm:gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+    <article class="min-w-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <div class="border-b border-[#E2E8F0] px-3 py-3 dark:border-[#334155] sm:px-5 sm:py-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h3 class="truncate text-base font-black text-[#0F172A] dark:text-white">Programme Progress</h3>
+            <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Completed and upcoming event balance.</p>
+          </div>
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300 sm:h-10 sm:w-10">
+            <%= icon_svg(:events, classes: "h-4 w-4 sm:h-5 sm:w-5") %>
+          </span>
+        </div>
+      </div>
+
+      <div class="p-3 sm:p-5">
+        <div class="grid grid-cols-2 gap-2">
+          <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-3 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+            <p class="text-[11px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Completed</p>
+            <p class="mt-1 text-xl font-black text-[#0F172A] dark:text-white"><%= completed_percent %>%</p>
+          </div>
+          <div class="rounded-xl border border-sky-100 bg-sky-50 p-3 dark:border-sky-500/20 dark:bg-sky-500/10">
+            <p class="text-[11px] font-black uppercase tracking-wide text-sky-700 dark:text-sky-300">Upcoming</p>
+            <p class="mt-1 text-xl font-black text-[#0F172A] dark:text-white"><%= upcoming_percent %>%</p>
+          </div>
+        </div>
+
+        <div class="mt-4 space-y-3">
+          <div>
+            <div class="flex justify-between text-xs font-black text-[#64748B] dark:text-[#CBD5E1]"><span>Completed</span><span><%= @summary[:completed_events] %></span></div>
+            <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-[#0F172A]"><div class="h-full rounded-full bg-emerald-500" style="width: <%= completed_percent %>%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-xs font-black text-[#64748B] dark:text-[#CBD5E1]"><span>Upcoming</span><span><%= @summary[:upcoming_events] %></span></div>
+            <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-[#0F172A]"><div class="h-full rounded-full bg-sky-500" style="width: <%= upcoming_percent %>%"></div></div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="min-w-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <div class="border-b border-[#E2E8F0] px-3 py-3 dark:border-[#334155] sm:px-5 sm:py-4">
+        <h3 class="text-base font-black text-[#0F172A] dark:text-white">Participation</h3>
+        <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">RSVP and attendance totals across events.</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 p-3 sm:p-5">
+        <div class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
+          <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">RSVPs</p>
+          <p class="mt-1 text-2xl font-black text-[#0F172A] dark:text-white"><%= @summary[:rsvp_count] %></p>
+        </div>
+        <div class="rounded-xl border border-violet-100 bg-violet-50 p-3 dark:border-violet-500/20 dark:bg-violet-500/10">
+          <p class="text-[11px] font-black uppercase tracking-wide text-violet-700 dark:text-violet-300">Attendance</p>
+          <p class="mt-1 text-2xl font-black text-[#0F172A] dark:text-white"><%= @summary[:attendance_count] %></p>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="min-w-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <div class="border-b border-[#E2E8F0] px-3 py-3 dark:border-[#334155] sm:px-5 sm:py-4">
+      <h3 class="text-base font-black text-[#0F172A] dark:text-white">Upcoming Events</h3>
+      <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Published events still ahead.</p>
+    </div>
+
+    <div class="divide-y divide-[#E2E8F0] dark:divide-[#334155]">
+      <% if upcoming_events.any? %>
+        <% upcoming_events.each do |event| %>
+          <div class="grid min-w-0 gap-2 px-3 py-2.5 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-3 sm:px-5 sm:py-3">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-black text-[#0F172A] dark:text-white"><%= event.title %></p>
+              <p class="mt-0.5 truncate text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= event.event_category.name %> · <%= event.venue.presence || "Venue not set" %></p>
+            </div>
+            <span class="text-xs font-black text-red-700 dark:text-red-300"><%= event.start_time&.strftime("%b %d, %Y") || "No date" %></span>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="p-5 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">No upcoming events found.</p>
+      <% end %>
+    </div>
   </section>
 </div>

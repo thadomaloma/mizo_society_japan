@@ -87,8 +87,12 @@ Rails.application.routes.draw do
   namespace :admin do
     root "dashboard#index"
     get "dashboard", to: "dashboard#index"
-    resources :membership_plans
-    resources :membership_plan_types, except: [ :show ]
+    get "membership_plans", to: redirect("/admin/payment_plans"), as: nil
+    get "membership_plans/*path", to: redirect("/admin/payment_plans/%{path}"), as: nil
+    get "membership_plan_types", to: redirect("/admin/payment_plan_types"), as: nil
+    get "membership_plan_types/*path", to: redirect("/admin/payment_plan_types/%{path}"), as: nil
+    resources :membership_plans, path: "payment_plans"
+    resources :membership_plan_types, path: "payment_plan_types", except: [ :show ]
     resources :event_categories, except: [ :show ]
     resources :document_categories, except: [ :show ]
     resources :membership_payments, path: "payments" do
