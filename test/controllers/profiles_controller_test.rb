@@ -64,6 +64,51 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Child One", "Child Two" ], profile.child_family_members.order(:name).pluck(:name)
   end
 
+  test "profile update ignores stale family member ids" do
+    other_user = User.create!(name: "Other Member", email: "other-family@example.test", password: "password123")
+    other_profile = other_user.create_member_profile!(
+      full_name: "Other Member",
+      mobile_number: "08012345678",
+      postal_code: "169-0075",
+      prefecture: "Tokyo",
+      city: "Shinjuku",
+      address_line1: "1-1-1 Okubo",
+      family_status: :family
+    )
+    stale_child = other_profile.family_members.create!(name: "Other Child", relationship: "Child")
+
+    @member.create_member_profile!(
+      full_name: "Complete Member",
+      mobile_number: "09012345678",
+      postal_code: "169-0075",
+      prefecture: "Tokyo",
+      city: "Shinjuku",
+      address_line1: "1-1-1 Okubo",
+      family_status: :family
+    )
+    sign_in @member
+
+    patch profile_path, params: {
+      member_profile: {
+        full_name: "Complete Member",
+        mobile_number: "09012345678",
+        postal_code: "169-0075",
+        prefecture: "Tokyo",
+        city: "Shinjuku",
+        address_line1: "1-1-1 Okubo",
+        family_status: "family",
+        spouse_name: "Spouse Name",
+        family_members_attributes: {
+          "0" => { id: stale_child.id, name: "My Child", relationship: "Child", _destroy: "0" }
+        }
+      }
+    }
+
+    assert_redirected_to profile_path
+    assert_equal [ "My Child" ], @member.member_profile.reload.child_family_members.pluck(:name)
+    assert_equal [ "Other Child" ], other_profile.child_family_members.reload.pluck(:name)
+  end
+
   test "member profile shows map but hides admin contact actions" do
     @member.create_member_profile!(
       full_name: "Complete Member",
