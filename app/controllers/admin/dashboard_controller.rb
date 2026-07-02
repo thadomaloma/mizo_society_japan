@@ -72,10 +72,21 @@ module Admin
 
     def finance_chart
       dates = (Date.current.beginning_of_month..Date.current).select { |date| (date.day % 5).zero? || date == Date.current }
+      month_range = Date.current.beginning_of_month..Date.current
+      income_by_date = FinanceTransaction.approved.income.where(transaction_date: month_range).group(:transaction_date).sum(:amount)
+      expense_by_date = FinanceTransaction.approved.expense.where(transaction_date: month_range).group(:transaction_date).sum(:amount)
+      running_income = 0
+      running_expense = 0
+
+      cumulative_totals = month_range.each_with_object({}) do |date, totals|
+        running_income += income_by_date.fetch(date, 0)
+        running_expense += expense_by_date.fetch(date, 0)
+        totals[date] = { income: running_income, expense: running_expense }
+      end
+
       dates.map do |date|
-        income = FinanceTransaction.approved.income.where(transaction_date: Date.current.beginning_of_month..date).sum(:amount)
-        expense = FinanceTransaction.approved.expense.where(transaction_date: Date.current.beginning_of_month..date).sum(:amount)
-        { label: date.strftime("%b %-d"), income: income.to_i, expense: expense.to_i }
+        totals = cumulative_totals.fetch(date, { income: 0, expense: 0 })
+        { label: date.strftime("%b %-d"), income: totals[:income].to_i, expense: totals[:expense].to_i }
       end
     end
 

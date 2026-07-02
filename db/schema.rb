@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_28_111000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_02_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -362,6 +362,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_111000) do
     t.index ["stripe_status"], name: "index_membership_payments_on_stripe_status"
     t.index ["transfer_reference_name"], name: "index_membership_payments_on_transfer_reference_name"
     t.index ["transferred_on"], name: "index_membership_payments_on_transferred_on"
+    t.index ["user_id", "created_at"], name: "index_membership_payments_on_user_id_and_created_at"
     t.index ["user_id", "payment_year", "payment_month"], name: "idx_membership_payments_on_user_and_period"
     t.index ["user_id"], name: "index_membership_payments_on_user_id"
   end
@@ -407,6 +408,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_111000) do
     t.index ["actor_id"], name: "index_notifications_on_actor_id"
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable_type_and_notifiable_id"
     t.index ["recipient_id", "action", "notifiable_type", "notifiable_id"], name: "idx_notifications_unique_recipient_action_notifiable", unique: true
+    t.index ["recipient_id", "created_at"], name: "index_notifications_on_recipient_id_and_created_at"
     t.index ["recipient_id", "read_at"], name: "index_notifications_on_recipient_id_and_read_at"
     t.index ["recipient_id"], name: "index_notifications_on_recipient_id"
   end
@@ -485,6 +487,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_28_111000) do
     t.index ["status", "priority", "submitted_at"], name: "index_welfare_cases_on_status_and_priority_and_submitted_at"
     t.index ["status"], name: "index_welfare_cases_on_status"
     t.index ["submitted_at"], name: "index_welfare_cases_on_submitted_at"
+    t.index ["user_id", "status", "submitted_at"], name: "index_welfare_cases_on_user_status_submitted_at"
     t.index ["user_id"], name: "index_welfare_cases_on_user_id"
     t.index ["welfare_category_id"], name: "index_welfare_cases_on_welfare_category_id"
   end
