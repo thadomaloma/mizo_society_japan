@@ -31,10 +31,25 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Write password reset and Devise emails to tmp/mail in development.
+  # Write password reset and Devise emails to tmp/mail in development unless
+  # SMTP credentials are present for real delivery testing.
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.delivery_method = :file
-  config.action_mailer.file_settings = { location: Rails.root.join("tmp/mail") }
+  if ENV.values_at("SMTP_ADDRESS", "SMTP_USERNAME", "SMTP_PASSWORD").all?(&:present?)
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      address: ENV.fetch("SMTP_ADDRESS"),
+      port: ENV.fetch("SMTP_PORT", 587).to_i,
+      domain: ENV.fetch("SMTP_DOMAIN", "gmail.com"),
+      user_name: ENV["SMTP_USERNAME"],
+      password: ENV["SMTP_PASSWORD"],
+      authentication: ENV.fetch("SMTP_AUTHENTICATION", "plain").to_sym,
+      enable_starttls_auto: ActiveModel::Type::Boolean.new.cast(ENV.fetch("SMTP_ENABLE_STARTTLS_AUTO", "true")),
+      openssl_verify_mode: ENV.fetch("SMTP_OPENSSL_VERIFY_MODE", "peer")
+    }.compact
+  else
+    config.action_mailer.delivery_method = :file
+    config.action_mailer.file_settings = { location: Rails.root.join("tmp/mail") }
+  end
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false

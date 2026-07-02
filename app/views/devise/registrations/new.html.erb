@@ -2,19 +2,28 @@
   <div class="bg-[#1E293B] px-6 py-7 text-white">
     <div class="grid h-14 w-14 place-items-center rounded-xl bg-red-700 text-sm font-black tracking-wide text-white">MSJ</div>
     <h1 class="mt-6 text-2xl font-black tracking-tight">Create member account</h1>
-    <p class="mt-2 text-sm font-semibold text-slate-300">Join the portal with member access. Office roles can be assigned by admins later.</p>
+    <p class="mt-2 text-sm font-semibold text-slate-300">Google sign-up is easiest. Email sign-up is available if you want a portal password.</p>
   </div>
 
   <div class="p-6 sm:p-8">
     <% if devise_mapping.omniauthable? && resource_class.omniauth_providers.include?(:google_oauth2) && google_oauth_configured? %>
-      <%= button_to user_google_oauth2_omniauth_authorize_path, method: :post, data: { turbo: false }, class: "flex w-full items-center justify-center gap-3 rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-black text-[#0F172A] shadow-sm transition hover:bg-slate-50" do %>
-        <span class="grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-black text-red-600">G</span>
-        <span>Sign up with Google</span>
-      <% end %>
+      <div class="rounded-2xl border border-red-100 bg-red-50 p-3">
+        <div class="mb-3 flex items-start gap-3">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-sm font-black text-red-600 shadow-sm">G</span>
+          <div>
+            <p class="text-sm font-black text-[#0F172A]">Recommended: create account with Google</p>
+            <p class="mt-1 text-xs font-semibold leading-5 text-[#64748B]">No password is needed. After Google sign-up, complete your member profile.</p>
+          </div>
+        </div>
+        <%= button_to user_google_oauth2_omniauth_authorize_path, method: :post, data: { turbo: false }, class: "flex w-full items-center justify-center gap-2 rounded-xl bg-red-700 px-3 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" do %>
+          <span>Sign up with Google</span>
+          <%= icon_svg(:arrow_right, classes: "h-4 w-4") %>
+        <% end %>
+      </div>
 
       <div class="my-6 flex items-center gap-3">
         <div class="h-px flex-1 bg-[#E2E8F0]"></div>
-        <span class="text-xs font-black uppercase tracking-wide text-[#64748B]">or email</span>
+        <span class="text-xs font-black uppercase tracking-wide text-[#64748B]">or create password</span>
         <div class="h-px flex-1 bg-[#E2E8F0]"></div>
       </div>
     <% elsif devise_mapping.omniauthable? && resource_class.omniauth_providers.include?(:google_oauth2) %>
@@ -22,6 +31,10 @@
         Google sign-up is ready in code. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable the button.
       </div>
     <% end %>
+
+    <div class="mb-4 rounded-xl border border-[#E2E8F0] bg-slate-50 px-3 py-2 text-xs font-semibold leading-5 text-[#64748B]">
+      Use this form only if you want to sign in with email and password instead of Google.
+    </div>
 
     <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: "space-y-4" }) do |f| %>
       <%= render "devise/shared/error_messages", resource: resource %>

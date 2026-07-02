@@ -66,7 +66,7 @@ Rails.application.configure do
     protocol: ENV.fetch("APP_PROTOCOL", "https")
   }
 
-  if ENV["SMTP_ADDRESS"].present?
+  if ENV.values_at("SMTP_ADDRESS", "SMTP_USERNAME", "SMTP_PASSWORD").all?(&:present?)
     config.action_mailer.delivery_method = :smtp
     config.action_mailer.smtp_settings = {
       address: ENV.fetch("SMTP_ADDRESS"),
