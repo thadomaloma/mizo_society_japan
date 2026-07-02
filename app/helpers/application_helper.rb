@@ -398,7 +398,7 @@ module ApplicationHelper
     profile = user&.member_profile
 
     if profile&.avatar&.attached?
-      image_tag profile.avatar.variant(resize_to_fill: [ 160, 160 ]),
+      image_tag profile.avatar,
         alt: user.display_name,
         class: "#{base_classes} object-cover",
         loading: "lazy",
