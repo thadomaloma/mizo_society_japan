@@ -275,11 +275,19 @@ Devise.setup do |config|
   # Add a new OmniAuth provider. Check the wiki for more information on setting
   # up on your models and hooks.
   if ENV["GOOGLE_CLIENT_ID"].present? && ENV["GOOGLE_CLIENT_SECRET"].present?
+    google_oauth_options = {
+      scope: "email,profile",
+      prompt: "select_account"
+    }
+
+    if Rails.env.production? && ENV["APP_HOST"].present?
+      google_oauth_options[:redirect_uri] = "#{ENV.fetch('APP_PROTOCOL', 'https')}://#{ENV.fetch('APP_HOST')}/users/auth/google_oauth2/callback"
+    end
+
     config.omniauth :google_oauth2,
       ENV.fetch("GOOGLE_CLIENT_ID"),
       ENV.fetch("GOOGLE_CLIENT_SECRET"),
-      scope: "email,profile",
-      prompt: "select_account"
+      google_oauth_options
   end
 
   # ==> Warden configuration
