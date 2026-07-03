@@ -17,6 +17,13 @@ class MembershipPaymentsController < ApplicationController
       .latest
       .to_a
     @current_payments.reject! { |payment| settled_payment_plan?(payment) }
+    @current_payment_batches = current_user.payment_batches
+      .includes(membership_payments: { membership_plan: :membership_plan_type })
+      .pending_verification
+      .latest
+      .to_a
+    active_batch_payment_ids = @current_payment_batches.flat_map { |batch| batch.membership_payments.map(&:id) }
+    @current_payments.reject! { |payment| active_batch_payment_ids.include?(payment.id) }
     @payment_history = payment_scope
       .history_for_member
       .by_status(@status)
@@ -24,7 +31,7 @@ class MembershipPaymentsController < ApplicationController
       .to_a
     @years = current_user.membership_payments.distinct.order(payment_year: :desc).pluck(:payment_year)
     @history_status_options = MembershipPayment::HISTORY_STATUSES.map(&:to_s)
-    current_plan_ids = @current_payments.map(&:membership_plan_id)
+    current_plan_ids = @current_payments.map(&:membership_plan_id) + @current_payment_batches.flat_map { |batch| batch.membership_payments.map(&:membership_plan_id) }
     @available_payment_plans = MembershipPlan.active
       .member_payable
       .where.not(id: current_plan_ids)
@@ -116,9 +123,14 @@ class MembershipPaymentsController < ApplicationController
       branch_name: AppSetting.get("bank_branch_name", "Please set branch / store name"),
       branch_code: AppSetting.get("bank_branch_code"),
       account_number: AppSetting.get("bank_account_number", "Please set account number"),
-      yucho_symbol_number: AppSetting.get("yucho_symbol_number"),
+      yucho_symbol: AppSetting.get("yucho_symbol").presence || legacy_yucho_parts.first,
+      yucho_number: AppSetting.get("yucho_number").presence || legacy_yucho_parts.second,
       qr_code_url: AppSetting.get("bank_qr_code_url")
     }
+  end
+
+  def legacy_yucho_parts
+    @legacy_yucho_parts ||= AppSetting.get("yucho_symbol_number").to_s.scan(/\d+/).first(2)
   end
 
   def bank_transfer_submission_params

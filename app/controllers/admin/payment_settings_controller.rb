@@ -39,11 +39,18 @@ module Admin
         placeholder: "普通 1234567"
       },
       {
-        key: "yucho_symbol_number",
-        label: "Yuucho Symbol / Number",
-        description: "Use this for ゆうちょ銀行 to ゆうちょ銀行 transfers when the app or ATM asks for 記号・番号.",
+        key: "yucho_symbol",
+        label: "Yuucho Symbol (記号)",
+        description: "Use this for ゆうちょ銀行 to ゆうちょ銀行 transfers when the app or ATM asks for 記号.",
         type: :text,
-        placeholder: "記号 12345 / 番号 12345671"
+        placeholder: "12345"
+      },
+      {
+        key: "yucho_number",
+        label: "Yuucho Number (番号)",
+        description: "Use this for ゆうちょ銀行 to ゆうちょ銀行 transfers when the app or ATM asks for 番号.",
+        type: :text,
+        placeholder: "12345671"
       }
     ].freeze
     BANK_SETTING_KEYS = BANK_SETTING_DEFINITIONS.pluck(:key).freeze
@@ -91,9 +98,28 @@ module Admin
 
     def bank_settings(overrides = {})
       BANK_SETTING_DEFINITIONS.map do |definition|
-        value = overrides.fetch(definition[:key]) { AppSetting.get(definition[:key]) }
+        value = overrides.fetch(definition[:key]) { bank_setting_value(definition[:key]) }
         definition.merge(value: value)
       end
+    end
+
+    def bank_setting_value(key)
+      return yucho_symbol_value if key == "yucho_symbol"
+      return yucho_number_value if key == "yucho_number"
+
+      AppSetting.get(key)
+    end
+
+    def yucho_symbol_value
+      AppSetting.get("yucho_symbol").presence || legacy_yucho_parts.first
+    end
+
+    def yucho_number_value
+      AppSetting.get("yucho_number").presence || legacy_yucho_parts.second
+    end
+
+    def legacy_yucho_parts
+      @legacy_yucho_parts ||= AppSetting.get("yucho_symbol_number").to_s.scan(/\d+/).first(2)
     end
 
     def payment_settings_params

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_03_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_03_133000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -336,6 +336,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_03_120000) do
     t.bigint "membership_plan_id", null: false
     t.text "notes"
     t.datetime "paid_on"
+    t.bigint "payment_batch_id"
     t.integer "payment_method", default: 1, null: false
     t.integer "payment_month"
     t.integer "payment_year", null: false
@@ -353,6 +354,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_03_120000) do
     t.bigint "user_id", null: false
     t.index ["approved_by_id"], name: "index_membership_payments_on_approved_by_id"
     t.index ["membership_plan_id"], name: "index_membership_payments_on_membership_plan_id"
+    t.index ["payment_batch_id"], name: "index_membership_payments_on_payment_batch_id"
     t.index ["payment_year"], name: "index_membership_payments_on_payment_year"
     t.index ["reference_number"], name: "index_membership_payments_on_reference_number"
     t.index ["status", "created_at"], name: "index_membership_payments_on_status_and_created_at"
@@ -411,6 +413,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_03_120000) do
     t.index ["recipient_id", "created_at"], name: "index_notifications_on_recipient_id_and_created_at"
     t.index ["recipient_id", "read_at"], name: "index_notifications_on_recipient_id_and_read_at"
     t.index ["recipient_id"], name: "index_notifications_on_recipient_id"
+  end
+
+  create_table "payment_batches", force: :cascade do |t|
+    t.datetime "approved_at"
+    t.bigint "approved_by_id"
+    t.datetime "created_at", null: false
+    t.text "notes"
+    t.integer "status", default: 0, null: false
+    t.decimal "total_amount", precision: 10, scale: 2, default: "0.0", null: false
+    t.decimal "transfer_amount", precision: 10, scale: 2
+    t.string "transfer_reference_name"
+    t.date "transferred_on"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["approved_by_id"], name: "index_payment_batches_on_approved_by_id"
+    t.index ["status", "created_at"], name: "index_payment_batches_on_status_and_created_at"
+    t.index ["transfer_reference_name"], name: "index_payment_batches_on_transfer_reference_name"
+    t.index ["user_id"], name: "index_payment_batches_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -539,11 +559,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_03_120000) do
   add_foreign_key "meeting_minutes", "users", column: "uploaded_by_id"
   add_foreign_key "member_profiles", "users"
   add_foreign_key "membership_payments", "membership_plans"
+  add_foreign_key "membership_payments", "payment_batches"
   add_foreign_key "membership_payments", "users"
   add_foreign_key "membership_payments", "users", column: "approved_by_id"
   add_foreign_key "membership_plans", "membership_plan_types"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"
+  add_foreign_key "payment_batches", "users"
+  add_foreign_key "payment_batches", "users", column: "approved_by_id"
   add_foreign_key "volunteer_signups", "users"
   add_foreign_key "volunteer_signups", "volunteer_slots"
   add_foreign_key "volunteer_slots", "events"

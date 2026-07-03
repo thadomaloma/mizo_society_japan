@@ -32,6 +32,11 @@ Rails.application.routes.draw do
       get :cancel
     end
   end
+  resources :payment_batches, path: "combined_payments", only: [ :show, :create ] do
+    member do
+      patch :submit_transfer
+    end
+  end
   resources :welfare_cases, only: [ :index, :show, :new, :create, :edit, :update ]
   get "/documents", to: redirect("/letters"), as: nil
   get "/documents/new", to: redirect("/letters/new"), as: nil
@@ -96,6 +101,12 @@ Rails.application.routes.draw do
     resources :event_categories, except: [ :show ]
     resources :document_categories, except: [ :show ]
     resources :membership_payments, path: "payments" do
+      member do
+        patch :approve
+        patch :reject
+      end
+    end
+    resources :payment_batches, path: "combined_payments", only: [ :show ] do
       member do
         patch :approve
         patch :reject

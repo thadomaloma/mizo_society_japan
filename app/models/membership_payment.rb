@@ -5,6 +5,7 @@ class MembershipPayment < ApplicationRecord
   belongs_to :user
   belongs_to :membership_plan
   belongs_to :approved_by, class_name: "User", optional: true
+  belongs_to :payment_batch, optional: true
 
   has_one_attached :transfer_screenshot
   has_many :notifications, as: :notifiable, dependent: :destroy

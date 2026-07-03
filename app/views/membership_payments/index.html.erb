@@ -2,9 +2,10 @@
 
 <div class="space-y-4 sm:space-y-5">
   <% payable_payments = @current_payments.select { |payment| policy(payment).submit_transfer? } %>
-  <% amount_due = payable_payments.sum(&:amount) %>
+  <% batch_due = @current_payment_batches.select { |batch| batch.pending? || batch.rejected? }.sum(&:total_amount) %>
+  <% amount_due = payable_payments.sum(&:amount) + batch_due %>
   <% pending_action_count = payable_payments.count %>
-  <% verification_count = @current_payments.count(&:pending_verification?) %>
+  <% verification_count = @current_payments.count(&:pending_verification?) + @current_payment_batches.count(&:pending_verification?) %>
 
   <div class="hidden sm:block">
     <%= render "shared/page_header",
@@ -83,8 +84,8 @@
       <h2 class="text-base font-black text-[#0F172A] dark:text-white">How to pay</h2>
       <div class="mt-3 space-y-3">
         <% [
-          [ "Pay Now", "Open a payment and choose online or bank transfer." ],
-          [ "Submit details", "For bank transfer, send date, amount, and reference name." ],
+          [ "Pay Together", "Select multiple fees and transfer once to save bank fees." ],
+          [ "Submit details", "Send one transfer date, total amount, and reference name." ],
           [ "Verification", "Treasurer confirms the transfer and marks it paid." ]
         ].each_with_index do |(label, text), index| %>
           <div class="flex gap-3">
@@ -96,34 +97,92 @@
     </article>
   </section>
 
-  <section id="current-payments" class="scroll-mt-4 rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
-    <div class="flex items-start justify-between gap-3 border-b border-[#E2E8F0] px-3 py-2.5 dark:border-[#334155] sm:px-4 sm:py-3">
-      <div>
-        <h2 class="text-[17px] font-black leading-6 text-[#0F172A] dark:text-white sm:text-base">Current Payments</h2>
-        <p class="mt-0.5 text-xs font-semibold leading-4 text-[#64748B] dark:text-[#CBD5E1] sm:mt-1 sm:leading-5">Unpaid payments and transfers waiting for verification.</p>
-      </div>
-      <span class="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-black text-red-700 dark:bg-red-500/15 dark:text-red-300"><%= @current_payments.count %></span>
-    </div>
-
-    <% if @current_payments.any? %>
-      <div class="grid gap-2 p-2 sm:gap-3 sm:p-4 lg:grid-cols-2 xl:grid-cols-3">
-        <%= render partial: "payment_card", collection: @current_payments, as: :payment, locals: { embedded: true } %>
-      </div>
-    <% else %>
-      <div class="p-4">
-        <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-100">
-          <div class="flex gap-3">
-            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-emerald-700 shadow-sm dark:bg-[#1E293B] dark:text-emerald-300"><%= icon_svg(:check, classes: "h-4 w-4") %></span>
-            <div>
-              <p class="font-black">No payment due right now.</p>
-              <p class="mt-1 leading-6">New required fees will appear here automatically.</p>
-            </div>
+  <% if payable_payments.any? %>
+    <section class="overflow-hidden rounded-2xl border border-red-100 bg-white shadow-sm dark:border-red-500/20 dark:bg-[#1E293B]">
+      <div class="border-b border-red-100 bg-red-50/70 px-3 py-3 dark:border-red-500/20 dark:bg-red-500/10 sm:px-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div class="min-w-0">
+            <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Recommended</p>
+            <h2 class="mt-0.5 text-[17px] font-black leading-6 text-[#0F172A] dark:text-white sm:text-base">Current Payments</h2>
+            <p class="mt-1 text-xs font-semibold leading-5 text-red-800 dark:text-red-100/80">Tick the payments you want to pay together. One bank transfer saves extra transfer fees.</p>
           </div>
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-red-700 shadow-sm dark:bg-[#1E293B] dark:text-red-300"><%= icon_svg(:credit_card, classes: "h-5 w-5") %></span>
         </div>
       </div>
-    <% end %>
-  </section>
 
+      <%= form_with url: payment_batches_path, method: :post, class: "space-y-3 p-3 sm:p-4", data: { controller: "payment-selection" } do %>
+        <div class="overflow-hidden rounded-xl border border-red-100 bg-white dark:border-red-500/20 dark:bg-[#0F172A]">
+          <% payable_payments.each do |payment| %>
+            <label class="group flex cursor-pointer items-center gap-3 border-b border-red-50 px-3 py-3 transition last:border-b-0 hover:bg-red-50/60 has-[:checked]:bg-red-50 dark:border-red-500/10 dark:hover:bg-red-500/10 dark:has-[:checked]:bg-red-500/10 sm:px-4">
+              <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-red-50 text-red-700 ring-1 ring-red-100 transition group-has-[:checked]:bg-red-600 group-has-[:checked]:text-white dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20 dark:group-has-[:checked]:bg-red-600">
+                <%= check_box_tag "membership_payment_ids[]", payment.id, true,
+                  class: "h-4 w-4 rounded border-red-200 text-red-600 focus:ring-2 focus:ring-red-600 focus:ring-offset-1 dark:border-red-500/40 dark:bg-[#1E293B]",
+                  data: { payment_selection_target: "checkbox", action: "payment-selection#update", amount: payment.amount.to_i } %>
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-sm font-black text-[#0F172A] dark:text-white"><%= payment.membership_plan.name %></span>
+                <span class="mt-0.5 block truncate text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= payment.plan_type_label %> · <%= payment.period_label %></span>
+              </span>
+              <span class="shrink-0 text-right">
+                <span class="block text-sm font-black text-[#0F172A] dark:text-white"><%= yen(payment.amount) %></span>
+                <span class="mt-0.5 block text-[10px] font-black uppercase tracking-wide text-red-700 opacity-0 transition group-has-[:checked]:opacity-100 dark:text-red-300">Selected</span>
+              </span>
+            </label>
+          <% end %>
+        </div>
+
+        <div class="hidden flex-col gap-2 rounded-xl border border-red-100 bg-white px-3 py-3 dark:border-red-500/20 dark:bg-[#1E293B] sm:flex sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">
+            <span data-payment-selection-target="count"><%= payable_payments.count %></span> selected ·
+            <span class="font-black text-[#0F172A] dark:text-white" data-payment-selection-target="total"><%= yen(payable_payments.sum(&:amount)) %></span>
+          </p>
+          <%= button_tag type: :submit, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "sm:w-auto"), data: { payment_selection_target: "submit" } do %>
+            <%= icon_svg(:credit_card, classes: "h-4 w-4") %>
+            <span>Pay Selected Together</span>
+          <% end %>
+        </div>
+
+        <div class="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+4.85rem)] z-30 rounded-2xl border border-red-100 bg-white/95 p-2.5 shadow-[0_16px_40px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-red-500/20 dark:bg-[#1E293B]/95 sm:hidden">
+          <div class="grid grid-cols-[1fr_auto] items-center gap-2">
+            <div class="min-w-0">
+              <p class="text-[10px] font-black uppercase tracking-wide text-red-700 dark:text-red-300">
+                <span data-payment-selection-target="count"><%= payable_payments.count %></span> selected
+              </p>
+              <p class="mt-0.5 truncate text-lg font-black text-[#0F172A] dark:text-white" data-payment-selection-target="total"><%= yen(payable_payments.sum(&:amount)) %></p>
+            </div>
+            <%= button_tag type: :submit, class: action_button_classes(:primary, size: :xs, extra: "px-3 py-2"), data: { payment_selection_target: "submit" } do %>
+              <%= icon_svg(:credit_card, classes: "h-4 w-4") %>
+              <span>Pay Together</span>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="h-20 sm:hidden" aria-hidden="true"></div>
+      <% end %>
+    </section>
+  <% elsif @current_payment_batches.empty? %>
+    <section class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-100">
+      <div class="flex gap-3">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-emerald-700 shadow-sm dark:bg-[#1E293B] dark:text-emerald-300"><%= icon_svg(:check, classes: "h-4 w-4") %></span>
+        <div>
+          <p class="font-black">No payment due right now.</p>
+          <p class="mt-1 leading-6">New required fees will appear here automatically.</p>
+        </div>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @current_payment_batches.any? %>
+    <section class="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+      <div class="border-b border-[#E2E8F0] px-3 py-2.5 dark:border-[#334155] sm:px-4 sm:py-3">
+        <h2 class="text-[17px] font-black leading-6 text-[#0F172A] dark:text-white sm:text-base">Submitted Combined Payments</h2>
+        <p class="mt-0.5 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1] sm:mt-1">Payment groups submitted or prepared for one bank transfer.</p>
+      </div>
+      <div class="grid gap-2 p-2 sm:gap-3 sm:p-4 lg:grid-cols-2">
+        <%= render partial: "payment_batch_card", collection: @current_payment_batches, as: :payment_batch %>
+      </div>
+    </section>
+  <% end %>
   <% if @available_payment_plans.any? %>
     <section class="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
       <div class="border-b border-[#E2E8F0] px-3 py-2.5 dark:border-[#334155] sm:px-4 sm:py-3">

@@ -14,7 +14,8 @@ module Admin
       current_balance = FinanceTransaction.approved_income_total - FinanceTransaction.approved_expense_total
       new_members_this_month = MemberProfile.active.where(joined_on: Date.current.all_month).count
       draft_minutes = MeetingMinute.draft.count
-      payments_to_verify = MembershipPayment.pending_verification.count
+      payment_batches_to_verify = PaymentBatch.pending_verification.count
+      payments_to_verify = MembershipPayment.pending_verification.where(payment_batch_id: nil).count + payment_batches_to_verify
       payments_waiting_transfer = MembershipPayment.pending.count
 
       @stats = [
@@ -38,12 +39,20 @@ module Admin
       @recent_welfare_cases = visible_welfare_cases.includes(:welfare_category, :user, :assigned_to).latest.limit(5)
       @upcoming_events = Event.published.upcoming.limit(3)
       @pending_verification_payments = if @finance_dashboard_enabled
-        MembershipPayment.pending_verification
+        MembershipPayment.pending_verification.where(payment_batch_id: nil)
           .includes({ membership_plan: :membership_plan_type }, user: :member_profile)
           .latest
           .limit(4)
       else
         MembershipPayment.none
+      end
+      @pending_verification_batches = if @finance_dashboard_enabled
+        PaymentBatch.pending_verification
+          .includes(:user, membership_payments: { membership_plan: :membership_plan_type })
+          .latest
+          .limit(3)
+      else
+        PaymentBatch.none
       end
       @recent_activities = recent_activities
       @finance_chart = finance_chart
@@ -97,11 +106,11 @@ module Admin
 
       {
         pending: MembershipPayment.pending.count,
-        pending_verification: MembershipPayment.pending_verification.count,
+        pending_verification: MembershipPayment.pending_verification.where(payment_batch_id: nil).count + PaymentBatch.pending_verification.count,
         paid: MembershipPayment.paid.count,
         this_month: MembershipPayment.where(created_at: Date.current.all_month).count,
         pending_amount: MembershipPayment.pending.sum(:amount),
-        pending_verification_amount: MembershipPayment.pending_verification.sum(:amount),
+        pending_verification_amount: MembershipPayment.pending_verification.where(payment_batch_id: nil).sum(:amount) + PaymentBatch.pending_verification.sum(:total_amount),
         paid_amount: MembershipPayment.paid.sum(:amount),
         this_month_amount: MembershipPayment.where(created_at: Date.current.all_month).sum(:amount),
         paid_this_month: paid_this_month.count,

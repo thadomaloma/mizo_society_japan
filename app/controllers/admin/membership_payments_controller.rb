@@ -16,10 +16,15 @@ module Admin
         .by_year(@year)
         .by_plan_type(@plan_type_id)
         .latest
+      @membership_payments = @membership_payments.where(payment_batch_id: nil) if @status.blank? || @status == "pending_verification"
+      @payment_batches = policy_scope(PaymentBatch)
+        .includes(:user, membership_payments: { membership_plan: :membership_plan_type })
+        .reviewable
+        .latest
       @payment_summary = {
         total: @membership_payments.count,
-        pending: @membership_payments.count(&:pending_verification?),
-        amount: @membership_payments.sum(&:amount)
+        pending: @membership_payments.count(&:pending_verification?) + @payment_batches.count,
+        amount: @membership_payments.sum(&:amount) + @payment_batches.sum(&:total_amount)
       }
       @years = MembershipPayment.distinct.order(payment_year: :desc).pluck(:payment_year)
       @plan_type_options = MembershipPlanType.active.latest

@@ -73,20 +73,22 @@
 
           <section class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
             <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">From ゆうちょ銀行</p>
-            <p class="mt-1 text-[11px] font-semibold leading-4 text-[#64748B] dark:text-[#CBD5E1]">Use this when ゆうちょ app or ATM asks for 記号・番号.</p>
+            <p class="mt-1 text-[11px] font-semibold leading-4 text-[#64748B] dark:text-[#CBD5E1]">Use these when ゆうちょ app or ATM asks for 記号 and 番号 separately.</p>
             <dl class="mt-3 space-y-2">
               <% [
-                [ "Yuucho Symbol / Number", @bank_transfer_details[:yucho_symbol_number] ],
+                [ "Yuucho Symbol<br><span class=\"normal-case tracking-normal\">記号</span>".html_safe, @bank_transfer_details[:yucho_symbol] ],
+                [ "Yuucho Number<br><span class=\"normal-case tracking-normal\">番号</span>".html_safe, @bank_transfer_details[:yucho_number] ],
                 [ "Account Name", @bank_transfer_details[:account_name] ]
               ].each do |label, value| %>
                 <% next if value.blank? %>
-                <% copyable = label == "Yuucho Symbol / Number" %>
+                <% copyable = label.to_s.include?("Yuucho Symbol") || label.to_s.include?("Yuucho Number") %>
+                <% copy_title = strip_tags(label.to_s).squish %>
                 <div class="flex gap-3 rounded-lg bg-white/70 px-3 py-2 dark:bg-[#1E293B]/70">
                   <dt class="w-28 shrink-0 text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></dt>
                   <dd class="flex min-w-0 flex-1 items-center justify-between gap-2">
                     <span class="min-w-0 break-words text-sm font-black text-[#0F172A] dark:text-white"><%= value %></span>
                     <% if copyable %>
-                      <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2 text-[11px] font-black text-[#64748B] transition hover:border-red-200 hover:text-red-700 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#CBD5E1] dark:hover:text-red-300" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= label %>">
+                      <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2 text-[11px] font-black text-[#64748B] transition hover:border-red-200 hover:text-red-700 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#CBD5E1] dark:hover:text-red-300" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= copy_title %>">
                         <%= icon_svg(:copy, classes: "h-3.5 w-3.5") %>
                         <span data-clipboard-target="label">Copy</span>
                       </button>
@@ -216,7 +218,7 @@
             <div class="rounded-lg bg-white p-3 ring-1 ring-[#E2E8F0] dark:bg-[#1E293B] dark:ring-[#334155]">
               <p class="text-sm font-black text-[#0F172A] dark:text-white">From ゆうちょ to ゆうちょ</p>
               <p class="mt-1 text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]">
-                Use Yuucho Symbol / Number if your app or ATM asks for 記号・番号.
+                Use Yuucho Symbol and Yuucho Number if your app or ATM asks for 記号 and 番号.
               </p>
             </div>
           </div>
@@ -226,7 +228,7 @@
           <% [
             [ "Choose transfer method", "Use your bank app, ゆうちょダイレクト, ゆうちょ通帳アプリ, or a ゆうちょ ATM." ],
             [ "From another bank", "Select 振込, choose ゆうちょ銀行, then use Store Name or Store No., Account Number, and Account Name." ],
-            [ "From ゆうちょ to ゆうちょ", "Use Yuucho Symbol / Number when your app or ATM asks for 記号・番号." ],
+            [ "From ゆうちょ to ゆうちょ", "Use Yuucho Symbol (記号) and Yuucho Number (番号) when your app or ATM asks for them." ],
             [ "Confirm amount and name", "Enter #{yen(@membership_payment.amount)} and make sure the receiver name matches the account name above." ],
             [ "Submit details here", "After transfer is complete, return to this page and submit Transfer Date, Amount, and Reference Name." ]
           ].each_with_index do |(title, body), index| %>

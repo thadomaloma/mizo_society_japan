@@ -44,6 +44,7 @@ class User < ApplicationRecord
 
   has_one :member_profile, dependent: :destroy
   has_many :membership_payments, dependent: :destroy
+  has_many :payment_batches, dependent: :destroy
   has_many :approved_membership_payments, class_name: "MembershipPayment", foreign_key: :approved_by_id, dependent: :nullify, inverse_of: :approved_by
   has_many :recorded_finance_transactions, class_name: "FinanceTransaction", foreign_key: :recorded_by_id, dependent: :restrict_with_error, inverse_of: :recorded_by
   has_many :approved_finance_transactions, class_name: "FinanceTransaction", foreign_key: :approved_by_id, dependent: :nullify, inverse_of: :approved_by

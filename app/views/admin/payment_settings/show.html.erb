@@ -99,9 +99,19 @@
                 [ "Account Number", value_for.call("bank_account_number") ],
                 [ "Account Name", value_for.call("bank_account_name") ]
               ].each do |label, value| %>
+                <% copyable = label.to_s.include?("Store Name") || label.to_s.include?("Store Number") || label == "Account Number" %>
+                <% copy_title = strip_tags(label.to_s).squish %>
                 <div class="flex items-start justify-between gap-3 rounded-xl bg-white px-3 py-2 dark:bg-slate-800">
                   <dt class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500"><%= label %></dt>
-                  <dd class="max-w-[11rem] text-right font-black text-slate-950 dark:text-white"><%= value %></dd>
+                  <dd class="flex min-w-0 items-center justify-end gap-2">
+                    <span class="max-w-[9rem] truncate text-right font-black text-slate-950 dark:text-white"><%= value %></span>
+                    <% if copyable && value != "Not set" %>
+                      <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-black text-slate-500 transition hover:border-red-200 hover:text-red-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-red-300" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= copy_title %>">
+                        <%= icon_svg(:copy, classes: "h-3.5 w-3.5") %>
+                        <span data-clipboard-target="label">Copy</span>
+                      </button>
+                    <% end %>
+                  </dd>
                 </div>
               <% end %>
             </dl>
@@ -109,9 +119,25 @@
 
           <div class="rounded-2xl border border-red-100 bg-red-50 p-3 dark:border-red-500/20 dark:bg-red-500/10">
             <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">From ゆうちょ銀行</p>
-            <div class="mt-3 flex items-start justify-between gap-3 rounded-xl bg-white px-3 py-2 dark:bg-slate-900">
-              <p class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">Yuucho Symbol / Number</p>
-              <p class="max-w-[11rem] text-right text-sm font-black text-slate-950 dark:text-white"><%= value_for.call("yucho_symbol_number") %></p>
+            <div class="mt-3 space-y-2">
+              <% [
+                [ "Yuucho Symbol<br><span class=\"normal-case tracking-normal\">記号</span>".html_safe, value_for.call("yucho_symbol") ],
+                [ "Yuucho Number<br><span class=\"normal-case tracking-normal\">番号</span>".html_safe, value_for.call("yucho_number") ]
+              ].each do |label, value| %>
+                <% copy_title = strip_tags(label.to_s).squish %>
+                <div class="flex items-start justify-between gap-3 rounded-xl bg-white px-3 py-2 dark:bg-slate-900">
+                  <p class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500"><%= label %></p>
+                  <div class="flex min-w-0 items-center justify-end gap-2">
+                    <p class="max-w-[9rem] truncate text-right text-sm font-black text-slate-950 dark:text-white"><%= value %></p>
+                    <% if value != "Not set" %>
+                      <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-black text-slate-500 transition hover:border-red-200 hover:text-red-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-red-300" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= copy_title %>">
+                        <%= icon_svg(:copy, classes: "h-3.5 w-3.5") %>
+                        <span data-clipboard-target="label">Copy</span>
+                      </button>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
             </div>
           </div>
         </div>
@@ -120,7 +146,7 @@
       <section class="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10 sm:p-5">
         <h3 class="text-sm font-black text-amber-800 dark:text-amber-200">Treasurer Note</h3>
         <p class="mt-2 text-sm font-semibold leading-6 text-amber-700 dark:text-amber-100">
-          QR code is no longer shown to members. Keep the store name, store number, account number, and ゆうちょ symbol accurate.
+          QR code is no longer shown to members. Keep the store name, store number, account number, ゆうちょ symbol, and ゆうちょ number accurate.
         </p>
       </section>
     </aside>
