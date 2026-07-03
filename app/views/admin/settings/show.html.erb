@@ -2,30 +2,10 @@
 
 <div class="mx-auto max-w-6xl space-y-6">
   <% can_update_settings = policy(AppSetting).update? %>
-  <% settings_actions = capture do %>
-    <% if current_user.super_admin? %>
-      <div class="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-nowrap">
-        <%= link_to admin_user_roles_path, class: action_button_classes(:secondary, size: :sm, extra: "w-full px-2 sm:w-auto sm:px-3") do %>
-          <%= icon_svg(:user_plus, classes: "h-4 w-4") %>
-          <span class="truncate sm:overflow-visible sm:whitespace-nowrap">User Roles</span>
-        <% end %>
-        <%= link_to admin_audit_logs_path, class: action_button_classes(:secondary, size: :sm, extra: "w-full px-2 sm:w-auto sm:px-3") do %>
-          <%= icon_svg(:reports, classes: "h-4 w-4") %>
-          <span class="truncate sm:overflow-visible sm:whitespace-nowrap">Audit Logs</span>
-        <% end %>
-        <%= link_to admin_permissions_path, class: action_button_classes(:secondary, size: :sm, extra: "w-full px-2 sm:w-auto sm:px-3") do %>
-          <%= icon_svg(:lock, classes: "h-4 w-4") %>
-          <span class="truncate sm:overflow-visible sm:whitespace-nowrap">Permissions</span>
-        <% end %>
-      </div>
-    <% end %>
-  <% end %>
-
   <%= render "shared/page_header",
     eyebrow: "Administration",
     title: "Settings",
-    subtitle: "Central controls for organization details, bank transfer instructions, notices, and future system operations.",
-    actions: settings_actions %>
+    subtitle: "Central controls for organization details, bank transfer instructions, notices, and future system operations." %>
 
   <% if @settings_errors.present? %>
     <section class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100">

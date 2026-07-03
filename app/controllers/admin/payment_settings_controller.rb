@@ -40,17 +40,10 @@ module Admin
       },
       {
         key: "yucho_symbol_number",
-        label: "Yuucho Symbol / Number (optional)",
-        description: "Only needed for ゆうちょ-to-ゆうちょ transfers. Leave blank if members should use store name, store number, and account number.",
+        label: "Yuucho Symbol / Number",
+        description: "Use this for ゆうちょ銀行 to ゆうちょ銀行 transfers when the app or ATM asks for 記号・番号.",
         type: :text,
         placeholder: "記号 12345 / 番号 12345671"
-      },
-      {
-        key: "bank_qr_code_url",
-        label: "Bank QR Code URL",
-        description: "Optional image URL for bank transfer instructions.",
-        type: :url,
-        placeholder: "https://example.com/bank-qr.png"
       }
     ].freeze
     BANK_SETTING_KEYS = BANK_SETTING_DEFINITIONS.pluck(:key).freeze
@@ -108,11 +101,7 @@ module Admin
     end
 
     def settings_errors_for(settings)
-      errors = []
-      if settings["bank_qr_code_url"].present? && !settings["bank_qr_code_url"].match?(URI::DEFAULT_PARSER.make_regexp(%w[http https]))
-        errors << "Bank QR Code URL is not valid."
-      end
-      errors
+      []
     end
   end
 end

@@ -1,10 +1,13 @@
 <% content_for :page_title, "Payment" %>
 
-<div class="space-y-6">
+<% review_available = policy(@membership_payment).approve? || policy(@membership_payment).reject? %>
+<% destructive_available = policy(@membership_payment).destroy? %>
+<% submitted_transfer = @membership_payment.transferred_on.present? || @membership_payment.transfer_reference_name.present? || @membership_payment.transfer_screenshot.attached? %>
+
+<div class="space-y-4 sm:space-y-6">
   <%= render "shared/page_header",
     eyebrow: "Payment",
     title: user_label(@membership_payment.user),
-    subtitle: "#{@membership_payment.membership_plan.name} · #{@membership_payment.period_label}",
     actions: safe_join([
       link_to(admin_membership_payments_path, class: action_button_classes(:secondary)) do
         safe_join([ icon_svg(:arrow_left, classes: "h-4 w-4"), tag.span("Back") ])
@@ -14,96 +17,166 @@
       end if policy(@membership_payment).update?)
     ].compact, " ") %>
 
-  <section class="grid gap-5 lg:grid-cols-[1fr_22rem]">
-    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <% if @membership_payment.user.member_profile.present? %>
-        <div class="mb-5 rounded-2xl border border-[#E2E8F0] bg-slate-50 p-4 dark:border-[#334155] dark:bg-[#0F172A]">
-          <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400">Member Contact</p>
-          <p class="mt-1 font-black text-gray-950 dark:text-white"><%= @membership_payment.user.display_name %></p>
-          <p class="mt-1 text-sm font-semibold text-gray-500 dark:text-gray-300"><%= @membership_payment.user.member_profile.mobile_number %></p>
-          <div class="mt-3">
-            <%= render "admin/shared/member_contact_actions", user: @membership_payment.user %>
+  <section class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <div class="space-y-4">
+      <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white p-4 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800 sm:p-5">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="min-w-0">
+              <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300"><%= @membership_payment.plan_type_label %></p>
+              <h2 class="mt-1 truncate text-xl font-black text-slate-950 dark:text-white"><%= @membership_payment.membership_plan.name %></h2>
+              <p class="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400"><%= @membership_payment.period_label %></p>
+            </div>
+            <div class="flex shrink-0 items-center gap-2">
+              <%= render "shared/status_badge", status: @membership_payment.status %>
+            </div>
           </div>
         </div>
+
+        <div class="grid gap-3 p-4 sm:grid-cols-3 sm:p-5">
+          <div class="rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4 dark:border-emerald-400/20 dark:bg-emerald-400/10">
+            <p class="text-xs font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Amount</p>
+            <p class="mt-2 text-2xl font-black tabular-nums text-slate-950 dark:text-white"><%= yen(@membership_payment.amount) %></p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
+            <p class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">Payment Method</p>
+            <p class="mt-2 font-black capitalize text-slate-950 dark:text-white"><%= @membership_payment.payment_method.humanize %></p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
+            <p class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">Reference</p>
+            <p class="mt-2 truncate font-black text-slate-950 dark:text-white"><%= @membership_payment.reference_number.presence || "Not recorded" %></p>
+          </div>
+        </div>
+      </article>
+
+      <% if @membership_payment.user.member_profile.present? %>
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="min-w-0">
+              <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Member Contact</p>
+              <p class="mt-1 truncate font-black text-slate-950 dark:text-white"><%= @membership_payment.user.display_name %></p>
+              <p class="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400"><%= @membership_payment.user.member_profile.mobile_number %></p>
+            </div>
+            <div class="sm:min-w-44">
+              <%= render "admin/shared/member_contact_actions", user: @membership_payment.user %>
+            </div>
+          </div>
+        </article>
       <% end %>
 
-      <div class="grid gap-5 sm:grid-cols-2">
-        <div>
-          <p class="text-sm font-bold text-gray-500">Amount</p>
-          <p class="mt-2 text-3xl font-black text-gray-950"><%= yen(@membership_payment.amount) %></p>
-        </div>
-        <div>
-          <p class="text-sm font-bold text-gray-500">Status</p>
-          <p class="mt-2"><%= render "shared/status_badge", status: @membership_payment.status %></p>
-        </div>
-        <div>
-          <p class="text-sm font-bold text-gray-500">Payment method</p>
-          <p class="mt-2 font-black capitalize text-gray-950"><%= @membership_payment.payment_method.humanize %></p>
-        </div>
-        <div>
-          <p class="text-sm font-bold text-gray-500">Reference</p>
-          <p class="mt-2 font-black text-gray-950"><%= @membership_payment.reference_number.presence || "Not recorded" %></p>
-        </div>
-        <div>
-          <p class="text-sm font-bold text-gray-500">Paid on</p>
-          <p class="mt-2 font-black text-gray-950"><%= @membership_payment.paid_on&.strftime("%b %d, %Y") || "Not recorded" %></p>
-        </div>
-        <div>
-          <p class="text-sm font-bold text-gray-500">Approved by</p>
-          <p class="mt-2 font-black text-gray-950"><%= @membership_payment.approved_by&.display_name || "Not approved" %></p>
-        </div>
-      </div>
+      <% if submitted_transfer %>
+        <article class="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10 sm:p-5">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p class="text-xs font-black uppercase tracking-wide text-amber-700 dark:text-amber-300">Member transfer submission</p>
+              <h3 class="mt-1 text-base font-black text-slate-950 dark:text-white">Bank transfer details</h3>
+            </div>
+            <% if @membership_payment.transfer_screenshot.attached? %>
+              <%= link_to rails_blob_path(@membership_payment.transfer_screenshot, disposition: "attachment"), class: action_button_classes(:secondary, size: :sm), target: "_blank", rel: "noopener" do %>
+                <%= icon_svg(:download, classes: "h-4 w-4") %>
+                <span>Screenshot</span>
+              <% end %>
+            <% end %>
+          </div>
 
-      <% if @membership_payment.transferred_on.present? || @membership_payment.transfer_reference_name.present? || @membership_payment.transfer_screenshot.attached? %>
-        <div class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
-          <p class="text-xs font-black uppercase tracking-wide text-amber-700 dark:text-amber-300">Member transfer submission</p>
-          <div class="mt-4 grid gap-4 sm:grid-cols-3">
-            <div>
-              <p class="text-xs font-bold text-amber-700 dark:text-amber-200">Transfer date</p>
-              <p class="mt-1 font-black text-gray-950 dark:text-white"><%= @membership_payment.transferred_on&.strftime("%b %d, %Y") || "Not submitted" %></p>
+          <div class="mt-4 grid gap-2 sm:grid-cols-3">
+            <div class="rounded-xl border border-amber-200/70 bg-white/70 p-3 dark:border-amber-500/20 dark:bg-slate-900/60">
+              <p class="text-xs font-black uppercase tracking-wide text-amber-700 dark:text-amber-300">Transfer Date</p>
+              <p class="mt-1 font-black text-slate-950 dark:text-white"><%= @membership_payment.transferred_on&.strftime("%b %d, %Y") || "Not submitted" %></p>
             </div>
-            <div>
-              <p class="text-xs font-bold text-amber-700 dark:text-amber-200">Submitted amount</p>
-              <p class="mt-1 font-black text-gray-950 dark:text-white"><%= yen(@membership_payment.transfer_amount || @membership_payment.amount) %></p>
+            <div class="rounded-xl border border-amber-200/70 bg-white/70 p-3 dark:border-amber-500/20 dark:bg-slate-900/60">
+              <p class="text-xs font-black uppercase tracking-wide text-amber-700 dark:text-amber-300">Submitted Amount</p>
+              <p class="mt-1 font-black text-slate-950 dark:text-white"><%= yen(@membership_payment.transfer_amount || @membership_payment.amount) %></p>
             </div>
-            <div>
-              <p class="text-xs font-bold text-amber-700 dark:text-amber-200">Reference name</p>
-              <p class="mt-1 font-black text-gray-950 dark:text-white"><%= @membership_payment.transfer_reference_name.presence || "Not submitted" %></p>
+            <div class="rounded-xl border border-amber-200/70 bg-white/70 p-3 dark:border-amber-500/20 dark:bg-slate-900/60">
+              <p class="text-xs font-black uppercase tracking-wide text-amber-700 dark:text-amber-300">Reference Name</p>
+              <p class="mt-1 truncate font-black text-slate-950 dark:text-white"><%= @membership_payment.transfer_reference_name.presence || "Not submitted" %></p>
             </div>
           </div>
-          <% if @membership_payment.transfer_screenshot.attached? %>
-            <%= link_to rails_blob_path(@membership_payment.transfer_screenshot, disposition: "attachment"), class: "#{action_button_classes(:secondary, size: :sm)} mt-4", target: "_blank", rel: "noopener" do %>
-              <%= icon_svg(:download, classes: "h-4 w-4") %>
-              <span>Download screenshot</span>
+        </article>
+      <% end %>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+        <h3 class="text-base font-black text-slate-950 dark:text-white">Approval record</h3>
+        <div class="mt-4 grid gap-2 sm:grid-cols-2">
+          <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+            <p class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">Paid On</p>
+            <p class="mt-1 font-black text-slate-950 dark:text-white"><%= @membership_payment.paid_on&.strftime("%b %d, %Y") || "Not recorded" %></p>
+          </div>
+          <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+            <p class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">Approved By</p>
+            <p class="mt-1 truncate font-black text-slate-950 dark:text-white"><%= @membership_payment.approved_by&.display_name || "Not approved" %></p>
+          </div>
+        </div>
+
+        <div class="mt-4 border-t border-slate-100 pt-4 dark:border-slate-700">
+          <p class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">Notes</p>
+          <p class="mt-2 whitespace-pre-line text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300"><%= @membership_payment.notes.presence || "No notes." %></p>
+        </div>
+      </article>
+    </div>
+
+    <aside class="xl:sticky xl:top-24 xl:self-start">
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Treasurer Review</p>
+            <h3 class="mt-1 text-lg font-black text-slate-950 dark:text-white">Review actions</h3>
+          </div>
+          <%= render "shared/status_badge", status: @membership_payment.status, compact: true %>
+        </div>
+
+        <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+          <p class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">Checklist</p>
+          <ul class="mt-2 space-y-2 text-xs font-semibold leading-5 text-slate-600 dark:text-slate-300">
+            <li class="flex gap-2"><%= icon_svg(:check, classes: "mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300") %><span>Confirm transfer amount.</span></li>
+            <li class="flex gap-2"><%= icon_svg(:check, classes: "mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300") %><span>Match reference name with bank record.</span></li>
+            <li class="flex gap-2"><%= icon_svg(:check, classes: "mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300") %><span>Approve only after confirmation.</span></li>
+          </ul>
+        </div>
+
+        <% review_primary_button_classes = "inline-flex w-full min-w-0 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-black text-white shadow-sm shadow-emerald-950/10 transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 dark:focus:ring-offset-slate-800" %>
+        <% review_secondary_button_classes = "inline-flex w-full min-w-0 items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200 dark:hover:bg-red-500/15 dark:focus:ring-offset-slate-800" %>
+        <% review_delete_button_classes = "inline-flex w-full min-w-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-600 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-200 dark:focus:ring-offset-slate-800" %>
+
+        <div class="mt-4 space-y-2">
+          <% if review_available %>
+            <% if policy(@membership_payment).approve? %>
+              <%= button_to approve_admin_membership_payment_path(@membership_payment), method: :patch, class: review_primary_button_classes do %>
+                <%= icon_svg(:check, classes: "h-4 w-4 shrink-0") %>
+                <span class="truncate">Approve Payment</span>
+              <% end %>
+            <% end %>
+
+            <div class="grid gap-2 <%= destructive_available && policy(@membership_payment).reject? ? "grid-cols-2" : "grid-cols-1" %>">
+              <% if policy(@membership_payment).reject? %>
+                <%= button_to reject_admin_membership_payment_path(@membership_payment), method: :patch, form: { class: "min-w-0" }, data: { turbo_confirm: "Reject this payment?" }, class: review_secondary_button_classes do %>
+                  <%= icon_svg(:x_mark, classes: "h-4 w-4 shrink-0") %>
+                  <span class="truncate">Reject</span>
+                <% end %>
+              <% end %>
+
+              <% if destructive_available %>
+                <%= button_to admin_membership_payment_path(@membership_payment), method: :delete, form: { class: "min-w-0" }, data: { turbo_confirm: "Delete this payment? This cannot be undone." }, class: review_delete_button_classes do %>
+                  <%= icon_svg(:trash, classes: "h-4 w-4 shrink-0") %>
+                  <span class="truncate">Delete</span>
+                <% end %>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+              No review action is available for this status.
+            </div>
+
+            <% if destructive_available %>
+              <%= button_to admin_membership_payment_path(@membership_payment), method: :delete, data: { turbo_confirm: "Delete this payment? This cannot be undone." }, class: review_delete_button_classes do %>
+                <%= icon_svg(:trash, classes: "h-4 w-4 shrink-0") %>
+                <span class="truncate">Delete Record</span>
+              <% end %>
             <% end %>
           <% end %>
         </div>
-      <% end %>
-
-      <div class="mt-6 border-t border-gray-200 pt-6">
-        <p class="text-sm font-bold text-gray-500">Notes</p>
-        <p class="mt-2 text-sm leading-6 text-gray-700"><%= @membership_payment.notes.presence || "No notes." %></p>
       </div>
-    </div>
-
-    <aside class="space-y-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <h3 class="text-lg font-black text-gray-950">Review actions</h3>
-      <% if policy(@membership_payment).approve? %>
-        <%= button_to approve_admin_membership_payment_path(@membership_payment), method: :patch, class: action_button_classes(:success, full_width: true) do %>
-          <%= icon_svg(:check, classes: "h-4 w-4") %>
-          <span>Approve</span>
-        <% end %>
-        <%= button_to reject_admin_membership_payment_path(@membership_payment), method: :patch, class: action_button_classes(:danger, full_width: true) do %>
-          <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
-          <span>Reject</span>
-        <% end %>
-      <% end %>
-      <% if policy(@membership_payment).destroy? %>
-        <%= button_to admin_membership_payment_path(@membership_payment), method: :delete, data: { turbo_confirm: "Delete this payment?" }, class: action_button_classes(:outline_danger, full_width: true) do %>
-          <%= icon_svg(:trash, classes: "h-4 w-4") %>
-          <span>Delete</span>
-        <% end %>
-      <% end %>
     </aside>
   </section>
 </div>
