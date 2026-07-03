@@ -2,17 +2,17 @@ require "test_helper"
 
 class MemberProfileTest < ActiveSupport::TestCase
   test "accepts and normalizes domestic Japan mobile numbers" do
-    profile = build_profile(mobile_number: "090-1234-5678")
+    profile = build_profile(mobile_number: "090-2468-1357")
 
     assert profile.valid?
-    assert_equal "09012345678", profile.mobile_number
+    assert_equal "09024681357", profile.mobile_number
   end
 
   test "accepts and normalizes plus eighty one Japan mobile numbers" do
-    profile = build_profile(mobile_number: "+81 90-1234-5678")
+    profile = build_profile(mobile_number: "+81 90-2468-1357")
 
     assert profile.valid?
-    assert_equal "09012345678", profile.mobile_number
+    assert_equal "09024681357", profile.mobile_number
   end
 
   test "rejects non Japan mobile numbers" do
@@ -23,7 +23,7 @@ class MemberProfileTest < ActiveSupport::TestCase
   end
 
   test "requires address line one to include a street number" do
-    profile = build_profile(mobile_number: "09012345678")
+    profile = build_profile(mobile_number: "09024681357")
     profile.address_line1 = "南大野"
 
     assert_not profile.valid?
@@ -31,10 +31,24 @@ class MemberProfileTest < ActiveSupport::TestCase
   end
 
   test "accepts address line one with full width street number" do
-    profile = build_profile(mobile_number: "09012345678")
+    profile = build_profile(mobile_number: "09024681357")
     profile.address_line1 = "南大野３-１１-２"
 
     assert profile.valid?
+  end
+
+  test "rejects example mobile numbers" do
+    profile = build_profile(mobile_number: "07012345678")
+
+    assert_not profile.valid?
+    assert_includes profile.errors[:mobile_number], "cannot be an example or placeholder number"
+  end
+
+  test "rejects repeated placeholder mobile numbers" do
+    profile = build_profile(mobile_number: "09000000000")
+
+    assert_not profile.valid?
+    assert_includes profile.errors[:mobile_number], "cannot be an example or placeholder number"
   end
 
   private

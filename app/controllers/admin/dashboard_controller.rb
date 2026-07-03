@@ -8,9 +8,9 @@ module Admin
       role_counts = User.group(:role).count
       @finance_dashboard_enabled = current_user.finance_viewer?
       visible_welfare_cases = policy_scope(WelfareCase)
-      monthly_transactions = FinanceTransaction.approved.this_month
-      monthly_income = monthly_transactions.income.sum(:amount)
-      monthly_expense = monthly_transactions.expense.sum(:amount)
+      yearly_transactions = FinanceTransaction.approved.where(transaction_date: Date.current.all_year)
+      yearly_income = yearly_transactions.income.sum(:amount)
+      yearly_expense = yearly_transactions.expense.sum(:amount)
       current_balance = FinanceTransaction.approved_income_total - FinanceTransaction.approved_expense_total
       new_members_this_month = MemberProfile.active.where(joined_on: Date.current.all_month).count
       draft_minutes = MeetingMinute.draft.count
@@ -49,8 +49,8 @@ module Admin
       @finance_chart = finance_chart
       @membership_payment_summary = membership_payment_summary
       @finance_summary = {
-        income: monthly_income,
-        expense: monthly_expense,
+        income: yearly_income,
+        expense: yearly_expense,
         balance: current_balance
       }
       @welfare_summary = {
@@ -71,23 +71,25 @@ module Admin
     private
 
     def finance_chart
-      dates = (Date.current.beginning_of_month..Date.current).select { |date| (date.day % 5).zero? || date == Date.current }
-      month_range = Date.current.beginning_of_month..Date.current
-      income_by_date = FinanceTransaction.approved.income.where(transaction_date: month_range).group(:transaction_date).sum(:amount)
-      expense_by_date = FinanceTransaction.approved.expense.where(transaction_date: month_range).group(:transaction_date).sum(:amount)
+      months = (1..Date.current.month).map { |month| Date.new(Date.current.year, month, 1) }
+      year_range = Date.current.all_year
+      income_by_month = monthly_finance_totals(FinanceTransaction.approved.income.where(transaction_date: year_range))
+      expense_by_month = monthly_finance_totals(FinanceTransaction.approved.expense.where(transaction_date: year_range))
       running_income = 0
       running_expense = 0
 
-      cumulative_totals = month_range.each_with_object({}) do |date, totals|
-        running_income += income_by_date.fetch(date, 0)
-        running_expense += expense_by_date.fetch(date, 0)
-        totals[date] = { income: running_income, expense: running_expense }
+      months.map do |month|
+        running_income += income_by_month.fetch(month, 0)
+        running_expense += expense_by_month.fetch(month, 0)
+        { label: month.strftime("%b"), income: running_income.to_i, expense: running_expense.to_i }
       end
+    end
 
-      dates.map do |date|
-        totals = cumulative_totals.fetch(date, { income: 0, expense: 0 })
-        { label: date.strftime("%b %-d"), income: totals[:income].to_i, expense: totals[:expense].to_i }
-      end
+    def monthly_finance_totals(scope)
+      scope
+        .group("DATE_TRUNC('month', transaction_date)")
+        .sum(:amount)
+        .transform_keys { |month| month.to_date.beginning_of_month }
     end
 
     def membership_payment_summary

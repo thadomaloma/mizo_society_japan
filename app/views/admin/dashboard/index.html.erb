@@ -33,8 +33,8 @@
   </section>
 
   <section class="grid gap-5 xl:grid-cols-[1.15fr_1fr_1fr]">
-    <%= render "shared/section_card", title: "Financial Overview (This Month)", body_class: "p-5" do %>
-      <% chart_data = @finance_chart.presence || [ { label: Date.current.strftime("%b %-d"), income: 0, expense: 0 } ] %>
+    <%= render "shared/section_card", title: "Financial Overview (This Year)", body_class: "p-5" do %>
+      <% chart_data = @finance_chart.presence || [ { label: Date.current.strftime("%b"), income: 0, expense: 0 } ] %>
       <% max_value = [ chart_data.flat_map { |point| [ point[:income], point[:expense] ] }.max.to_i, 1 ].max %>
       <% chart_left = 38 %>
       <% chart_right = 328 %>
@@ -62,7 +62,7 @@
           <p class="mt-0.5 truncate text-sm font-black text-[#0F172A] dark:text-white sm:mt-1 sm:text-base"><%= yen(@finance_summary[:expense]) %></p>
         </div>
         <div class="min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-600 dark:bg-slate-800/70 sm:rounded-xl sm:px-3 sm:py-2.5">
-          <p class="truncate text-[10px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-300 sm:text-[11px]">Net</p>
+          <p class="truncate text-[10px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-300 sm:text-[11px]">Year Net</p>
           <p class="mt-0.5 truncate text-sm font-black sm:mt-1 sm:text-base <%= net_balance.negative? ? "text-red-700 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300" %>"><%= yen(net_balance) %></p>
         </div>
       </div>
@@ -73,10 +73,10 @@
             <span class="inline-flex items-center gap-2 text-emerald-700 dark:text-emerald-300"><span class="h-2 w-2 rounded-full bg-emerald-600 shadow-[0_0_0_4px_rgba(5,150,105,0.12)]"></span>Income</span>
             <span class="inline-flex items-center gap-2 text-red-700 dark:text-red-300"><span class="h-2 w-2 rounded-full bg-red-600 shadow-[0_0_0_4px_rgba(220,38,38,0.12)]"></span>Expense</span>
           </div>
-          <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-500 dark:bg-slate-700 dark:text-slate-200">Monthly trend</span>
+          <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-500 dark:bg-slate-700 dark:text-slate-200">Yearly trend</span>
         </div>
 
-        <svg viewBox="0 0 360 196" class="h-60 w-full overflow-visible" role="img" aria-label="Monthly income and expense trend">
+        <svg viewBox="0 0 360 196" class="h-60 w-full overflow-visible" role="img" aria-label="Yearly income and expense trend">
           <defs>
             <linearGradient id="incomeAreaGradient" x1="0" x2="0" y1="0" y2="1">
               <stop offset="0%" stop-color="#059669" stop-opacity="0.26" />
@@ -120,7 +120,7 @@
 
       <% if @finance_chart.blank? %>
         <div class="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-          No finance transactions yet for this month.
+          No finance transactions yet for this year.
         </div>
       <% end %>
     <% end %>
@@ -208,15 +208,22 @@
     <%= render "shared/section_card",
       title: "Welfare Cases",
       action: action_link("View all", admin_welfare_cases_path, icon: :welfare),
-      body_class: "space-y-4 p-5" do %>
+      body_class: "space-y-3 p-4 sm:p-5" do %>
+      <% welfare_total = [ @welfare_summary[:open], @welfare_summary[:in_progress], @welfare_summary[:resolved] ].sum %>
       <% [
-        [ "Open", @welfare_summary[:open], "text-red-700" ],
-        [ "In Progress", @welfare_summary[:in_progress], "text-amber-700" ],
-        [ "Resolved", @welfare_summary[:resolved], "text-emerald-700" ]
-      ].each do |label, count, tone| %>
-        <div class="flex items-center justify-between">
-          <p class="text-sm font-black <%= tone %>"><%= label %></p>
-          <p class="text-sm font-black text-gray-950 dark:text-white"><%= count %> Cases</p>
+        [ "Open", @welfare_summary[:open], "bg-red-600", "text-red-700 dark:text-red-300" ],
+        [ "In Progress", @welfare_summary[:in_progress], "bg-amber-500", "text-amber-700 dark:text-amber-300" ],
+        [ "Resolved", @welfare_summary[:resolved], "bg-emerald-600", "text-emerald-700 dark:text-emerald-300" ]
+      ].each do |label, count, bar, tone| %>
+        <% percentage = welfare_total.positive? ? ((count.to_f / welfare_total) * 100).round : 0 %>
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-sm font-black <%= tone %>"><%= label %></p>
+            <p class="text-sm font-black text-gray-950 dark:text-white"><%= count %></p>
+          </div>
+          <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+            <div class="h-full rounded-full <%= bar %>" style="width: <%= percentage %>%"></div>
+          </div>
         </div>
       <% end %>
     <% end %>

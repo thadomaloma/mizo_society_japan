@@ -1,5 +1,16 @@
 class MemberProfile < ApplicationRecord
   JAPAN_MOBILE_NUMBER_REGEX = /\A0[789]0\d{8}\z/
+  RESERVED_MOBILE_NUMBERS = %w[
+    07012345678
+    08012345678
+    09012345678
+    07000000000
+    08000000000
+    09000000000
+    07011111111
+    08011111111
+    09011111111
+  ].freeze
 
   REQUIRED_PROFILE_FIELDS = %i[
     full_name
@@ -30,6 +41,7 @@ class MemberProfile < ApplicationRecord
   validates :membership_number, presence: true, uniqueness: true
   validates :status, presence: true
   validate :address_line1_includes_street_number
+  validate :mobile_number_is_not_placeholder
   validates :mobile_number, format: {
     with: JAPAN_MOBILE_NUMBER_REGEX,
     message: "must be a valid Japan mobile number starting with 070, 080, or 090"
@@ -144,6 +156,29 @@ class MemberProfile < ApplicationRecord
     return if normalized_address.match?(/\d/)
 
     errors.add(:address_line1, "must include a street or building number")
+  end
+
+  def mobile_number_is_not_placeholder
+    return if mobile_number.blank?
+    return unless mobile_number.match?(JAPAN_MOBILE_NUMBER_REGEX)
+
+    local_part = mobile_number[3..]
+    return unless RESERVED_MOBILE_NUMBERS.include?(mobile_number) ||
+      repeated_digits?(local_part) ||
+      sequential_digits?(local_part)
+
+    errors.add(:mobile_number, "cannot be an example or placeholder number")
+  end
+
+  def repeated_digits?(value)
+    value.chars.uniq.one?
+  end
+
+  def sequential_digits?(value)
+    ascending = "0123456789"
+    descending = ascending.reverse
+
+    ascending.include?(value) || descending.include?(value)
   end
 
   def remove_children_unless_family

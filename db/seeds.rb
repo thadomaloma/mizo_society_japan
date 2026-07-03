@@ -19,7 +19,7 @@ super_admin.save!
 profile = super_admin.member_profile || super_admin.build_member_profile
 profile.assign_attributes(
   full_name: super_admin.name,
-  mobile_number: profile.mobile_number.presence || ENV.fetch("SEED_SUPER_ADMIN_MOBILE", "09012345678"),
+  mobile_number: profile.mobile_number.presence || ENV.fetch("SEED_SUPER_ADMIN_MOBILE", "09024681357"),
   postal_code: profile.postal_code.presence || ENV.fetch("SEED_SUPER_ADMIN_POSTAL_CODE", "169-0075"),
   prefecture: profile.prefecture.presence || ENV.fetch("SEED_SUPER_ADMIN_PREFECTURE", "Tokyo"),
   city: profile.city.presence || ENV.fetch("SEED_SUPER_ADMIN_CITY", "Shinjuku"),
