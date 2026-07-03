@@ -1,4 +1,6 @@
 class MemberProfile < ApplicationRecord
+  JAPAN_MOBILE_NUMBER_REGEX = /\A0[789]0\d{8}\z/
+
   REQUIRED_PROFILE_FIELDS = %i[
     full_name
     mobile_number
@@ -20,15 +22,20 @@ class MemberProfile < ApplicationRecord
 
   before_validation :assign_membership_number, if: -> { membership_number.blank? }
   before_validation :assign_joined_on, if: -> { joined_on.blank? }
+  before_validation :normalize_mobile_number
   before_validation :clear_household_details_unless_family
   after_save :remove_children_unless_family
 
   validates :full_name, :mobile_number, :postal_code, :prefecture, :city, :address_line1, presence: true
   validates :membership_number, presence: true, uniqueness: true
   validates :status, presence: true
+  validate :address_line1_includes_street_number
   validates :mobile_number, format: {
-    with: /\A0[789]0-?\d{4}-?\d{4}\z/,
-    message: "must be a valid Japan mobile number"
+    with: JAPAN_MOBILE_NUMBER_REGEX,
+    message: "must be a valid Japan mobile number starting with 070, 080, or 090"
+  }, allow_blank: true
+  validates :mobile_number, uniqueness: {
+    message: "is already used by another member"
   }, allow_blank: true
 
   scope :latest, -> { order(created_at: :desc) }
@@ -113,6 +120,30 @@ class MemberProfile < ApplicationRecord
 
   def clear_household_details_unless_family
     self.spouse_name = nil unless family?
+  end
+
+  def normalize_mobile_number
+    return if mobile_number.blank?
+
+    value = mobile_number.to_s
+      .tr("０１２３４５６７８９", "0123456789")
+      .strip
+      .gsub(/[[:space:]\-ー−()（）]/, "")
+
+    self.mobile_number = if value.start_with?("+81")
+      "0#{value.delete_prefix('+81').gsub(/\D/, '')}"
+    else
+      value.gsub(/\D/, "")
+    end
+  end
+
+  def address_line1_includes_street_number
+    return if address_line1.blank?
+
+    normalized_address = address_line1.to_s.tr("０１２３４５６７８９", "0123456789")
+    return if normalized_address.match?(/\d/)
+
+    errors.add(:address_line1, "must include a street or building number")
   end
 
   def remove_children_unless_family

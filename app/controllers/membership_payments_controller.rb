@@ -16,6 +16,7 @@ class MembershipPaymentsController < ApplicationController
       .current_for_member
       .latest
       .to_a
+    @current_payments.reject! { |payment| settled_payment_plan?(payment) }
     @payment_history = payment_scope
       .history_for_member
       .by_status(@status)
@@ -27,6 +28,7 @@ class MembershipPaymentsController < ApplicationController
     @available_payment_plans = MembershipPlan.active
       .member_payable
       .where.not(id: current_plan_ids)
+      .where.not(id: settled_payment_plan_ids)
       .includes(:membership_plan_type)
       .order(:name)
   end
@@ -36,7 +38,8 @@ class MembershipPaymentsController < ApplicationController
     membership_plan = MembershipPlan.active.member_payable.find(params.require(:membership_plan_id))
     payment = MemberPlanPaymentStarter.call(user: current_user, membership_plan: membership_plan)
 
-    redirect_to membership_payment_path(payment), notice: "#{membership_plan.name} is ready for payment."
+    notice = payment.paid? ? "#{membership_plan.name} is already marked as paid." : "#{membership_plan.name} is ready for payment."
+    redirect_to membership_payment_path(payment), notice: notice
   end
 
   def show
@@ -125,5 +128,18 @@ class MembershipPaymentsController < ApplicationController
       :transfer_reference_name,
       :transfer_screenshot
     )
+  end
+
+  def settled_payment_plan?(payment)
+    settled_payment_plan_ids.include?(payment.membership_plan_id)
+  end
+
+  def settled_payment_plan_ids
+    @settled_payment_plan_ids ||= begin
+      paid_scope = current_user.membership_payments.paid.includes(:membership_plan)
+      paid_scope.select do |payment|
+        payment.one_time_payment? || payment.payment_year == Date.current.year
+      end.map(&:membership_plan_id)
+    end
   end
 end

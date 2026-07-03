@@ -1,0 +1,52 @@
+require "test_helper"
+
+class MemberProfileTest < ActiveSupport::TestCase
+  test "accepts and normalizes domestic Japan mobile numbers" do
+    profile = build_profile(mobile_number: "090-1234-5678")
+
+    assert profile.valid?
+    assert_equal "09012345678", profile.mobile_number
+  end
+
+  test "accepts and normalizes plus eighty one Japan mobile numbers" do
+    profile = build_profile(mobile_number: "+81 90-1234-5678")
+
+    assert profile.valid?
+    assert_equal "09012345678", profile.mobile_number
+  end
+
+  test "rejects non Japan mobile numbers" do
+    profile = build_profile(mobile_number: "+91 98765 43210")
+
+    assert_not profile.valid?
+    assert_includes profile.errors[:mobile_number], "must be a valid Japan mobile number starting with 070, 080, or 090"
+  end
+
+  test "requires address line one to include a street number" do
+    profile = build_profile(mobile_number: "09012345678")
+    profile.address_line1 = "南大野"
+
+    assert_not profile.valid?
+    assert_includes profile.errors[:address_line1], "must include a street or building number"
+  end
+
+  test "accepts address line one with full width street number" do
+    profile = build_profile(mobile_number: "09012345678")
+    profile.address_line1 = "南大野３-１１-２"
+
+    assert profile.valid?
+  end
+
+  private
+
+  def build_profile(mobile_number:)
+    users(:member).build_member_profile(
+      full_name: "Member User",
+      mobile_number: mobile_number,
+      postal_code: "169-0075",
+      prefecture: "東京都",
+      city: "新宿区",
+      address_line1: "1-1-1"
+    )
+  end
+end

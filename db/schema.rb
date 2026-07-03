@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_02_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_03_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -322,7 +322,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_090000) do
     t.index ["family_status"], name: "index_member_profiles_on_family_status"
     t.index ["full_name"], name: "index_member_profiles_on_full_name"
     t.index ["membership_number"], name: "index_member_profiles_on_membership_number", unique: true
-    t.index ["mobile_number"], name: "index_member_profiles_on_mobile_number"
+    t.index ["mobile_number"], name: "index_member_profiles_on_mobile_number", unique: true, where: "((mobile_number IS NOT NULL) AND ((mobile_number)::text <> ''::text))"
     t.index ["prefecture"], name: "index_member_profiles_on_prefecture"
     t.index ["status", "created_at"], name: "index_member_profiles_on_status_and_created_at"
     t.index ["user_id"], name: "index_member_profiles_on_user_id", unique: true

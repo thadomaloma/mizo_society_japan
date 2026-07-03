@@ -9,7 +9,7 @@ class MemberPlanPaymentStarter
   end
 
   def call
-    reusable_payment || create_payment!
+    reusable_payment || settled_payment || create_payment!
   end
 
   private
@@ -19,6 +19,14 @@ class MemberPlanPaymentStarter
   def reusable_payment
     user.membership_payments
       .where(membership_plan: membership_plan, status: MembershipPayment::CURRENT_STATUSES + [ :cancelled ])
+      .latest
+      .first
+  end
+
+  def settled_payment
+    user.membership_payments
+      .where(membership_plan: membership_plan, status: :paid)
+      .yield_self { |scope| membership_plan.one_time? ? scope : scope.where(payment_year: Date.current.year) }
       .latest
       .first
   end
