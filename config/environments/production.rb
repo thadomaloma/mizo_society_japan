@@ -47,8 +47,10 @@ Rails.application.configure do
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 
-  # Replace the default in-process memory cache store with a durable alternative.
-  config.cache_store = :solid_cache_store
+  # Keep production caching in-process for single-container Railway deploys.
+  # This avoids requiring the solid_cache_entries table on every database reset
+  # or region move, while still caching settings and dashboard aggregates.
+  config.cache_store = :memory_store, { size: ENV.fetch("RAILS_CACHE_SIZE_MB", 64).to_i * 1024 * 1024 }
 
   # Keep production jobs in-process unless a dedicated Solid Queue database has
   # been provisioned. This avoids upload failures when Active Storage enqueues
