@@ -55,12 +55,28 @@ module Admin
     end
 
     test "authorized admin can export csv" do
+      @president.member_profile.update!(
+        father_name: "Father Report",
+        mother_name: "Mother Report",
+        family_status: :family,
+        spouse_name: "Spouse Report",
+        address_line2: "Room 201"
+      )
+      @president.member_profile.family_members.create!(name: "Child Report", relationship: "Child")
+
       sign_in @president
 
       get members_admin_reports_path(format: :csv)
 
       assert_response :success
       assert_includes response.media_type, "text/csv"
+      assert_includes response.body, "Postal Code"
+      assert_includes response.body, "Address Line 1"
+      assert_includes response.body, "Full Address"
+      assert_includes response.body, "Father Report"
+      assert_includes response.body, "Mother Report"
+      assert_includes response.body, "Spouse Report"
+      assert_includes response.body, "Child Report"
     end
 
     private
@@ -74,9 +90,10 @@ module Admin
     def ensure_profile_for(user)
       return if user.member_profile.present?
 
+      suffix = user.email.to_s.bytes.sum.to_s.rjust(4, "0")[-4, 4]
       user.create_member_profile!(
         full_name: user.name,
-        mobile_number: "09024681357",
+        mobile_number: "0902468#{suffix}",
         postal_code: "169-0075",
         prefecture: "Tokyo",
         city: "Shinjuku",

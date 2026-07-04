@@ -92,7 +92,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
       role: :member,
       password: "password123"
     )
-    ensure_profile_for(new_member, mobile_number: "08013572468")
+    ensure_profile_for(new_member, mobile_number: "08013572469")
 
     sign_in new_member
 
@@ -105,8 +105,8 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal @plan, payment.membership_plan
     assert_equal Date.current.year, payment.payment_year
     assert_equal "pending", payment.status
-    assert_includes response.body, membership_payment_path(payment)
-    assert_includes response.body, "Pay Now"
+    assert_includes response.body, @plan.name
+    assert_includes response.body, "Pay Together"
     assert_match(/Current Payments.*Optional Payment Plans.*Payment History/m, response.body)
   end
 
@@ -137,7 +137,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "pending", payment.status
     assert_includes response.body, required_plan.name
-    assert_includes response.body, "Pay Now"
+    assert_includes response.body, "Pay Together"
   end
 
   test "current payments and payment history are separated" do

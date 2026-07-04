@@ -7,38 +7,80 @@
     subtitle: "Combined payment · #{pluralize(@payment_batch.membership_payments.count, 'item')}",
     actions: link_to(admin_membership_payments_path, class: action_button_classes(:secondary)) { safe_join([ icon_svg(:arrow_left, classes: "h-4 w-4"), tag.span("Payments") ]) } %>
 
+  <% screenshot_attached = @payment_batch.transfer_screenshot.attached? %>
+  <% screenshot_is_image = screenshot_attached && @payment_batch.transfer_screenshot.blob.content_type.to_s.start_with?("image/") %>
+
   <section class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
     <div class="space-y-4">
-      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Combined transfer</p>
-            <h2 class="mt-1 text-2xl font-black text-slate-950 dark:text-white"><%= yen(@payment_batch.total_amount) %></h2>
-            <p class="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400"><%= @payment_batch.transfer_reference_name.presence || "No reference submitted yet" %></p>
+      <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white p-4 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800 sm:p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Finance review</p>
+              <h2 class="mt-1 text-2xl font-black text-slate-950 dark:text-white"><%= yen(@payment_batch.total_amount) %></h2>
+              <p class="mt-1 truncate text-sm font-semibold text-slate-500 dark:text-slate-400"><%= @payment_batch.transfer_reference_name.presence || "No reference submitted yet" %></p>
+            </div>
+            <%= render "shared/status_badge", status: @payment_batch.status %>
           </div>
-          <%= render "shared/status_badge", status: @payment_batch.status %>
         </div>
 
-        <div class="mt-4 grid gap-2 sm:grid-cols-3">
-          <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+        <div class="grid gap-2 p-4 sm:grid-cols-3 sm:p-5">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
             <p class="text-xs font-black uppercase tracking-wide text-slate-400">Transfer Date</p>
             <p class="mt-1 font-black text-slate-950 dark:text-white"><%= @payment_batch.transferred_on&.strftime("%b %d, %Y") || "Not submitted" %></p>
           </div>
-          <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
-            <p class="text-xs font-black uppercase tracking-wide text-slate-400">Submitted</p>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+            <p class="text-xs font-black uppercase tracking-wide text-slate-400">Submitted Amount</p>
             <p class="mt-1 font-black text-slate-950 dark:text-white"><%= yen(@payment_batch.transfer_amount || @payment_batch.total_amount) %></p>
           </div>
-          <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
             <p class="text-xs font-black uppercase tracking-wide text-slate-400">Approved By</p>
             <p class="mt-1 truncate font-black text-slate-950 dark:text-white"><%= @payment_batch.approved_by&.display_name || "Not approved" %></p>
           </div>
         </div>
+      </article>
 
-        <% if @payment_batch.transfer_screenshot.attached? %>
-          <%= link_to rails_blob_path(@payment_batch.transfer_screenshot, disposition: "attachment"), class: "#{action_button_classes(:secondary, size: :sm)} mt-4", target: "_blank", rel: "noopener" do %>
+      <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-700">
+          <div class="min-w-0">
+            <h3 class="text-base font-black text-slate-950 dark:text-white">Transfer evidence</h3>
+            <p class="mt-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Screenshot or receipt uploaded by the member.</p>
+          </div>
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
             <%= icon_svg(:download, classes: "h-4 w-4") %>
-            <span>Download Screenshot</span>
-          <% end %>
+          </span>
+        </div>
+
+        <% if screenshot_attached %>
+          <div class="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:p-5">
+            <% if screenshot_is_image %>
+              <%= link_to rails_blob_path(@payment_batch.transfer_screenshot, disposition: "inline"), target: "_blank", rel: "noopener", class: "block overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900" do %>
+                <%= image_tag @payment_batch.transfer_screenshot, alt: "Transfer screenshot", class: "max-h-80 w-full object-contain" %>
+              <% end %>
+            <% else %>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
+                <p class="text-sm font-black text-slate-950 dark:text-white"><%= @payment_batch.transfer_screenshot.filename.to_s %></p>
+                <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400"><%= @payment_batch.transfer_screenshot.blob.content_type %></p>
+              </div>
+            <% end %>
+
+            <div class="flex flex-row gap-2 sm:w-40 sm:flex-col">
+              <%= link_to rails_blob_path(@payment_batch.transfer_screenshot, disposition: "inline"), class: action_button_classes(:secondary, size: :sm, full_width: true), target: "_blank", rel: "noopener" do %>
+                <%= icon_svg(:eye, classes: "h-4 w-4") %>
+                <span>Open</span>
+              <% end %>
+              <%= link_to rails_blob_path(@payment_batch.transfer_screenshot, disposition: "attachment"), class: action_button_classes(:dark, size: :sm, full_width: true), target: "_blank", rel: "noopener" do %>
+                <%= icon_svg(:download, classes: "h-4 w-4") %>
+                <span>Download</span>
+              <% end %>
+            </div>
+          </div>
+        <% else %>
+          <div class="p-4 sm:p-5">
+            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+              No screenshot was uploaded. Verify using transfer date, amount, and reference name.
+            </div>
+          </div>
         <% end %>
       </article>
 
@@ -66,17 +108,30 @@
     <aside class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5 xl:sticky xl:top-24 xl:self-start">
       <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Treasurer Review</p>
       <h3 class="mt-1 text-lg font-black text-slate-950 dark:text-white">Batch actions</h3>
-      <p class="mt-2 text-sm font-semibold leading-6 text-slate-500 dark:text-slate-400">Approving this batch marks every included payment as paid.</p>
+      <p class="mt-2 text-sm font-semibold leading-6 text-slate-500 dark:text-slate-400">Check the bank account and uploaded evidence before approving this batch.</p>
 
-      <div class="mt-4 grid gap-2">
+      <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+        <p class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">Review checklist</p>
+        <ul class="mt-2 space-y-2 text-xs font-semibold leading-5 text-slate-600 dark:text-slate-300">
+          <li class="flex gap-2"><%= icon_svg(:check, classes: "mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300") %><span>Confirm transfer amount matches the batch total.</span></li>
+          <li class="flex gap-2"><%= icon_svg(:check, classes: "mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300") %><span>Match the reference name with the bank record.</span></li>
+          <li class="flex gap-2"><%= icon_svg(:check, classes: "mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300") %><span>Open the screenshot if one was uploaded.</span></li>
+        </ul>
+      </div>
+
+      <div class="mt-4 grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900 sm:grid-cols-1 sm:gap-3 sm:p-3">
         <% if policy(@payment_batch).approve? %>
-          <%= button_to approve_admin_payment_batch_path(@payment_batch), method: :patch, class: action_button_classes(:success, full_width: true) do %>
-            <%= icon_svg(:check, classes: "h-4 w-4") %>
-            <span>Approve All</span>
+          <%= button_to approve_admin_payment_batch_path(@payment_batch), method: :patch, form: { class: "min-w-0" }, class: "group flex w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-2.5 py-2 text-xs font-black text-white shadow-sm shadow-emerald-950/10 transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900 sm:px-3 sm:py-2.5 sm:text-sm" do %>
+            <span class="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-white/15 transition group-hover:bg-white/20">
+              <%= icon_svg(:check, classes: "h-4 w-4") %>
+            </span>
+            <span class="truncate">Approve All</span>
           <% end %>
-          <%= button_to reject_admin_payment_batch_path(@payment_batch), method: :patch, data: { turbo_confirm: "Reject this combined payment?" }, class: action_button_classes(:danger, full_width: true) do %>
-            <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
-            <span>Reject Batch</span>
+          <%= button_to reject_admin_payment_batch_path(@payment_batch), method: :patch, form: { class: "min-w-0" }, data: { turbo_confirm: "Reject this combined payment?" }, class: "group flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-2.5 py-2 text-xs font-black text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 dark:border-red-500/30 dark:bg-slate-950 dark:text-red-200 dark:hover:bg-red-500/10 dark:focus:ring-offset-slate-900 sm:px-3 sm:py-2.5 sm:text-sm" do %>
+            <span class="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-red-50 text-red-700 transition group-hover:bg-red-100 dark:bg-red-500/10 dark:text-red-200">
+              <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
+            </span>
+            <span class="truncate">Reject Batch</span>
           <% end %>
         <% else %>
           <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">

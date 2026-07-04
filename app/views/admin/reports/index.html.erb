@@ -1,10 +1,11 @@
 <% content_for :page_title, "Reports" %>
 
 <div class="space-y-6">
+  <% can_export_reports = policy(:report).export? %>
   <%= render "shared/page_header",
     eyebrow: "Operations",
     title: "Reports",
-    subtitle: "Export-ready summaries from existing MSJ portal records." %>
+    subtitle: can_export_reports ? "Export-ready summaries from existing MSJ portal records." : "Role-based summaries from existing MSJ portal records." %>
 
   <section class="grid min-w-0 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
     <% [

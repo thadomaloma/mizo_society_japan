@@ -47,6 +47,7 @@ class UserTest < ActiveSupport::TestCase
     assert_not member.minutes_access?
     assert_not treasurer.super_admin?
     assert treasurer.finance_viewer?
+    assert finance_secretary.finance_approver?
     assert_not assistant_secretary.finance_admin?
     assert_not treasurer.welfare_viewer?
     assert_not journal_secretary.finance_team?

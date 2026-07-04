@@ -303,6 +303,30 @@ module ApplicationHelper
     }.fetch(status.to_s, status.to_s.humanize)
   end
 
+  def payment_review_label(payment)
+    return "Ready to Verify" if payment.pending_verification?
+    return "Waiting Transfer" if payment.pending?
+    return "Paid" if payment.paid?
+
+    payment.status.humanize
+  end
+
+  def payment_review_description(payment)
+    return "Member submitted transfer details. Check the bank account, then approve or reject." if payment.pending_verification?
+    return "Member has not submitted transfer details yet. Nothing to approve." if payment.pending?
+    return "Approved and marked as paid." if payment.paid?
+
+    payment.status.humanize
+  end
+
+  def payment_review_badge_classes(payment)
+    return "bg-emerald-50 text-emerald-700 ring-emerald-200" if payment.paid?
+    return "bg-amber-50 text-amber-700 ring-amber-200" if payment.pending_verification?
+    return "bg-slate-100 text-slate-700 ring-slate-200" if payment.pending?
+
+    status_badge_classes(payment.status)
+  end
+
   def visibility_label(visibility)
     {
       "all_members" => "All Members",

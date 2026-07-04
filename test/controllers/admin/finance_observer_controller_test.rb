@@ -48,7 +48,7 @@ module Admin
       assert_includes response.body, @plan.name
       assert_includes response.body, admin_membership_payment_path(@payment)
       assert_not_includes response.body, "Add Payment"
-      assert_not_includes response.body, "Approve"
+      assert_not_includes response.body, approve_admin_membership_payment_path(@payment)
       assert_not_includes response.body, edit_admin_membership_payment_path(@payment)
 
       get admin_membership_payment_path(@payment)
@@ -97,9 +97,10 @@ module Admin
     def ensure_profile_for(user)
       return if user.member_profile.present?
 
+      suffix = user.email.to_s.bytes.sum.to_s.rjust(4, "0")[-4, 4]
       user.create_member_profile!(
         full_name: user.name,
-        mobile_number: "09024681357",
+        mobile_number: "0902468#{suffix}",
         postal_code: "169-0075",
         prefecture: "Tokyo",
         city: "Shinjuku",

@@ -16,7 +16,7 @@ class User < ApplicationRecord
   ADMIN_ROLES = SUPER_ADMIN_ROLES
   FINANCE_ADMIN_ROLES = %w[treasurer finance_secretary].freeze
   FINANCE_ROLES = (SUPER_ADMIN_ROLES + FINANCE_ADMIN_ROLES).freeze
-  APPROVER_ROLES = %w[president secretary treasurer].freeze
+  APPROVER_ROLES = %w[president secretary treasurer finance_secretary].freeze
   OBSERVER_OFFICE_BEARER_ROLES = %w[vice_president journal_secretary].freeze
   EXECUTIVE_ROLES = %w[executive_member].freeze
   ADVISORY_VIEWER_ROLES = (OBSERVER_OFFICE_BEARER_ROLES + EXECUTIVE_ROLES).freeze

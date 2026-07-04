@@ -31,17 +31,15 @@
           <%= form.text_field :venue, placeholder: "e.g. Shinjuku, Tokyo or Zoom", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
         </div>
       </div>
-      <div class="grid gap-4 md:grid-cols-3">
-        <% [ [ :chairman, "Chairman", "e.g. Lalrammawia" ], [ :minute_recorder, "Minute Recorder", "e.g. Vanlalhruaia" ], [ :opening_prayer, "Opening Prayer", "e.g. Lalbiakzuali" ] ].each do |field, label, placeholder| %>
-          <div>
-            <%= form.label field, label, class: "text-sm font-black text-[#0F172A] dark:text-white" %>
-            <%= form.text_field field, placeholder: placeholder, class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
-          </div>
-        <% end %>
-      </div>
-      <div>
-        <%= form.label :welcome_speech, "Welcome Speech", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
-        <%= form.text_field :welcome_speech, placeholder: "e.g. Welcome remarks by the Chairman", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <%= form.label :opening_prayer, "Opening Prayer", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+          <%= form.text_field :opening_prayer, placeholder: "e.g. Lalbiakzuali", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
+        <div>
+          <%= form.label :welcome_speech, "Welcome Speech", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+          <%= form.text_field :welcome_speech, placeholder: "e.g. Welcome remarks by the Chairman", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+        </div>
       </div>
     </div>
   </section>

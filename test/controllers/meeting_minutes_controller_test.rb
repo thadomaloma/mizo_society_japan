@@ -89,8 +89,8 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Meeting Time"
     assert_not_includes response.body, "Meeting Type"
     assert_not_includes response.body, "Visibility"
-    assert_includes response.body, "Chairman"
-    assert_includes response.body, "Minute Recorder"
+    assert_not_includes response.body, "Chairman</label>"
+    assert_not_includes response.body, "Minute Recorder</label>"
     assert_includes response.body, "Opening Prayer"
     assert_includes response.body, "Welcome Speech"
     assert_includes response.body, "Previous Minute Approval"
@@ -142,6 +142,17 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
 
   test "authorised minutes viewers can export the record as an A4 PDF" do
     minute = create_minute(status: :published)
+    signature_file = Rails.root.join("public/icons/favicon-32x32.png")
+    minute.chairman_signature.attach(
+      io: File.open(signature_file),
+      filename: "chairman-signature.png",
+      content_type: "image/png"
+    )
+    minute.secretary_signature.attach(
+      io: File.open(signature_file),
+      filename: "secretary-signature.png",
+      content_type: "image/png"
+    )
     sign_in @executive
 
     get export_pdf_meeting_minute_path(minute)
@@ -149,6 +160,8 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "application/pdf", response.media_type
     assert_includes response.body, "%PDF-1.4"
+    assert_includes response.body, "/Subtype /Image"
+    assert_includes response.body, "/XObject"
   end
 
   test "members cannot access meeting minutes" do

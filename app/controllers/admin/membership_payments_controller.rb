@@ -5,7 +5,7 @@ module Admin
 
     def index
       authorize MembershipPayment
-      @status = params[:status].presence || "pending_verification"
+      @status = params[:status].presence || "all"
       @year = params[:year]
       @plan_type_id = params[:plan_type_id]
       @query = params[:query]
@@ -15,8 +15,15 @@ module Admin
         .by_year(@year)
         .by_plan_type(@plan_type_id)
         .latest
-      @membership_payments = @membership_payments.by_status(@status) unless @status == "all"
-      @membership_payments = @membership_payments.where(payment_batch_id: nil) if @status == "pending_verification"
+      if @status == "pending_verification"
+        @membership_payments = @membership_payments.by_status(@status).where(payment_batch_id: nil)
+      elsif @status == "all"
+        @membership_payments = @membership_payments.where.not(status: :pending_verification).or(
+          @membership_payments.pending_verification.where(payment_batch_id: nil)
+        )
+      else
+        @membership_payments = @membership_payments.by_status(@status)
+      end
       @payment_batches = policy_scope(PaymentBatch)
         .includes(:user, membership_payments: { membership_plan: :membership_plan_type })
         .reviewable
@@ -24,7 +31,8 @@ module Admin
       @payment_batches = PaymentBatch.none unless @status.in?([ "all", "pending_verification" ])
       @payment_summary = {
         total: @membership_payments.count,
-        pending: @membership_payments.count(&:pending_verification?) + @payment_batches.count,
+        pending: @membership_payments.pending_verification.count + @payment_batches.count,
+        paid: @membership_payments.paid.count,
         amount: @membership_payments.sum(&:amount) + @payment_batches.sum(&:total_amount)
       }
       @years = MembershipPayment.distinct.order(payment_year: :desc).pluck(:payment_year)

@@ -28,7 +28,7 @@
               <p class="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400"><%= @membership_payment.period_label %></p>
             </div>
             <div class="flex shrink-0 items-center gap-2">
-              <%= render "shared/status_badge", status: @membership_payment.status %>
+              <%= render "admin/membership_payments/review_badge", payment: @membership_payment %>
             </div>
           </div>
         </div>
@@ -123,7 +123,11 @@
             <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Treasurer Review</p>
             <h3 class="mt-1 text-lg font-black text-slate-950 dark:text-white">Review actions</h3>
           </div>
-          <%= render "shared/status_badge", status: @membership_payment.status, compact: true %>
+          <%= render "admin/membership_payments/review_badge", payment: @membership_payment %>
+        </div>
+
+        <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm font-semibold leading-5 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+          <%= payment_review_description(@membership_payment) %>
         </div>
 
         <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">

@@ -47,11 +47,6 @@
         <dl class="mx-auto mt-7 max-w-2xl space-y-1 text-left text-base leading-6">
           <div><dt class="inline font-black">A Hun (Date &amp; Time):</dt> <dd class="inline"><%= @meeting_minute.meeting_date.strftime("%d/%m/%Y") %>, <%= @meeting_minute.meeting_time_label %></dd></div>
           <div><dt class="inline font-black">A Hmun (Venue):</dt> <dd class="inline"><%= @meeting_minute.venue.presence || "-" %></dd></div>
-          <div><dt class="inline font-black">Chairman:</dt> <dd class="inline"><%= @meeting_minute.chairman.presence || "-" %></dd></div>
-          <div><dt class="inline font-black">Secretary:</dt> <dd class="inline"><%= @meeting_minute.minute_recorder.presence || "-" %></dd></div>
-          <% if @meeting_minute.opening_prayer.present? %>
-            <div><dt class="inline font-black">Opening Prayer:</dt> <dd class="inline"><%= @meeting_minute.opening_prayer %></dd></div>
-          <% end %>
         </dl>
       </header>
 
