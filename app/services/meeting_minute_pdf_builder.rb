@@ -165,22 +165,22 @@ class MeetingMinutePdfBuilder
   end
 
   def signature_block(x, name, title, attachment:)
-    signature_drawn = draw_signature_image(attachment, x, @cursor_y)
+    signature_drawn = draw_signature_image(attachment, x, @cursor_y, name)
     draw_text("Sd/-", x, @cursor_y + 20, size: 11, align: :center) unless signature_drawn
     draw_text(name.to_s.upcase, x, @cursor_y - 34, size: 10.5, bold: true, align: :center)
     draw_text(title, x, @cursor_y - 50, size: 10.5, align: :center)
     draw_text("Mizo Society of Japan", x, @cursor_y - 66, size: 10.5, align: :center)
   end
 
-  def draw_signature_image(attachment, center_x, baseline_y)
+  def draw_signature_image(attachment, center_x, baseline_y, display_name)
     return false unless attachment&.attached?
 
     image = prepared_pdf_image(attachment)
     return false if image.blank?
 
-    max_width = 150.0
-    max_height = 48.0
-    scale = [ max_width / image[:width], max_height / image[:height] ].min
+    max_width = signature_image_width_for(display_name)
+    max_height = 36.0
+    scale = [ max_width / image[:width], max_height / image[:height], 1.0 ].min
     width = image[:width] * scale
     height = image[:height] * scale
     x = center_x - (width / 2)
@@ -191,6 +191,11 @@ class MeetingMinutePdfBuilder
     true
   rescue StandardError
     false
+  end
+
+  def signature_image_width_for(display_name)
+    name_width = approximate_text_width(display_name.to_s.upcase, 10.5)
+    [[ name_width * 1.2, 72.0 ].max, 126.0 ].min
   end
 
   def draw_text(text, x, y, size:, bold: false, align: :left)
@@ -344,12 +349,12 @@ class MeetingMinutePdfBuilder
     return unless bit_depth == 8 && compression.zero? && filter_method.zero? && interlace.zero?
 
     palette = chunks.find { |chunk| chunk[:type] == "PLTE" }&.dig(:data)
+    transparency = chunks.find { |chunk| chunk[:type] == "tRNS" }&.dig(:data)
     compressed = chunks.select { |chunk| chunk[:type] == "IDAT" }.map { |chunk| chunk[:data] }.join.b
     raw = Zlib::Inflate.inflate(compressed)
-    rgb = png_scanlines_to_rgb(raw, width, height, color_type, palette)
+    rgb = png_scanlines_to_rgb(raw, width, height, color_type, palette, transparency)
     return if rgb.blank?
 
-    rgb, width, height = trim_signature_whitespace(rgb, width, height)
     data = Zlib::Deflate.deflate(rgb)
     {
       data: data.b,
@@ -376,7 +381,7 @@ class MeetingMinutePdfBuilder
     chunks
   end
 
-  def png_scanlines_to_rgb(raw, width, height, color_type, palette)
+  def png_scanlines_to_rgb(raw, width, height, color_type, palette, transparency)
     channels = png_channels(color_type)
     return if channels.blank?
 
@@ -392,64 +397,11 @@ class MeetingMinutePdfBuilder
       encoded = raw.byteslice(offset, row_bytes).bytes
       offset += row_bytes
       decoded = png_unfilter(encoded, previous, bytes_per_pixel, filter_type)
-      rgb << png_row_to_rgb(decoded, color_type, palette)
+      rgb << png_row_to_rgb(decoded, color_type, palette, transparency)
       previous = decoded
     end
 
     rgb
-  end
-
-  def trim_signature_whitespace(rgb, width, height)
-    bounds = signature_content_bounds(rgb, width, height)
-    return [ rgb, width, height ] if bounds.blank?
-
-    min_x, min_y, max_x, max_y = bounds
-    padding = 4
-    min_x = [ min_x - padding, 0 ].max
-    min_y = [ min_y - padding, 0 ].max
-    max_x = [ max_x + padding, width - 1 ].min
-    max_y = [ max_y + padding, height - 1 ].min
-
-    cropped_width = max_x - min_x + 1
-    cropped_height = max_y - min_y + 1
-    cropped = +"".b
-
-    (min_y..max_y).each do |y|
-      offset = ((y * width) + min_x) * 3
-      cropped << rgb.byteslice(offset, cropped_width * 3)
-    end
-
-    [ cropped, cropped_width, cropped_height ]
-  end
-
-  def signature_content_bounds(rgb, width, height)
-    min_x = width
-    min_y = height
-    max_x = -1
-    max_y = -1
-
-    height.times do |y|
-      width.times do |x|
-        offset = ((y * width) + x) * 3
-        red = rgb.getbyte(offset)
-        green = rgb.getbyte(offset + 1)
-        blue = rgb.getbyte(offset + 2)
-        next unless signature_ink_pixel?(red, green, blue)
-
-        min_x = x if x < min_x
-        min_y = y if y < min_y
-        max_x = x if x > max_x
-        max_y = y if y > max_y
-      end
-    end
-
-    return if max_x.negative? || max_y.negative?
-
-    [ min_x, min_y, max_x, max_y ]
-  end
-
-  def signature_ink_pixel?(red, green, blue)
-    red.to_i < 245 || green.to_i < 245 || blue.to_i < 245
   end
 
   def png_channels(color_type)
@@ -493,18 +445,37 @@ class MeetingMinutePdfBuilder
     up_left
   end
 
-  def png_row_to_rgb(row, color_type, palette)
+  def png_row_to_rgb(row, color_type, palette, transparency)
     rgb = +"".b
 
     case color_type
     when 0
-      row.each { |gray| rgb << gray << gray << gray }
+      transparent_gray = png_transparent_gray(transparency)
+      row.each do |gray|
+        value = transparent_gray == gray ? 255 : gray
+        rgb << value << value << value
+      end
     when 2
-      rgb << row.pack("C*")
+      transparent_rgb = png_transparent_rgb(transparency)
+      row.each_slice(3) do |red, green, blue|
+        if transparent_rgb == [ red, green, blue ]
+          rgb << 255 << 255 << 255
+        else
+          rgb << red << green << blue
+        end
+      end
     when 3
+      palette_alpha = png_palette_alpha(transparency)
       row.each do |index|
         offset = index * 3
-        rgb << palette.to_s.byteslice(offset, 3).to_s.b
+        red, green, blue = palette.to_s.byteslice(offset, 3).to_s.b.bytes
+        red ||= 255
+        green ||= 255
+        blue ||= 255
+        alpha = palette_alpha.fetch(index, 255)
+        rgb << composite_over_white(red, alpha)
+        rgb << composite_over_white(green, alpha)
+        rgb << composite_over_white(blue, alpha)
       end
     when 4
       row.each_slice(2) do |gray, alpha|
@@ -520,6 +491,24 @@ class MeetingMinutePdfBuilder
     end
 
     rgb
+  end
+
+  def png_palette_alpha(transparency)
+    return {} if transparency.blank?
+
+    transparency.bytes.each_with_index.to_h { |alpha, index| [ index, alpha ] }
+  end
+
+  def png_transparent_gray(transparency)
+    return if transparency.blank? || transparency.bytesize < 2
+
+    transparency.unpack1("n")
+  end
+
+  def png_transparent_rgb(transparency)
+    return if transparency.blank? || transparency.bytesize < 6
+
+    transparency.unpack("nnn")
   end
 
   def composite_over_white(channel, alpha)

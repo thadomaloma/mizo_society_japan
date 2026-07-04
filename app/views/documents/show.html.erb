@@ -10,21 +10,33 @@
       <span>Back</span>
     <% end %>
     <% if @document.official_letter? %>
-      <%= link_to download_letter_document_path(@document), class: action_button_classes(:primary) do %>
+      <%= link_to download_letter_document_path(@document), class: action_button_classes(:secondary) do %>
         <%= icon_svg(:download, classes: "h-4 w-4") %>
         <span>Download DOCX</span>
       <% end %>
     <% end %>
-    <% if @document.file.attached? && policy(@document).download? %>
-      <%= link_to download_document_path(@document), class: action_button_classes(:secondary) do %>
+    <% if @document.published? && @document.file.attached? && policy(@document).download? %>
+      <%= link_to download_document_path(@document), class: action_button_classes(:primary) do %>
         <%= icon_svg(:paperclip, classes: "h-4 w-4") %>
         <span>Final File</span>
       <% end %>
     <% end %>
-    <% if policy(@document).update? %>
+    <% if policy(@document).update? && !(@document.draft? && !@document.file.attached?) %>
       <%= link_to edit_document_path(@document), class: action_button_classes(:secondary) do %>
         <%= icon_svg(:edit, classes: "h-4 w-4") %>
         <span>Edit</span>
+      <% end %>
+    <% end %>
+    <% if policy(@document).publish? && @document.draft? && @document.file.attached? %>
+      <%= button_to publish_document_path(@document), method: :patch, form_class: "inline-flex", class: action_button_classes(:primary) do %>
+        <%= icon_svg(:upload, classes: "h-4 w-4") %>
+        <span>Publish</span>
+      <% end %>
+    <% end %>
+    <% if policy(@document).update? && @document.draft? && !@document.file.attached? %>
+      <%= link_to edit_document_path(@document), class: action_button_classes(:primary) do %>
+        <%= icon_svg(:upload, classes: "h-4 w-4") %>
+        <span>Attach Final</span>
       <% end %>
     <% end %>
   <% end %>
@@ -61,10 +73,6 @@
           <p class="text-sm font-black text-amber-800 dark:text-amber-200">Final file is not attached yet.</p>
           <p class="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-100">Download the DOCX, finalise it, then attach the final DOCX or PDF before publishing.</p>
         </div>
-        <%= link_to edit_document_path(@document), class: action_button_classes(:primary, size: :sm) do %>
-          <%= icon_svg(:upload, classes: "h-4 w-4") %>
-          <span>Attach Final File</span>
-        <% end %>
       </div>
     </section>
   <% end %>
@@ -149,26 +157,14 @@
         <p class="mt-2 text-sm font-semibold leading-6 text-[#64748B] dark:text-[#CBD5E1]">
           <%= @document.file.attached? ? "A final file is attached and ready for download." : "No final file has been attached yet." %>
         </p>
-        <div class="mt-4 flex flex-col gap-2">
-          <% if @document.file.attached? && policy(@document).download? %>
-            <%= link_to download_document_path(@document), class: action_button_classes(:secondary, full_width: true) do %>
-              <%= icon_svg(:download, classes: "h-4 w-4") %>
-              <span>Download Final File</span>
+        <% if policy(@document).archive? && @document.published? %>
+          <div class="mt-4 border-t border-[#E2E8F0] pt-4 dark:border-[#334155]">
+            <%= button_to archive_document_path(@document), method: :patch, form_class: "w-full", class: action_button_classes(:outline_danger, size: :xs, full_width: true) do %>
+              <%= icon_svg(:documents, classes: "h-3.5 w-3.5") %>
+              <span>Archive Letter</span>
             <% end %>
-          <% end %>
-          <% if policy(@document).update? && @document.draft? && @document.file.attached? %>
-            <%= button_to publish_document_path(@document), method: :patch, class: action_button_classes(:primary, full_width: true) do %>
-              <%= icon_svg(:upload, classes: "h-4 w-4") %>
-              <span>Publish Letter</span>
-            <% end %>
-          <% end %>
-          <% if policy(@document).archive? && @document.published? %>
-            <%= button_to archive_document_path(@document), method: :patch, class: action_button_classes(:secondary, full_width: true) do %>
-              <%= icon_svg(:documents, classes: "h-4 w-4") %>
-              <span>Archive</span>
-            <% end %>
-          <% end %>
-        </div>
+          </div>
+        <% end %>
       </section>
 
       <% if @document.description.present? %>

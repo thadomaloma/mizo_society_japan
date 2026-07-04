@@ -144,9 +144,9 @@ class MeetingMinute < ApplicationRecord
       secretary_signature: secretary_signature
     }.each do |attribute, attachment|
       next unless attachment.attached?
-      next if attachment.blob.content_type.in?(%w[image/png image/jpeg])
+      next if attachment.blob.content_type == "image/png"
 
-      errors.add(attribute, "must be a PNG or JPG image")
+      errors.add(attribute, "must be a PNG image")
     end
   end
 

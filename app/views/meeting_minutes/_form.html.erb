@@ -130,15 +130,17 @@
         <%= form.text_field :secretary_signature_title, placeholder: "Gen. Secretary", class: "mt-2 block w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
       </div>
       <div>
-        <%= form.label :chairman_signature, "Chairman Signature Image", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
-        <%= form.file_field :chairman_signature, accept: "image/png,image/jpeg", class: "mt-2 block w-full rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-3 py-3 text-sm font-semibold text-[#0F172A] file:mr-3 file:rounded-lg file:border-0 file:bg-red-700 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-red-800 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
+        <%= form.label :chairman_signature, "Chairman Signature PNG", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+        <%= form.file_field :chairman_signature, accept: "image/png,.png", class: "mt-2 block w-full rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-3 py-3 text-sm font-semibold text-[#0F172A] file:mr-3 file:rounded-lg file:border-0 file:bg-red-700 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-red-800 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
+        <p class="mt-2 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">PNG file only. The PDF will only control display size.</p>
         <% if meeting_minute.chairman_signature.attached? %>
           <p class="mt-2 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Current signature: <%= meeting_minute.chairman_signature.filename %></p>
         <% end %>
       </div>
       <div>
-        <%= form.label :secretary_signature, "Secretary Signature Image", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
-        <%= form.file_field :secretary_signature, accept: "image/png,image/jpeg", class: "mt-2 block w-full rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-3 py-3 text-sm font-semibold text-[#0F172A] file:mr-3 file:rounded-lg file:border-0 file:bg-red-700 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-red-800 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
+        <%= form.label :secretary_signature, "Secretary Signature PNG", class: "text-sm font-black text-[#0F172A] dark:text-white" %>
+        <%= form.file_field :secretary_signature, accept: "image/png,.png", class: "mt-2 block w-full rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-3 py-3 text-sm font-semibold text-[#0F172A] file:mr-3 file:rounded-lg file:border-0 file:bg-red-700 file:px-3 file:py-1.5 file:text-xs file:font-black file:text-white hover:file:bg-red-800 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
+        <p class="mt-2 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">PNG file only. The PDF will only control display size.</p>
         <% if meeting_minute.secretary_signature.attached? %>
           <p class="mt-2 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Current signature: <%= meeting_minute.secretary_signature.filename %></p>
         <% end %>
