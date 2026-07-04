@@ -168,7 +168,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     user
   end
 
-  def ensure_profile_for(user, mobile_number: "09012345678", prefecture: "Tokyo")
+  def ensure_profile_for(user, mobile_number: "09024681357", prefecture: "Tokyo")
     return if user.member_profile.present?
 
     user.create_member_profile!(

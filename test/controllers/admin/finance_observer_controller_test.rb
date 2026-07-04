@@ -99,7 +99,7 @@ module Admin
 
       user.create_member_profile!(
         full_name: user.name,
-        mobile_number: "09012345678",
+        mobile_number: "09024681357",
         postal_code: "169-0075",
         prefecture: "Tokyo",
         city: "Shinjuku",

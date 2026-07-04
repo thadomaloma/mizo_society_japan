@@ -4,11 +4,11 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @president = users(:admin)
     @member = users(:member)
-    @executive = create_user("Executive Member", "executive_minutes@example.test", :executive_member, "07012345678")
+    @executive = create_user("Executive Member", "executive_minutes@example.test", :executive_member, "07024681359")
     @finance_secretary = create_user("Finance Secretary", "finance_minutes@example.test", :finance_secretary, "08012345679")
     @assistant_secretary = create_user("Assistant Secretary", "welfare_minutes@example.test", :assistant_secretary, "09012345679")
     ensure_profile_for(@president)
-    ensure_profile_for(@member, mobile_number: "08012345678")
+    ensure_profile_for(@member, mobile_number: "08013572468")
   end
 
   test "president can save a simple draft with attendees and decisions" do
@@ -235,7 +235,7 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
     user
   end
 
-  def ensure_profile_for(user, mobile_number: "09012345678")
+  def ensure_profile_for(user, mobile_number: "09024681357")
     return if user.member_profile.present?
 
     user.create_member_profile!(

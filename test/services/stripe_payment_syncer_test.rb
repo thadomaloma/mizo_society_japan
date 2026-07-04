@@ -6,7 +6,7 @@ class StripePaymentSyncerTest < ActiveSupport::TestCase
     @member = users(:member)
     @finance_user = users(:admin)
     ensure_profile_for(@member)
-    ensure_profile_for(@finance_user, mobile_number: "08012345678")
+    ensure_profile_for(@finance_user, mobile_number: "08013572468")
     @plan = MembershipPlan.create!(
       name: "Online Annual Fee",
       amount: 5000,
@@ -75,7 +75,7 @@ class StripePaymentSyncerTest < ActiveSupport::TestCase
 
   private
 
-  def ensure_profile_for(user, mobile_number: "09012345678")
+  def ensure_profile_for(user, mobile_number: "09024681357")
     return if user.member_profile.present?
 
     user.create_member_profile!(

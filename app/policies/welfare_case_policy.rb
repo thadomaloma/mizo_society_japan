@@ -56,5 +56,4 @@ class WelfareCasePolicy < ApplicationPolicy
   def owner_editable_case?
     owner? && record.editable_by_member?
   end
-
 end

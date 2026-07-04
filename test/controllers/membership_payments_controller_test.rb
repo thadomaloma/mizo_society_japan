@@ -8,7 +8,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     @member = users(:member)
     @president = users(:admin)
     ensure_profile_for(@member)
-    ensure_profile_for(@president, mobile_number: "08012345678")
+    ensure_profile_for(@president, mobile_number: "08013572468")
     @plan = MembershipPlan.create!(
       name: "Test Annual Member Fee",
       amount: 5000,
@@ -92,7 +92,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
       role: :member,
       password: "password123"
     )
-    ensure_profile_for(new_member, mobile_number: "08012345678")
+    ensure_profile_for(new_member, mobile_number: "08013572468")
 
     sign_in new_member
 
@@ -117,7 +117,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
       role: :assistant_secretary,
       password: "password123"
     )
-    ensure_profile_for(assistant_secretary, mobile_number: "07012345670")
+    ensure_profile_for(assistant_secretary, mobile_number: "07024681350")
     required_plan = MembershipPlan.create!(
       name: "Required OB Society Fee",
       amount: 3000,
@@ -213,7 +213,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
       role: :member,
       password: "password123"
     )
-    ensure_profile_for(new_member, mobile_number: "07012345679")
+    ensure_profile_for(new_member, mobile_number: "07024681379")
     MembershipPayment.create!(
       user: new_member,
       membership_plan: @donation_plan,
@@ -260,7 +260,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def ensure_profile_for(user, mobile_number: "09012345678")
+  def ensure_profile_for(user, mobile_number: "09024681357")
     user.create_member_profile!(
       full_name: user.name,
       mobile_number: mobile_number,

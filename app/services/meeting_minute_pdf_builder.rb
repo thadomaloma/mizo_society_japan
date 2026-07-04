@@ -185,7 +185,7 @@ class MeetingMinutePdfBuilder
     words = text.to_s.split(/\s+/)
     return [ "" ] if words.empty?
 
-    words.each_with_object([ +""]) do |word, lines|
+    words.each_with_object([ +"" ]) do |word, lines|
       if "#{lines.last} #{word}".strip.length > width
         lines << word.dup
       else

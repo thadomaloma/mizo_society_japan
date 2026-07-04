@@ -5,7 +5,7 @@ class Admin::WelfareCategoriesControllerTest < ActionDispatch::IntegrationTest
     @president = users(:admin)
     @member = users(:member)
     ensure_profile_for(@president)
-    ensure_profile_for(@member, mobile_number: "08012345678")
+    ensure_profile_for(@member, mobile_number: "08013572468")
   end
 
   test "welfare manager can create and edit a welfare category" do
@@ -68,7 +68,7 @@ class Admin::WelfareCategoriesControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def ensure_profile_for(user, mobile_number: "09012345678")
+  def ensure_profile_for(user, mobile_number: "09024681357")
     return if user.member_profile.present?
 
     user.create_member_profile!(

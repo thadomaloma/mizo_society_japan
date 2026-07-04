@@ -11,9 +11,9 @@ class Admin::WelfareCasesControllerTest < ActionDispatch::IntegrationTest
     @executive_member = create_user("Executive User", "welfare_executive@example.test", :executive_member)
     @category = WelfareCategory.create!(name: "Test Welfare Category", active: true)
     ensure_profile_for(@president)
-    ensure_profile_for(@member, mobile_number: "08012345678")
-    ensure_profile_for(@vice_president, mobile_number: "09087654321")
-    ensure_profile_for(@executive_member, mobile_number: "07012345678")
+    ensure_profile_for(@member, mobile_number: "08013572468")
+    ensure_profile_for(@vice_president, mobile_number: "09086427531")
+    ensure_profile_for(@executive_member, mobile_number: "07024681359")
   end
 
   test "new welfare case only lists eligible officers for assignment" do
@@ -123,7 +123,7 @@ class Admin::WelfareCasesControllerTest < ActionDispatch::IntegrationTest
     User.create!(name: name, email: email, password: "password123", role: role)
   end
 
-  def ensure_profile_for(user, mobile_number: "09012345678")
+  def ensure_profile_for(user, mobile_number: "09024681357")
     return if user.member_profile.present?
 
     user.create_member_profile!(

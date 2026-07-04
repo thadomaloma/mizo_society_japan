@@ -24,6 +24,7 @@ module Admin
     def create
       authorize :user_role
       @user = User.new(create_user_params)
+      @user.role = requested_role || :member
       @user.password = Devise.friendly_token[0, 32]
       @role_options = role_options
 
@@ -54,7 +55,7 @@ module Admin
     def update
       authorize :user_role
       attributes = update_user_params
-      new_role = attributes[:role]
+      new_role = requested_role || @user.role
 
       if @user.active? && last_active_super_admin? && !User::SUPER_ADMIN_ROLES.include?(new_role)
         redirect_to admin_user_roles_path, alert: "President or Secretary access must remain assigned."
@@ -65,7 +66,10 @@ module Admin
       profile_changed = attributes.slice(:name, :email).to_h.any? { |attribute, value| @user.public_send(attribute) != value }
       role_changed = previous_role != new_role
 
-      if @user.update(attributes)
+      @user.assign_attributes(attributes)
+      @user.role = new_role
+
+      if @user.save
         sync_member_profile_name(attributes[:name])
 
         AuditLogger.call(
@@ -133,11 +137,16 @@ module Admin
     end
 
     def update_user_params
-      params.require(:user).permit(:name, :email, :role)
+      params.require(:user).permit(:name, :email)
     end
 
     def create_user_params
-      params.require(:user).permit(:name, :email, :role)
+      params.require(:user).permit(:name, :email)
+    end
+
+    def requested_role
+      role = params.dig(:user, :role).to_s
+      User.roles.key?(role) ? role : nil
     end
 
     def sync_member_profile_name(name)

@@ -9,8 +9,8 @@ class Admin::PaymentSettingsControllerTest < ActionDispatch::IntegrationTest
       password: "password123"
     )
     @member = users(:member)
-    ensure_profile_for(@treasurer, mobile_number: "08012345678")
-    ensure_profile_for(@member, mobile_number: "09012345678")
+    ensure_profile_for(@treasurer, mobile_number: "08013572468")
+    ensure_profile_for(@member, mobile_number: "09024681357")
   end
 
   test "treasurer can view and update bank details" do
@@ -70,7 +70,7 @@ class Admin::PaymentSettingsControllerTest < ActionDispatch::IntegrationTest
     ]
 
     users.each do |user|
-      ensure_profile_for(user, mobile_number: "07012345678")
+      ensure_profile_for(user, mobile_number: "07024681359")
       sign_in user
 
       get admin_payment_settings_path

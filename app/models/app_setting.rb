@@ -18,5 +18,4 @@ class AppSetting < ApplicationRecord
     setting.update!(value: value)
     setting
   end
-
 end

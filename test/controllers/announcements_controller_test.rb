@@ -4,10 +4,10 @@ class AnnouncementsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @president = users(:admin)
     @member = users(:member)
-    @assistant_secretary = create_user("Assistant Secretary", "assistant_announcements@example.test", :assistant_secretary, "08012345678")
+    @assistant_secretary = create_user("Assistant Secretary", "assistant_announcements@example.test", :assistant_secretary, "08013572468")
     @journal_secretary = create_user("Journal Secretary", "journal_announcements@example.test", :journal_secretary, "08012345679")
     ensure_profile_for(@president)
-    ensure_profile_for(@member, mobile_number: "07012345678")
+    ensure_profile_for(@member, mobile_number: "07024681359")
   end
 
   test "members see published announcements and opening one records a read" do
@@ -93,7 +93,7 @@ class AnnouncementsControllerTest < ActionDispatch::IntegrationTest
     user
   end
 
-  def ensure_profile_for(user, mobile_number: "09012345678")
+  def ensure_profile_for(user, mobile_number: "09024681357")
     return if user.member_profile.present?
 
     user.create_member_profile!(

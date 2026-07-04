@@ -20,7 +20,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     patch complete_setup_profile_path, params: {
       member_profile: {
         full_name: "Complete Member",
-        mobile_number: "09012345678",
+        mobile_number: "09024681357",
         postal_code: "169-0075",
         prefecture: "Tokyo",
         city: "Shinjuku",
@@ -39,7 +39,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     patch complete_setup_profile_path, params: {
       member_profile: {
         full_name: "Family Member",
-        mobile_number: "09012345678",
+        mobile_number: "09024681357",
         postal_code: "169-0075",
         prefecture: "Tokyo",
         city: "Shinjuku",
@@ -68,7 +68,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     other_user = User.create!(name: "Other Member", email: "other-family@example.test", password: "password123")
     other_profile = other_user.create_member_profile!(
       full_name: "Other Member",
-      mobile_number: "08012345678",
+      mobile_number: "08013572468",
       postal_code: "169-0075",
       prefecture: "Tokyo",
       city: "Shinjuku",
@@ -79,7 +79,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
 
     @member.create_member_profile!(
       full_name: "Complete Member",
-      mobile_number: "09012345678",
+      mobile_number: "09024681357",
       postal_code: "169-0075",
       prefecture: "Tokyo",
       city: "Shinjuku",
@@ -91,7 +91,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     patch profile_path, params: {
       member_profile: {
         full_name: "Complete Member",
-        mobile_number: "09012345678",
+        mobile_number: "09024681357",
         postal_code: "169-0075",
         prefecture: "Tokyo",
         city: "Shinjuku",
@@ -112,7 +112,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
   test "member profile shows map but hides admin contact actions" do
     @member.create_member_profile!(
       full_name: "Complete Member",
-      mobile_number: "09012345678",
+      mobile_number: "09024681357",
       postal_code: "169-0075",
       prefecture: "Tokyo",
       city: "Shinjuku",

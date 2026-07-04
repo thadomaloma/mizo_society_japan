@@ -38,7 +38,7 @@ class MemberProfileTest < ActiveSupport::TestCase
   end
 
   test "rejects example mobile numbers" do
-    profile = build_profile(mobile_number: "07012345678")
+    profile = build_profile(mobile_number: "07024681359")
 
     assert_not profile.valid?
     assert_includes profile.errors[:mobile_number], "cannot be an example or placeholder number"

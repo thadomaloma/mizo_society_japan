@@ -6,7 +6,7 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     @member = users(:member)
     @category = document_categories(:forms)
     ensure_profile_for(@president)
-    ensure_profile_for(@member, mobile_number: "08012345678")
+    ensure_profile_for(@member, mobile_number: "08013572468")
   end
 
   test "president can upload and publish a document" do
@@ -211,7 +211,7 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "executive members can access executive committee letters but not office bearer letters" do
-    executive = create_user("Executive Member", "document_executive@example.test", :executive_member, "07012345678")
+    executive = create_user("Executive Member", "document_executive@example.test", :executive_member, "07024681359")
     office_letter = create_document(title: "Office Bearer Letter", status: :published, visibility: :office_bearers_only)
     executive_letter = create_document(title: "Executive Committee Letter", status: :published, visibility: :executive_committee_only)
     sign_in executive
@@ -243,7 +243,7 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     document
   end
 
-  def ensure_profile_for(user, mobile_number: "09012345678")
+  def ensure_profile_for(user, mobile_number: "09024681357")
     return if user.member_profile.present?
 
     user.create_member_profile!(

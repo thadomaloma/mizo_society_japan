@@ -5,7 +5,7 @@ class SearchesControllerTest < ActionDispatch::IntegrationTest
     @admin = users(:admin)
     @member = users(:member)
     ensure_profile_for(@admin)
-    ensure_profile_for(@member, mobile_number: "08012345678")
+    ensure_profile_for(@member, mobile_number: "08013572468")
   end
 
   test "signed in users can request global search results in a turbo frame" do
@@ -25,7 +25,7 @@ class SearchesControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def ensure_profile_for(user, mobile_number: "09012345678")
+  def ensure_profile_for(user, mobile_number: "09024681357")
     return if user.member_profile.present?
 
     user.create_member_profile!(

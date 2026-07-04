@@ -166,5 +166,4 @@ class MeetingMinute < ApplicationRecord
 
     errors.add(:summary, "must include meeting agenda text")
   end
-
 end
