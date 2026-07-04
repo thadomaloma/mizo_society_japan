@@ -104,15 +104,28 @@ module Admin
     end
 
     def yucho_symbol_value
-      AppSetting.get("yucho_symbol").presence || legacy_yucho_parts.first
+      explicit_yucho_symbol.presence || inferred_yucho_parts.first
     end
 
     def yucho_number_value
-      AppSetting.get("yucho_number").presence || legacy_yucho_parts.second
+      AppSetting.get("yucho_number").presence || inferred_yucho_parts.second
     end
 
-    def legacy_yucho_parts
-      @legacy_yucho_parts ||= AppSetting.get("yucho_symbol_number").to_s.scan(/\d+/).first(2)
+    def explicit_yucho_symbol
+      symbol = AppSetting.get("yucho_symbol").to_s.strip
+      return symbol if symbol.blank?
+
+      parts = symbol.scan(/\d+/)
+      parts.size >= 2 ? parts.first : symbol
+    end
+
+    def inferred_yucho_parts
+      @inferred_yucho_parts ||= begin
+        symbol = AppSetting.get("yucho_symbol").to_s
+        legacy = AppSetting.get("yucho_symbol_number").to_s
+        source = [ symbol, legacy ].find { |value| value.scan(/\d+/).size >= 2 }.presence || legacy
+        source.scan(/\d+/).first(2)
+      end
     end
 
     def payment_settings_params
