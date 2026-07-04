@@ -133,7 +133,7 @@ class MembershipPaymentsController < ApplicationController
   end
 
   def yucho_number_value
-    AppSetting.get("yucho_number").presence || inferred_yucho_parts.second
+    explicit_yucho_number.presence || inferred_yucho_parts.second
   end
 
   def explicit_yucho_symbol
@@ -144,11 +144,20 @@ class MembershipPaymentsController < ApplicationController
     parts.size >= 2 ? parts.first : symbol
   end
 
+  def explicit_yucho_number
+    number = AppSetting.get("yucho_number").to_s.strip
+    return number if number.blank?
+
+    parts = number.scan(/\d+/)
+    parts.size >= 2 ? parts.second : number
+  end
+
   def inferred_yucho_parts
     @inferred_yucho_parts ||= begin
       symbol = AppSetting.get("yucho_symbol").to_s
+      number = AppSetting.get("yucho_number").to_s
       legacy = AppSetting.get("yucho_symbol_number").to_s
-      source = [ symbol, legacy ].find { |value| value.scan(/\d+/).size >= 2 }.presence || legacy
+      source = [ symbol, number, legacy ].find { |value| value.scan(/\d+/).size >= 2 }.presence || legacy
       source.scan(/\d+/).first(2)
     end
   end
