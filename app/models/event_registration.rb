@@ -2,7 +2,7 @@ class EventRegistration < ApplicationRecord
   belongs_to :event
   belongs_to :user
 
-  enum :status, { going: 0, interested: 1, not_going: 2, cancelled: 3 }, default: :going
+  enum :status, { going: 0, interested: 1, not_attending: 2, cancelled: 3 }, default: :going
 
   before_validation :assign_registered_at, if: -> { registered_at.blank? }
 
