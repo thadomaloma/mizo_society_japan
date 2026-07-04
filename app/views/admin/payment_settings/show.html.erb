@@ -95,11 +95,10 @@
               <% [
                 [ "Bank", value_for.call("bank_name") ],
                 [ "Store Name<br><span class=\"normal-case tracking-normal\">店名</span>".html_safe, value_for.call("bank_branch_name") ],
-                [ "Store Number<br><span class=\"normal-case tracking-normal\">店番</span>".html_safe, value_for.call("bank_branch_code") ],
                 [ "Account Number", value_for.call("bank_account_number") ],
                 [ "Account Name", value_for.call("bank_account_name") ]
               ].each do |label, value| %>
-                <% copyable = label.to_s.include?("Store Name") || label.to_s.include?("Store Number") || label == "Account Number" %>
+                <% copyable = label.to_s.include?("Store Name") || label == "Account Number" %>
                 <% copy_title = strip_tags(label.to_s).squish %>
                 <div class="flex items-start justify-between gap-3 rounded-xl bg-white px-3 py-2 dark:bg-slate-800">
                   <dt class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500"><%= label %></dt>
@@ -146,7 +145,7 @@
       <section class="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10 sm:p-5">
         <h3 class="text-sm font-black text-amber-800 dark:text-amber-200">Treasurer Note</h3>
         <p class="mt-2 text-sm font-semibold leading-6 text-amber-700 dark:text-amber-100">
-          QR code is no longer shown to members. Keep the store name, store number, account number, ゆうちょ symbol, and ゆうちょ number accurate.
+          QR code is no longer shown to members. Keep the store name, account number, ゆうちょ symbol, and ゆうちょ number accurate.
         </p>
       </section>
     </aside>

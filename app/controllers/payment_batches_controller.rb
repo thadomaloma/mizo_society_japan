@@ -104,7 +104,6 @@ class PaymentBatchesController < ApplicationController
       account_name: AppSetting.get("bank_account_name", "Mizo Society of Japan"),
       bank_name: AppSetting.get("bank_name", "Please set bank name"),
       branch_name: AppSetting.get("bank_branch_name", "Please set branch / store name"),
-      branch_code: AppSetting.get("bank_branch_code"),
       account_number: AppSetting.get("bank_account_number", "Please set account number"),
       yucho_symbol: AppSetting.get("yucho_symbol").presence || legacy_yucho_parts.first,
       yucho_number: AppSetting.get("yucho_number").presence || legacy_yucho_parts.second

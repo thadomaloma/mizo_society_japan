@@ -20,16 +20,9 @@ module Admin
       {
         key: "bank_branch_name",
         label: "Store Name (店名)",
-        description: "For ゆうちょ銀行 transfers from other banks, this is the store name, for example 〇一八.",
+        description: "For ゆうちょ銀行 transfers from other banks, this is the store name members should enter, for example 〇一八.",
         type: :text,
         placeholder: "〇一八"
-      },
-      {
-        key: "bank_branch_code",
-        label: "Store Number (店番)",
-        description: "Some bank apps ask for the store number instead of the store name, for example 018.",
-        type: :text,
-        placeholder: "018"
       },
       {
         key: "bank_account_number",
