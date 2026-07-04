@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_03_133000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_04_121000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -331,7 +331,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_03_133000) do
   create_table "membership_payments", force: :cascade do |t|
     t.decimal "amount", precision: 10, scale: 2, null: false
     t.bigint "approved_by_id"
-    t.datetime "checkout_expires_at"
     t.datetime "created_at", null: false
     t.bigint "membership_plan_id", null: false
     t.text "notes"
@@ -342,11 +341,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_03_133000) do
     t.integer "payment_year", null: false
     t.string "reference_number"
     t.integer "status", default: 0, null: false
-    t.string "stripe_checkout_session_id"
-    t.string "stripe_customer_id"
-    t.string "stripe_payment_intent_id"
-    t.string "stripe_payment_method_type"
-    t.string "stripe_status"
     t.decimal "transfer_amount", precision: 10, scale: 2
     t.string "transfer_reference_name"
     t.date "transferred_on"
@@ -358,10 +352,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_03_133000) do
     t.index ["payment_year"], name: "index_membership_payments_on_payment_year"
     t.index ["reference_number"], name: "index_membership_payments_on_reference_number"
     t.index ["status", "created_at"], name: "index_membership_payments_on_status_and_created_at"
-    t.index ["stripe_checkout_session_id"], name: "index_membership_payments_on_stripe_checkout_session_id", unique: true
-    t.index ["stripe_customer_id"], name: "index_membership_payments_on_stripe_customer_id"
-    t.index ["stripe_payment_intent_id"], name: "index_membership_payments_on_stripe_payment_intent_id"
-    t.index ["stripe_status"], name: "index_membership_payments_on_stripe_status"
     t.index ["transfer_reference_name"], name: "index_membership_payments_on_transfer_reference_name"
     t.index ["transferred_on"], name: "index_membership_payments_on_transferred_on"
     t.index ["user_id", "created_at"], name: "index_membership_payments_on_user_id_and_created_at"

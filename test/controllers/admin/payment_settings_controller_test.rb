@@ -1,4 +1,5 @@
 require "test_helper"
+require "zlib"
 
 class Admin::PaymentSettingsControllerTest < ActionDispatch::IntegrationTest
   setup do
@@ -26,8 +27,7 @@ class Admin::PaymentSettingsControllerTest < ActionDispatch::IntegrationTest
           bank_account_name: "Mizo Society of Japan",
           bank_name: "MUFG Bank",
           bank_branch_name: "Shinjuku Branch",
-          bank_account_number: "普通 1234567",
-          bank_qr_code_url: "https://example.test/bank-qr.png"
+          bank_account_number: "普通 1234567"
         }
       }
     end
@@ -35,24 +35,6 @@ class Admin::PaymentSettingsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_payment_settings_path
     assert_equal "MUFG Bank", AppSetting.get("bank_name")
     assert_equal "普通 1234567", AppSetting.get("bank_account_number")
-  end
-
-  test "invalid bank qr url is not saved" do
-    sign_in @treasurer
-
-    patch admin_payment_settings_path, params: {
-      settings: {
-        bank_account_name: "Mizo Society of Japan",
-        bank_name: "MUFG Bank",
-        bank_branch_name: "Shinjuku Branch",
-        bank_account_number: "普通 1234567",
-        bank_qr_code_url: "not-a-url"
-      }
-    }
-
-    assert_response :unprocessable_entity
-    assert_includes response.body, "Bank QR Code URL is not valid."
-    assert_nil AppSetting.find_by(key: "bank_qr_code_url")
   end
 
   test "member cannot view bank details admin page" do
@@ -70,7 +52,7 @@ class Admin::PaymentSettingsControllerTest < ActionDispatch::IntegrationTest
     ]
 
     users.each do |user|
-      ensure_profile_for(user, mobile_number: "07024681359")
+      ensure_profile_for(user, mobile_number: unique_mobile_for(user))
       sign_in user
 
       get admin_payment_settings_path
@@ -109,5 +91,10 @@ class Admin::PaymentSettingsControllerTest < ActionDispatch::IntegrationTest
       city: "Shinjuku",
       address_line1: "1-1-1 Okubo"
     )
+  end
+
+  def unique_mobile_for(user)
+    suffix = (Zlib.crc32(user.email) % 100_000_000).to_s.rjust(8, "0")
+    "090#{suffix}"
   end
 end

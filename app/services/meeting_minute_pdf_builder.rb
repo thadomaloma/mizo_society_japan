@@ -195,7 +195,7 @@ class MeetingMinutePdfBuilder
 
   def signature_image_width_for(display_name)
     name_width = approximate_text_width(display_name.to_s.upcase, 10.5)
-    [[ name_width * 1.2, 72.0 ].max, 126.0 ].min
+    [ [ name_width * 1.2, 72.0 ].max, 126.0 ].min
   end
 
   def draw_text(text, x, y, size:, bold: false, align: :left)

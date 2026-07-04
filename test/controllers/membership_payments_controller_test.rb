@@ -1,6 +1,4 @@
 require "test_helper"
-require "ostruct"
-
 class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
   include ActionMailer::TestHelper
 
@@ -32,57 +30,6 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
       payment_method: :bank_transfer,
       status: :pending
     )
-    @original_stripe_api_key = Stripe.api_key
-    Stripe.api_key = "sk_test_mock"
-  end
-
-  teardown do
-    Stripe.api_key = @original_stripe_api_key
-  end
-
-  test "member can start online card and wallet checkout" do
-    captured_customer_params = nil
-    captured_session_params = nil
-    original_customer_create = Stripe::Customer.method(:create)
-    original_session_create = Stripe::Checkout::Session.method(:create)
-
-    Stripe::Customer.define_singleton_method(:create) do |params|
-      captured_customer_params = params
-      OpenStruct.new(id: "cus_test_member")
-    end
-
-    Stripe::Checkout::Session.define_singleton_method(:create) do |params|
-      captured_session_params = params
-      OpenStruct.new(
-        id: "cs_test_member",
-        url: "https://checkout.stripe.com/c/test_member",
-        payment_intent: "pi_test_member",
-        customer: params[:customer],
-        status: "open",
-        expires_at: 1.hour.from_now.to_i
-      )
-    end
-
-    sign_in @member
-    post checkout_membership_payment_path(@payment)
-
-    assert_redirected_to "https://checkout.stripe.com/c/test_member"
-    @payment.reload
-    assert_equal "online_card", @payment.payment_method
-    assert_equal "pending", @payment.status
-    assert_equal "cs_test_member", @payment.stripe_checkout_session_id
-    assert_equal "pi_test_member", @payment.stripe_payment_intent_id
-    assert_equal "cus_test_member", @payment.stripe_customer_id
-    assert_equal "open", @payment.stripe_status
-    assert_equal @member.email, captured_customer_params[:email]
-    assert_equal "cus_test_member", captured_session_params[:customer]
-    assert_equal [ "card" ], captured_session_params[:payment_method_types]
-    assert_equal "jpy", captured_session_params[:line_items].first[:price_data][:currency]
-    assert_match %r{/payments/#{@payment.id}/success}, captured_session_params[:success_url]
-    assert_match %r{/payments/#{@payment.id}/cancel}, captured_session_params[:cancel_url]
-  ensure
-    Stripe::Customer.define_singleton_method(:create) { |*args, **kwargs| original_customer_create.call(*args, **kwargs) } if original_customer_create
-    Stripe::Checkout::Session.define_singleton_method(:create) { |*args, **kwargs| original_session_create.call(*args, **kwargs) } if original_session_create
   end
 
   test "member without a payment gets current year fee on My Payments" do

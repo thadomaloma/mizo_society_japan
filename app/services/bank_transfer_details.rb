@@ -23,8 +23,7 @@ class BankTransferDetails
       branch_name: AppSetting.get("bank_branch_name", "Please set branch / store name"),
       account_number: AppSetting.get("bank_account_number", "Please set account number"),
       yucho_symbol: symbol,
-      yucho_number: number,
-      qr_code_url: AppSetting.get("bank_qr_code_url")
+      yucho_number: number
     }
   end
 

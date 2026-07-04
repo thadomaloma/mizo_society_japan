@@ -84,8 +84,7 @@
             <%= form.label :payment_method, "Payment Method", class: label_classes %>
             <%= form.select :payment_method, [
               [ "Cash", "cash" ],
-              [ "Bank transfer", "bank_transfer" ],
-              [ "Online card", "online_card" ]
+              [ "Bank transfer", "bank_transfer" ]
             ], {}, class: input_classes %>
             <p class="<%= hint_classes %>">Bank transfer is the normal MSJ method.</p>
           </div>

@@ -15,18 +15,6 @@ class MembershipPaymentPolicy < ApplicationPolicy
     owns_record? && record.bank_transfer_submittable?
   end
 
-  def checkout?
-    owns_record? && record.online_checkoutable?
-  end
-
-  def success?
-    owns_record?
-  end
-
-  def cancel?
-    owns_record?
-  end
-
   def create?
     finance_user?
   end

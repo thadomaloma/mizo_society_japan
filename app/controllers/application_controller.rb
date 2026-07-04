@@ -49,7 +49,6 @@ class ApplicationController < ActionController::Base
     return false unless current_user
     return false if devise_controller?
     return false if controller_path == "profiles"
-    return false if controller_path.start_with?("webhooks")
     return false if controller_path == "rails/health"
 
     !current_user.profile_complete?
@@ -62,7 +61,7 @@ class ApplicationController < ActionController::Base
   def enforce_maintenance_mode
     return unless AppSetting.enabled?(:maintenance_mode)
     return if current_user&.super_admin?
-    return if controller_path.start_with?("webhooks") || controller_path == "rails/health"
+    return if controller_path == "rails/health"
 
     render template: "maintenance/show", layout: "maintenance", status: :service_unavailable
   end

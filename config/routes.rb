@@ -26,10 +26,7 @@ Rails.application.routes.draw do
     end
 
     member do
-      post :checkout
       patch :submit_transfer
-      get :success
-      get :cancel
     end
   end
   resources :payment_batches, path: "combined_payments", only: [ :show, :create ] do
@@ -83,10 +80,6 @@ Rails.application.routes.draw do
   resource :profile, only: [ :show, :edit, :update ] do
     get :setup
     patch :complete_setup, action: :create_setup
-  end
-
-  namespace :webhooks do
-    post "stripe", to: "stripe#create"
   end
 
   namespace :admin do

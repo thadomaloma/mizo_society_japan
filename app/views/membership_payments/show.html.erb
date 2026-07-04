@@ -101,27 +101,6 @@
 
       </section>
 
-      <% if policy(@membership_payment).checkout? %>
-        <section class="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:p-5">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-start gap-3">
-              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#F8FAFC] text-[#64748B] dark:bg-[#0F172A] dark:text-[#CBD5E1]"><%= icon_svg(:credit_card, classes: "h-5 w-5") %></span>
-              <div>
-                <p class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Optional</p>
-                <h3 class="mt-0.5 text-base font-black text-[#0F172A] dark:text-white">Card / Apple Pay / Google Pay</h3>
-                <p class="mt-0.5 text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]">
-                  Use online payment if you prefer instant checkout.
-                </p>
-              </div>
-            </div>
-            <%= button_to checkout_membership_payment_path(@membership_payment), method: :post, form: { data: { turbo: false } }, class: action_button_classes(:secondary, size: :sm, extra: "px-2 sm:px-3") do %>
-              <%= icon_svg(:credit_card, classes: "h-4 w-4") %>
-              <span>Pay Online</span>
-            <% end %>
-          </div>
-        </section>
-      <% end %>
-
       <% if @membership_payment.pending_verification? || @membership_payment.paid? %>
         <section class="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
           <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400">Submitted transfer</p>

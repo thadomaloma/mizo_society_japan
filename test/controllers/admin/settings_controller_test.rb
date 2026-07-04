@@ -1,4 +1,5 @@
 require "test_helper"
+require "zlib"
 
 class Admin::SettingsControllerTest < ActionDispatch::IntegrationTest
   setup do
@@ -41,7 +42,7 @@ class Admin::SettingsControllerTest < ActionDispatch::IntegrationTest
 
   test "vice president cannot view or update settings" do
     vice_president = User.create!(name: "Vice President", email: "vp_settings@example.test", password: "password123", role: :vice_president)
-    ensure_profile_for(vice_president)
+    ensure_profile_for(vice_president, mobile_number: unique_mobile_for(vice_president))
     sign_in vice_president
 
     get admin_settings_path
@@ -99,5 +100,10 @@ class Admin::SettingsControllerTest < ActionDispatch::IntegrationTest
       city: "Shinjuku",
       address_line1: "1-1-1 Okubo"
     )
+  end
+
+  def unique_mobile_for(user)
+    suffix = (Zlib.crc32(user.email) % 100_000_000).to_s.rjust(8, "0")
+    "090#{suffix}"
   end
 end

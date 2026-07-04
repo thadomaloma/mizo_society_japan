@@ -10,7 +10,7 @@ class MembershipPayment < ApplicationRecord
   has_one_attached :transfer_screenshot
   has_many :notifications, as: :notifiable, dependent: :destroy
 
-  enum :payment_method, { cash: 0, bank_transfer: 1, other: 3, manual_bank_transfer: 4, online_card: 5 }, default: :bank_transfer
+  enum :payment_method, { cash: 0, bank_transfer: 1, other: 3, manual_bank_transfer: 4 }, default: :bank_transfer
   enum :status, {
     pending: 0,
     paid: 3,
@@ -64,10 +64,6 @@ class MembershipPayment < ApplicationRecord
     user.present? && amount.to_i.positive? && (pending? || failed? || expired? || cancelled?)
   end
 
-  def online_checkoutable?
-    user.present? && amount.to_i.positive? && (pending? || failed? || expired? || cancelled?)
-  end
-
   def submit_bank_transfer!(transferred_on:, transfer_amount:, transfer_reference_name:, transfer_screenshot: nil)
     assign_attributes(
       payment_method: :manual_bank_transfer,
@@ -82,7 +78,7 @@ class MembershipPayment < ApplicationRecord
   end
 
   def finance_reference_number
-    stripe_payment_intent_id.presence || stripe_checkout_session_id.presence || transfer_reference_name.presence || reference_number.presence || "membership-payment-#{id}"
+    transfer_reference_name.presence || reference_number.presence || "membership-payment-#{id}"
   end
 
   def period_label

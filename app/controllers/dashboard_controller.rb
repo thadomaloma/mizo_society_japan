@@ -100,32 +100,39 @@ class DashboardController < ApplicationController
   private
 
   def community_overview
-    prefecture_counts = MemberProfile.active
-      .where.not(prefecture: [ nil, "" ])
-      .group(:prefecture)
-      .count
-    current_prefecture = current_user.member_profile&.prefecture.to_s.strip.presence
-    current_prefecture_count = current_prefecture ? prefecture_counts.fetch(current_prefecture, 0) : 0
-    family_status_counts = MemberProfile.active.group(:family_status).count
-    single_count = family_status_counts.fetch("single", family_status_counts.fetch(MemberProfile.family_statuses[:single], 0))
-    family_count = family_status_counts.fetch("family", family_status_counts.fetch(MemberProfile.family_statuses[:family], 0))
-    family_status_total = single_count + family_count
+    overview = Rails.cache.fetch("dashboard/community_overview/v2", expires_in: 10.minutes) do
+      prefecture_counts = MemberProfile.active
+        .where.not(prefecture: [ nil, "" ])
+        .group(:prefecture)
+        .count
+      family_status_counts = MemberProfile.active.group(:family_status).count
+      single_count = family_status_counts.fetch("single", family_status_counts.fetch(MemberProfile.family_statuses[:single], 0))
+      family_count = family_status_counts.fetch("family", family_status_counts.fetch(MemberProfile.family_statuses[:family], 0))
+      family_status_total = single_count + family_count
 
-    {
-      total_active_members: MemberProfile.active.count,
+      {
+        prefecture_counts: prefecture_counts,
+        total_active_members: MemberProfile.active.count,
+        family_status_total: family_status_total,
+        single_members: single_count,
+        family_members: family_count,
+        single_percentage: percentage_of(single_count, family_status_total),
+        family_percentage: percentage_of(family_count, family_status_total),
+        top_prefectures: prefecture_counts
+          .select { |_prefecture, count| count >= 3 }
+          .sort_by { |prefecture, count| [ -count, prefecture ] }
+          .map { |prefecture, count| [ display_prefecture(prefecture), count ] }
+          .first(5)
+      }
+    end
+
+    current_prefecture = current_user.member_profile&.prefecture.to_s.strip.presence
+    current_prefecture_count = current_prefecture ? overview[:prefecture_counts].fetch(current_prefecture, 0) : 0
+
+    overview.except(:prefecture_counts).merge(
       current_prefecture: display_prefecture(current_prefecture),
-      current_prefecture_count: community_count_label(current_prefecture_count),
-      family_status_total: family_status_total,
-      single_members: single_count,
-      family_members: family_count,
-      single_percentage: percentage_of(single_count, family_status_total),
-      family_percentage: percentage_of(family_count, family_status_total),
-      top_prefectures: prefecture_counts
-        .select { |_prefecture, count| count >= 3 }
-        .sort_by { |prefecture, count| [ -count, prefecture ] }
-        .map { |prefecture, count| [ display_prefecture(prefecture), count ] }
-        .first(5)
-    }
+      current_prefecture_count: community_count_label(current_prefecture_count)
+    )
   end
 
   def display_prefecture(prefecture)

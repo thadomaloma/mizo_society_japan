@@ -1,4 +1,5 @@
 require "test_helper"
+require "zlib"
 
 module Admin
   class DashboardControllerTest < ActionDispatch::IntegrationTest
@@ -47,12 +48,17 @@ module Admin
 
       user.create_member_profile!(
         full_name: user.name,
-        mobile_number: "09024681357",
+        mobile_number: unique_mobile_for(user),
         postal_code: "169-0075",
         prefecture: "Tokyo",
         city: "Shinjuku",
         address_line1: "1-1-1 Okubo"
       )
+    end
+
+    def unique_mobile_for(user)
+      suffix = (Zlib.crc32(user.email) % 100_000_000).to_s.rjust(8, "0")
+      "090#{suffix}"
     end
   end
 end

@@ -1,4 +1,5 @@
 require "test_helper"
+require "zlib"
 
 class Admin::MembershipPlansControllerTest < ActionDispatch::IntegrationTest
   setup do
@@ -54,7 +55,7 @@ class Admin::MembershipPlansControllerTest < ActionDispatch::IntegrationTest
 
   test "vice president can view payment plans but cannot create or edit" do
     vice_president = User.create!(name: "Vice President", email: "vp_plans@example.test", password: "password123", role: :vice_president)
-    ensure_profile_for(vice_president)
+    ensure_profile_for(vice_president, mobile_number: unique_mobile_for(vice_president))
     plan = MembershipPlan.create!(name: "Observer Plan", amount: 1000, membership_plan_type: plan_type("other_fee"), billing_cycle: :one_time, active: true)
     sign_in vice_president
 
@@ -177,6 +178,11 @@ class Admin::MembershipPlansControllerTest < ActionDispatch::IntegrationTest
       city: "Shinjuku",
       address_line1: "1-1-1 Okubo"
     )
+  end
+
+  def unique_mobile_for(user)
+    suffix = (Zlib.crc32(user.email) % 100_000_000).to_s.rjust(8, "0")
+    "090#{suffix}"
   end
 
   def plan_type(code)

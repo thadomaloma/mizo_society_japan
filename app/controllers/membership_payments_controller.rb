@@ -1,6 +1,6 @@
 class MembershipPaymentsController < ApplicationController
-  before_action :set_membership_payment, only: [ :show, :checkout, :submit_transfer, :success, :cancel ]
-  before_action :set_bank_transfer_details, only: [ :show, :submit_transfer, :cancel ]
+  before_action :set_membership_payment, only: [ :show, :submit_transfer ]
+  before_action :set_bank_transfer_details, only: [ :show, :submit_transfer ]
 
   def index
     authorize MembershipPayment, :member_index?
@@ -53,17 +53,6 @@ class MembershipPaymentsController < ApplicationController
     authorize @membership_payment
   end
 
-  def checkout
-    authorize @membership_payment
-    session = StripeCheckoutSessionCreator.call(membership_payment: @membership_payment, request: request)
-
-    redirect_to session.url, allow_other_host: true
-  rescue StripeCheckoutSessionCreator::StripeConfigurationError => error
-    redirect_to membership_payment_path(@membership_payment), alert: error.message
-  rescue StripeCheckoutSessionCreator::StripeCheckoutError => error
-    redirect_to membership_payment_path(@membership_payment), alert: "Online payment could not be started: #{error.message}"
-  end
-
   def submit_transfer
     authorize @membership_payment
     submission = bank_transfer_submission_params
@@ -96,18 +85,6 @@ class MembershipPaymentsController < ApplicationController
     )
 
     redirect_to membership_payment_path(@membership_payment), notice: "Bank transfer details submitted. Treasurer will verify the payment."
-  end
-
-  def success
-    authorize @membership_payment
-  end
-
-  def cancel
-    authorize @membership_payment
-
-    if params[:session_id].present? && @membership_payment.stripe_checkout_session_id == params[:session_id] && !@membership_payment.paid?
-      @membership_payment.update!(status: :cancelled, stripe_status: "cancelled")
-    end
   end
 
   private

@@ -1,4 +1,5 @@
 require "test_helper"
+require "zlib"
 
 class DashboardControllerTest < ActionDispatch::IntegrationTest
   setup do
@@ -164,7 +165,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
       password: "password123",
       role: role
     )
-    ensure_profile_for(user, prefecture: prefecture)
+    ensure_profile_for(user, mobile_number: unique_mobile_for(user), prefecture: prefecture)
     user
   end
 
@@ -179,5 +180,10 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
       city: "Shinjuku",
       address_line1: "1-1-1 Okubo"
     )
+  end
+
+  def unique_mobile_for(user)
+    suffix = (Zlib.crc32(user.email) % 100_000_000).to_s.rjust(8, "0")
+    "090#{suffix}"
   end
 end
