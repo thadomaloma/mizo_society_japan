@@ -11,7 +11,10 @@ class BankTransferDetails
     symbol, number = yucho_parts(
       symbol: AppSetting.get("yucho_symbol"),
       number: AppSetting.get("yucho_number"),
-      legacy: AppSetting.get("yucho_symbol_number")
+      legacy: [
+        AppSetting.get("yucho_symbol_number"),
+        AppSetting.get("bank_account_number")
+      ]
     )
 
     {
@@ -28,9 +31,9 @@ class BankTransferDetails
   def yucho_parts(symbol:, number:, legacy: nil)
     symbol = normalize_digits(symbol)
     number = normalize_digits(number)
-    legacy = normalize_digits(legacy)
+    legacy_values = Array(legacy).map { |value| normalize_digits(value) }
 
-    [ symbol, number, legacy ].each do |value|
+    [ symbol, number, *legacy_values ].each do |value|
       pair = split_pair(value)
       return pair if pair.present?
     end

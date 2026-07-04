@@ -112,7 +112,11 @@ module Admin
       symbol, number = BankTransferDetails.yucho_parts(
         symbol: settings["yucho_symbol"],
         number: settings["yucho_number"],
-        legacy: AppSetting.get("yucho_symbol_number")
+        legacy: [
+          AppSetting.get("yucho_symbol_number"),
+          settings["bank_account_number"],
+          AppSetting.get("bank_account_number")
+        ]
       )
 
       settings["yucho_symbol"] = symbol.to_s if symbol.present?

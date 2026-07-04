@@ -123,16 +123,18 @@
             [ "Symbol<br><span class=\"text-inherit normal-case tracking-normal\">記号</span>".html_safe, @bank_transfer_details[:yucho_symbol] ],
             [ "Number<br><span class=\"text-inherit normal-case tracking-normal\">番号</span>".html_safe, @bank_transfer_details[:yucho_number] ]
           ].each do |label, value| %>
-            <% next if value.blank? %>
+            <% display_value = value.presence || "Not set" %>
             <% copy_title = strip_tags(label.to_s).squish %>
             <div class="mt-2 flex items-start justify-between gap-3 rounded-lg bg-white/90 px-3 py-2 ring-1 ring-red-100/70 dark:bg-[#1E293B]/85 dark:ring-red-400/10">
               <p class="w-24 shrink-0 text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></p>
               <div class="flex min-w-0 flex-1 items-start justify-end gap-2">
-                <p class="min-w-0 break-all text-right text-sm font-black text-[#0F172A] dark:text-white"><%= value %></p>
-                <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2 text-[11px] font-black text-[#64748B] transition hover:border-red-200 hover:text-red-700 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#CBD5E1]" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= copy_title %>">
-                  <%= icon_svg(:copy, classes: "h-3.5 w-3.5") %>
-                  <span data-clipboard-target="label">Copy</span>
-                </button>
+                <p class="min-w-0 break-all text-right text-sm font-black text-[#0F172A] dark:text-white"><%= display_value %></p>
+                <% if value.present? %>
+                  <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2 text-[11px] font-black text-[#64748B] transition hover:border-red-200 hover:text-red-700 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#CBD5E1]" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= copy_title %>">
+                    <%= icon_svg(:copy, classes: "h-3.5 w-3.5") %>
+                    <span data-clipboard-target="label">Copy</span>
+                  </button>
+                <% end %>
               </div>
             </div>
           <% end %>
