@@ -58,7 +58,7 @@
         </label>
       <% end %>
 
-      <%= f.button type: :submit, class: action_button_classes(:primary, full_width: true) do %>
+      <%= f.button type: :submit, class: "flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-red-700 px-3 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2" do %>
         <%= icon_svg(:arrow_right, classes: "h-4 w-4") %>
         <span>Sign in with email</span>
       <% end %>
