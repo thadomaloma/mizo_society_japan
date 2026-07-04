@@ -1,15 +1,8 @@
 <div class="overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl shadow-slate-950/40">
   <div class="relative overflow-hidden bg-[#1E293B] px-5 py-4 text-white sm:px-6 sm:py-5">
     <div class="absolute inset-x-0 top-0 h-1 bg-red-600"></div>
-    <div class="flex items-center justify-between gap-4">
-      <div class="flex min-w-0 items-center gap-3">
-        <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-700 text-[11px] font-black tracking-wide text-white shadow-lg shadow-red-950/30 ring-1 ring-white/10">MSJ</div>
-        <div class="min-w-0">
-          <p class="text-xl font-black leading-none text-white">MSJ</p>
-          <p class="mt-1 truncate text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">Mizo Society of Japan</p>
-        </div>
-      </div>
-      <span class="hidden rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-red-200 sm:inline-flex">Portal</span>
+    <div class="flex justify-center">
+      <%= render "devise/shared/auth_logo", wrapper_classes: "h-12 w-12 rounded-2xl", image_classes: "h-10 w-10" %>
     </div>
     <div class="mt-4 border-t border-white/10 pt-4">
       <h1 class="text-xl font-black tracking-tight">Chibai le...</h1>
