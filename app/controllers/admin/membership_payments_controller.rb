@@ -5,22 +5,23 @@ module Admin
 
     def index
       authorize MembershipPayment
-      @status = params[:status]
+      @status = params[:status].presence || "pending_verification"
       @year = params[:year]
       @plan_type_id = params[:plan_type_id]
       @query = params[:query]
       @membership_payments = policy_scope(MembershipPayment)
         .includes({ membership_plan: :membership_plan_type }, user: :member_profile)
         .search(@query)
-        .by_status(@status)
         .by_year(@year)
         .by_plan_type(@plan_type_id)
         .latest
-      @membership_payments = @membership_payments.where(payment_batch_id: nil) if @status.blank? || @status == "pending_verification"
+      @membership_payments = @membership_payments.by_status(@status) unless @status == "all"
+      @membership_payments = @membership_payments.where(payment_batch_id: nil) if @status == "pending_verification"
       @payment_batches = policy_scope(PaymentBatch)
         .includes(:user, membership_payments: { membership_plan: :membership_plan_type })
         .reviewable
         .latest
+      @payment_batches = PaymentBatch.none unless @status.in?([ "all", "pending_verification" ])
       @payment_summary = {
         total: @membership_payments.count,
         pending: @membership_payments.count(&:pending_verification?) + @payment_batches.count,

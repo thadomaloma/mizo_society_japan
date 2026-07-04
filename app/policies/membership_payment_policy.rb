@@ -40,11 +40,11 @@ class MembershipPaymentPolicy < ApplicationPolicy
   end
 
   def approve?
-    finance_approver? && (record.pending? || record.pending_verification?)
+    finance_approver? && record.pending_verification?
   end
 
   def reject?
-    finance_approver? && (record.pending? || record.pending_verification?)
+    finance_approver? && record.pending_verification?
   end
 
   class Scope < ApplicationPolicy::Scope
