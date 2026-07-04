@@ -41,23 +41,23 @@
         </div>
 
         <div class="mt-5 grid gap-3 lg:grid-cols-2">
-          <section class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
-            <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">From another bank</p>
+          <section class="rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-3 shadow-sm shadow-sky-950/5 dark:border-sky-400/20 dark:from-sky-500/10 dark:to-[#0F172A]">
+            <p class="inline-flex rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-yellow-900 ring-1 ring-yellow-200 dark:bg-yellow-400/15 dark:text-yellow-100 dark:ring-yellow-300/20">From another bank</p>
             <p class="mt-1 text-[11px] font-semibold leading-4 text-[#64748B] dark:text-[#CBD5E1]">Use these fields when transferring from MUFG, SMBC, Mizuho, or another bank.</p>
             <dl class="mt-3 space-y-2">
               <% [
                 [ "Bank", @bank_transfer_details[:bank_name] ],
-                [ "Store Name<br><span class=\"normal-case tracking-normal\">店名</span>".html_safe, @bank_transfer_details[:branch_name] ],
-                [ "Account Number", @bank_transfer_details[:account_number] ],
+                [ "Store Name<br><span class=\"text-inherit normal-case tracking-normal\">店名</span>".html_safe, @bank_transfer_details[:branch_name] ],
+                [ "Account Number<br><span class=\"text-inherit normal-case tracking-normal\">口座番号</span>".html_safe, @bank_transfer_details[:account_number] ],
                 [ "Account Name", @bank_transfer_details[:account_name] ]
               ].each do |label, value| %>
                 <% next if value.blank? %>
-                <% copyable = label.to_s.include?("Store Name") || label == "Account Number" %>
+                <% copyable = label.to_s.include?("Store Name") || label.to_s.include?("Account Number") %>
                 <% copy_title = strip_tags(label.to_s).squish %>
-                <div class="flex gap-3 rounded-lg bg-white/70 px-3 py-2 dark:bg-[#1E293B]/70">
+                <div class="flex gap-3 rounded-lg bg-white/90 px-3 py-2 ring-1 ring-sky-100/70 dark:bg-[#1E293B]/85 dark:ring-sky-400/10">
                   <dt class="w-28 shrink-0 text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></dt>
-                  <dd class="flex min-w-0 flex-1 items-center justify-between gap-2">
-                    <span class="min-w-0 break-words text-sm font-black text-[#0F172A] dark:text-white"><%= value %></span>
+                  <dd class="flex min-w-0 flex-1 items-start justify-between gap-2">
+                    <span class="min-w-0 break-all text-sm font-black text-[#0F172A] dark:text-white"><%= value %></span>
                     <% if copyable %>
                       <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2 text-[11px] font-black text-[#64748B] transition hover:border-red-200 hover:text-red-700 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#CBD5E1] dark:hover:text-red-300" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= copy_title %>">
                         <%= icon_svg(:copy, classes: "h-3.5 w-3.5") %>
@@ -70,22 +70,22 @@
             </dl>
           </section>
 
-          <section class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
-            <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">From ゆうちょ銀行</p>
+          <section class="rounded-xl border border-red-100 bg-gradient-to-br from-red-50 to-white p-3 shadow-sm shadow-red-950/5 dark:border-red-400/20 dark:from-red-500/10 dark:to-[#0F172A]">
+            <p class="inline-flex rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-yellow-900 ring-1 ring-yellow-200 dark:bg-yellow-400/15 dark:text-yellow-100 dark:ring-yellow-300/20">From ゆうちょ銀行</p>
             <p class="mt-1 text-[11px] font-semibold leading-4 text-[#64748B] dark:text-[#CBD5E1]">Use these when ゆうちょ app or ATM asks for 記号 and 番号 separately.</p>
             <dl class="mt-3 space-y-2">
               <% [
-                [ "Yuucho Symbol<br><span class=\"normal-case tracking-normal\">記号</span>".html_safe, @bank_transfer_details[:yucho_symbol] ],
-                [ "Yuucho Number<br><span class=\"normal-case tracking-normal\">番号</span>".html_safe, @bank_transfer_details[:yucho_number] ],
+                [ "Yuucho Symbol<br><span class=\"text-inherit normal-case tracking-normal\">記号</span>".html_safe, @bank_transfer_details[:yucho_symbol] ],
+                [ "Yuucho Number<br><span class=\"text-inherit normal-case tracking-normal\">番号</span>".html_safe, @bank_transfer_details[:yucho_number] ],
                 [ "Account Name", @bank_transfer_details[:account_name] ]
               ].each do |label, value| %>
                 <% next if value.blank? %>
                 <% copyable = label.to_s.include?("Yuucho Symbol") || label.to_s.include?("Yuucho Number") %>
                 <% copy_title = strip_tags(label.to_s).squish %>
-                <div class="flex gap-3 rounded-lg bg-white/70 px-3 py-2 dark:bg-[#1E293B]/70">
+                <div class="flex gap-3 rounded-lg bg-white/90 px-3 py-2 ring-1 ring-red-100/70 dark:bg-[#1E293B]/85 dark:ring-red-400/10">
                   <dt class="w-28 shrink-0 text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></dt>
-                  <dd class="flex min-w-0 flex-1 items-center justify-between gap-2">
-                    <span class="min-w-0 break-words text-sm font-black text-[#0F172A] dark:text-white"><%= value %></span>
+                  <dd class="flex min-w-0 flex-1 items-start justify-between gap-2">
+                    <span class="min-w-0 break-all text-sm font-black text-[#0F172A] dark:text-white"><%= value %></span>
                     <% if copyable %>
                       <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2 text-[11px] font-black text-[#64748B] transition hover:border-red-200 hover:text-red-700 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#CBD5E1] dark:hover:text-red-300" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= copy_title %>">
                         <%= icon_svg(:copy, classes: "h-3.5 w-3.5") %>
@@ -165,7 +165,7 @@
             </div>
             <div class="sm:col-span-2">
               <%= form.label :transfer_reference_name, "Reference Name", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
-              <%= form.text_field :transfer_reference_name, required: true, placeholder: current_user.display_name, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+              <%= form.text_field :transfer_reference_name, required: true, value: @membership_payment.transfer_reference_name.presence || current_user.display_name, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
             </div>
             <div class="sm:col-span-2">
               <%= form.label :transfer_screenshot, "Screenshot (optional)", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>

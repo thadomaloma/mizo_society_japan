@@ -1,14 +1,23 @@
 <% content_for :page_title, "Combined Payment" %>
 
 <div class="space-y-4 sm:space-y-6">
-  <%= render "shared/page_header",
-    eyebrow: "Member finance",
-    title: "Combined Payment",
-    actions: link_to(membership_payments_path, class: action_button_classes(:secondary)) { safe_join([ icon_svg(:arrow_left, classes: "h-4 w-4"), tag.span("Payments") ]) } %>
+  <div class="hidden sm:block">
+    <%= render "shared/page_header",
+      eyebrow: "Member finance",
+      title: "Combined Payment",
+      actions: link_to(membership_payments_path, class: action_button_classes(:secondary)) { safe_join([ icon_svg(:arrow_left, classes: "h-4 w-4"), tag.span("Payments") ]) } %>
+  </div>
+
+  <div class="sm:hidden">
+    <%= link_to membership_payments_path, class: "inline-flex items-center gap-1.5 rounded-lg px-1 text-xs font-black text-[#64748B] transition hover:text-red-700 dark:text-[#CBD5E1] dark:hover:text-red-300" do %>
+      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+      <span>Payments</span>
+    <% end %>
+  </div>
 
   <section class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
-    <div class="space-y-4">
-      <article class="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:p-5">
+    <div class="space-y-4 xl:order-1">
+      <article class="hidden rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:block sm:p-5">
         <div class="flex items-start justify-between gap-3">
           <div>
             <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Transfer once</p>
@@ -33,6 +42,16 @@
 
       <% if policy(@payment_batch).submit_transfer? %>
         <article class="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:p-5">
+          <div class="mb-4 rounded-xl border border-red-100 bg-red-50 p-3 dark:border-red-500/20 dark:bg-red-500/10 sm:hidden">
+            <div class="flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-[10px] font-black uppercase tracking-wide text-red-700 dark:text-red-300"><%= pluralize(@payment_batch.membership_payments.count, "selected item") %></p>
+                <p class="mt-0.5 truncate text-2xl font-black text-[#0F172A] dark:text-white"><%= yen(@payment_batch.total_amount) %></p>
+              </div>
+              <%= render "shared/status_badge", status: @payment_batch.status, compact: true %>
+            </div>
+          </div>
+
           <h3 class="text-base font-black text-[#0F172A] dark:text-white">Submit Bank Transfer Details</h3>
           <p class="mt-1 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]">Transfer the total amount once, then submit the details below.</p>
 
@@ -40,7 +59,7 @@
             <%= render "devise/shared/error_messages", resource: @payment_batch %>
             <div>
               <%= form.label :transferred_on, "Transfer Date", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
-              <%= form.date_field :transferred_on, required: true, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+              <%= form.date_field :transferred_on, required: true, max: Date.current, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
             </div>
             <div>
               <%= form.label :transfer_amount, "Total Amount", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
@@ -48,7 +67,7 @@
             </div>
             <div class="sm:col-span-2">
               <%= form.label :transfer_reference_name, "Reference Name", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
-              <%= form.text_field :transfer_reference_name, required: true, placeholder: "Name shown in bank transfer", class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+              <%= form.text_field :transfer_reference_name, required: true, value: @payment_batch.transfer_reference_name.presence || current_user.display_name, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
             </div>
             <div class="sm:col-span-2">
               <%= form.label :transfer_screenshot, "Screenshot (optional)", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
@@ -57,7 +76,7 @@
             <div class="sm:col-span-2">
               <%= form.button type: :submit, class: action_button_classes(:primary, full_width: true) do %>
                 <%= icon_svg(:upload, classes: "h-4 w-4") %>
-                <span>Submit Combined Transfer</span>
+                <span>Submit Transfer</span>
               <% end %>
             </div>
           <% end %>
@@ -70,25 +89,26 @@
       <% end %>
     </div>
 
-    <aside class="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:p-5 xl:sticky xl:top-24 xl:self-start">
+    <aside class="order-first rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:p-5 xl:order-2 xl:sticky xl:top-24 xl:self-start">
       <h3 class="text-base font-black text-[#0F172A] dark:text-white">Bank Transfer</h3>
       <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Use these details and transfer the total once.</p>
       <div class="mt-4 space-y-3">
-        <div class="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
-          <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">From another bank</p>
+        <div class="rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-3 shadow-sm shadow-sky-950/5 dark:border-sky-400/20 dark:from-sky-500/10 dark:to-[#0F172A]">
+          <p class="inline-flex rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-yellow-900 ring-1 ring-yellow-200 dark:bg-yellow-400/15 dark:text-yellow-100 dark:ring-yellow-300/20">From another bank</p>
           <% [
             [ "Bank", @bank_transfer_details[:bank_name], false ],
-            [ "Store Name", @bank_transfer_details[:branch_name], true ],
-            [ "Account Number", @bank_transfer_details[:account_number], true ],
+            [ "Store Name<br><span class=\"text-inherit normal-case tracking-normal\">店名</span>".html_safe, @bank_transfer_details[:branch_name], true ],
+            [ "Account Number<br><span class=\"text-inherit normal-case tracking-normal\">口座番号</span>".html_safe, @bank_transfer_details[:account_number], true ],
             [ "Account Name", @bank_transfer_details[:account_name], false ]
           ].each do |label, value, copyable| %>
             <% next if value.blank? %>
-            <div class="mt-2 flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 dark:bg-[#1E293B]">
-              <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></p>
-              <div class="flex min-w-0 items-center gap-2">
-                <p class="truncate text-right text-sm font-black text-[#0F172A] dark:text-white"><%= value %></p>
+            <% copy_title = strip_tags(label.to_s).squish %>
+            <div class="mt-2 flex items-start justify-between gap-3 rounded-lg bg-white/90 px-3 py-2 ring-1 ring-sky-100/70 dark:bg-[#1E293B]/85 dark:ring-sky-400/10">
+              <p class="w-24 shrink-0 text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></p>
+              <div class="flex min-w-0 flex-1 items-start justify-end gap-2">
+                <p class="min-w-0 break-all text-right text-sm font-black text-[#0F172A] dark:text-white"><%= value %></p>
                 <% if copyable %>
-                  <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2 text-[11px] font-black text-[#64748B] transition hover:border-red-200 hover:text-red-700 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#CBD5E1]" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy">
+                  <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2 text-[11px] font-black text-[#64748B] transition hover:border-red-200 hover:text-red-700 dark:border-[#334155] dark:bg-[#0F172A] dark:text-[#CBD5E1]" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= copy_title %>">
                     <%= icon_svg(:copy, classes: "h-3.5 w-3.5") %>
                     <span data-clipboard-target="label">Copy</span>
                   </button>
@@ -97,18 +117,19 @@
             </div>
           <% end %>
         </div>
-        <div class="rounded-xl border border-red-100 bg-red-50 p-3 dark:border-red-500/20 dark:bg-red-500/10">
-          <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">From ゆうちょ銀行</p>
+        <div class="rounded-xl border border-red-100 bg-gradient-to-br from-red-50 to-white p-3 shadow-sm shadow-red-950/5 dark:border-red-400/20 dark:from-red-500/10 dark:to-[#0F172A]">
+          <p class="inline-flex rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-yellow-900 ring-1 ring-yellow-200 dark:bg-yellow-400/15 dark:text-yellow-100 dark:ring-yellow-300/20">From ゆうちょ銀行</p>
           <% [
-            [ "Symbol", @bank_transfer_details[:yucho_symbol] ],
-            [ "Number", @bank_transfer_details[:yucho_number] ]
+            [ "Symbol<br><span class=\"text-inherit normal-case tracking-normal\">記号</span>".html_safe, @bank_transfer_details[:yucho_symbol] ],
+            [ "Number<br><span class=\"text-inherit normal-case tracking-normal\">番号</span>".html_safe, @bank_transfer_details[:yucho_number] ]
           ].each do |label, value| %>
             <% next if value.blank? %>
-            <div class="mt-2 flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 dark:bg-[#0F172A]">
-              <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></p>
-              <div class="flex min-w-0 items-center gap-2">
-                <p class="truncate text-sm font-black text-[#0F172A] dark:text-white"><%= value %></p>
-                <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2 text-[11px] font-black text-[#64748B] transition hover:border-red-200 hover:text-red-700 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#CBD5E1]" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy">
+            <% copy_title = strip_tags(label.to_s).squish %>
+            <div class="mt-2 flex items-start justify-between gap-3 rounded-lg bg-white/90 px-3 py-2 ring-1 ring-red-100/70 dark:bg-[#1E293B]/85 dark:ring-red-400/10">
+              <p class="w-24 shrink-0 text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></p>
+              <div class="flex min-w-0 flex-1 items-start justify-end gap-2">
+                <p class="min-w-0 break-all text-right text-sm font-black text-[#0F172A] dark:text-white"><%= value %></p>
+                <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-[#E2E8F0] bg-white px-2 text-[11px] font-black text-[#64748B] transition hover:border-red-200 hover:text-red-700 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#CBD5E1]" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= copy_title %>">
                   <%= icon_svg(:copy, classes: "h-3.5 w-3.5") %>
                   <span data-clipboard-target="label">Copy</span>
                 </button>
@@ -116,6 +137,55 @@
             </div>
           <% end %>
         </div>
+      </div>
+
+      <div class="mt-4 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
+        <p class="text-xs font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Which numbers should I use?</p>
+        <div class="mt-3 grid gap-2">
+          <div class="rounded-lg bg-white p-3 ring-1 ring-[#E2E8F0] dark:bg-[#1E293B] dark:ring-[#334155]">
+            <p class="text-sm font-black text-[#0F172A] dark:text-white">From another bank</p>
+            <p class="mt-1 text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]">
+              Use Bank, Store Name, Account Number, and Account Name.
+            </p>
+          </div>
+          <div class="rounded-lg bg-white p-3 ring-1 ring-[#E2E8F0] dark:bg-[#1E293B] dark:ring-[#334155]">
+            <p class="text-sm font-black text-[#0F172A] dark:text-white">From ゆうちょ銀行</p>
+            <p class="mt-1 text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]">
+              Use Symbol (記号) and Number (番号) if your app or ATM asks for them.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <ol class="mt-4 space-y-3">
+        <% [
+          [ "Open bank transfer", "Use your bank app, ゆうちょダイレクト, ゆうちょ通帳アプリ, or a ゆうちょ ATM." ],
+          [ "Enter MSJ account", "Choose ゆうちょ銀行, then enter the matching account details shown above." ],
+          [ "Transfer total amount", "Send #{yen(@payment_batch.total_amount)} once for all selected payments." ],
+          [ "Submit details", "After transfer is complete, enter Transfer Date, Total Amount, and Reference Name below." ]
+        ].each_with_index do |(title, body), index| %>
+          <li class="flex gap-3">
+            <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#0F172A] text-[11px] font-black text-white dark:bg-[#334155]"><%= index + 1 %></span>
+            <span>
+              <span class="block text-sm font-black text-[#0F172A] dark:text-white"><%= title %></span>
+              <span class="mt-0.5 block text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]"><%= body %></span>
+            </span>
+          </li>
+        <% end %>
+      </ol>
+
+      <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">
+        <p class="text-xs font-black text-amber-800 dark:text-amber-100">Authentication note</p>
+        <p class="mt-1 text-xs font-semibold leading-5 text-amber-700 dark:text-amber-100">
+          ゆうちょ may ask for the ゆうちょ認証アプリ depending on your account setup. Follow the official bank instructions if that prompt appears.
+        </p>
+      </div>
+
+      <div class="mt-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
+        <p class="text-xs font-black text-[#0F172A] dark:text-white">Receipt reminder</p>
+        <p class="mt-1 text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]">
+          Keep your transfer receipt or screenshot until the treasurer verifies the payment.
+        </p>
       </div>
     </aside>
   </section>

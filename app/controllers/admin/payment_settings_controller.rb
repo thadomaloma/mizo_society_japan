@@ -59,6 +59,7 @@ module Admin
       normalized_settings = payment_settings_params.each_with_object({}) do |(key, value), settings|
         settings[key] = value.to_s.strip
       end
+      normalize_yucho_settings!(normalized_settings)
       @settings_errors = settings_errors_for(normalized_settings)
       if @settings_errors.any?
         @bank_settings = bank_settings(normalized_settings)
@@ -97,44 +98,25 @@ module Admin
     end
 
     def bank_setting_value(key)
-      return yucho_symbol_value if key == "yucho_symbol"
-      return yucho_number_value if key == "yucho_number"
+      return bank_transfer_details[:yucho_symbol] if key == "yucho_symbol"
+      return bank_transfer_details[:yucho_number] if key == "yucho_number"
 
       AppSetting.get(key)
     end
 
-    def yucho_symbol_value
-      explicit_yucho_symbol.presence || inferred_yucho_parts.first
+    def bank_transfer_details
+      @bank_transfer_details ||= BankTransferDetails.call
     end
 
-    def yucho_number_value
-      explicit_yucho_number.presence || inferred_yucho_parts.second
-    end
+    def normalize_yucho_settings!(settings)
+      symbol, number = BankTransferDetails.yucho_parts(
+        symbol: settings["yucho_symbol"],
+        number: settings["yucho_number"],
+        legacy: AppSetting.get("yucho_symbol_number")
+      )
 
-    def explicit_yucho_symbol
-      symbol = AppSetting.get("yucho_symbol").to_s.strip
-      return symbol if symbol.blank?
-
-      parts = symbol.scan(/\d+/)
-      parts.size >= 2 ? parts.first : symbol
-    end
-
-    def explicit_yucho_number
-      number = AppSetting.get("yucho_number").to_s.strip
-      return number if number.blank?
-
-      parts = number.scan(/\d+/)
-      parts.size >= 2 ? parts.second : number
-    end
-
-    def inferred_yucho_parts
-      @inferred_yucho_parts ||= begin
-        symbol = AppSetting.get("yucho_symbol").to_s
-        number = AppSetting.get("yucho_number").to_s
-        legacy = AppSetting.get("yucho_symbol_number").to_s
-        source = [ symbol, number, legacy ].find { |value| value.scan(/\d+/).size >= 2 }.presence || legacy
-        source.scan(/\d+/).first(2)
-      end
+      settings["yucho_symbol"] = symbol.to_s if symbol.present?
+      settings["yucho_number"] = number.to_s if number.present?
     end
 
     def payment_settings_params

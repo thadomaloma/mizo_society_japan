@@ -161,6 +161,29 @@ body {
     font-size: 0.875rem;
   }
 
+  body > div main :where(input[type="date"], input[type="datetime-local"], input[type="time"]) {
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2.25rem;
+    padding: 0.5rem 0.625rem !important;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
+  body > div main :where(input[type="date"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value) {
+    min-height: 1.25rem;
+    text-align: left;
+  }
+
+  body > div main :where(input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator) {
+    margin-left: 0.25rem;
+    padding: 0;
+  }
+
   body > div main :where(form.rounded-2xl, form.rounded-xl) {
     border-radius: 0.875rem !important;
   }

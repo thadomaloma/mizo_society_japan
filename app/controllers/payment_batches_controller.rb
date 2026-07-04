@@ -100,47 +100,6 @@ class PaymentBatchesController < ApplicationController
   end
 
   def set_bank_transfer_details
-    @bank_transfer_details = {
-      account_name: AppSetting.get("bank_account_name", "Mizo Society of Japan"),
-      bank_name: AppSetting.get("bank_name", "Please set bank name"),
-      branch_name: AppSetting.get("bank_branch_name", "Please set branch / store name"),
-      account_number: AppSetting.get("bank_account_number", "Please set account number"),
-      yucho_symbol: yucho_symbol_value,
-      yucho_number: yucho_number_value
-    }
-  end
-
-  def yucho_symbol_value
-    explicit_yucho_symbol.presence || inferred_yucho_parts.first
-  end
-
-  def yucho_number_value
-    explicit_yucho_number.presence || inferred_yucho_parts.second
-  end
-
-  def explicit_yucho_symbol
-    symbol = AppSetting.get("yucho_symbol").to_s.strip
-    return symbol if symbol.blank?
-
-    parts = symbol.scan(/\d+/)
-    parts.size >= 2 ? parts.first : symbol
-  end
-
-  def explicit_yucho_number
-    number = AppSetting.get("yucho_number").to_s.strip
-    return number if number.blank?
-
-    parts = number.scan(/\d+/)
-    parts.size >= 2 ? parts.second : number
-  end
-
-  def inferred_yucho_parts
-    @inferred_yucho_parts ||= begin
-      symbol = AppSetting.get("yucho_symbol").to_s
-      number = AppSetting.get("yucho_number").to_s
-      legacy = AppSetting.get("yucho_symbol_number").to_s
-      source = [ symbol, number, legacy ].find { |value| value.scan(/\d+/).size >= 2 }.presence || legacy
-      source.scan(/\d+/).first(2)
-    end
+    @bank_transfer_details = BankTransferDetails.call
   end
 end

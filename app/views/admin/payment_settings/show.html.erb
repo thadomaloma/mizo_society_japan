@@ -89,21 +89,21 @@
         </div>
 
         <div class="mt-4 space-y-3">
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
-            <p class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">From another bank</p>
+          <div class="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-3 shadow-sm shadow-sky-950/5 dark:border-sky-400/20 dark:from-sky-500/10 dark:to-slate-900">
+            <p class="inline-flex rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-yellow-900 ring-1 ring-yellow-200 dark:bg-yellow-400/15 dark:text-yellow-100 dark:ring-yellow-300/20">From another bank</p>
             <dl class="mt-3 grid gap-2 text-sm">
               <% [
                 [ "Bank", value_for.call("bank_name") ],
-                [ "Store Name<br><span class=\"normal-case tracking-normal\">店名</span>".html_safe, value_for.call("bank_branch_name") ],
-                [ "Account Number", value_for.call("bank_account_number") ],
+                [ "Store Name<br><span class=\"text-inherit normal-case tracking-normal\">店名</span>".html_safe, value_for.call("bank_branch_name") ],
+                [ "Account Number<br><span class=\"text-inherit normal-case tracking-normal\">口座番号</span>".html_safe, value_for.call("bank_account_number") ],
                 [ "Account Name", value_for.call("bank_account_name") ]
               ].each do |label, value| %>
-                <% copyable = label.to_s.include?("Store Name") || label == "Account Number" %>
+                <% copyable = label.to_s.include?("Store Name") || label.to_s.include?("Account Number") %>
                 <% copy_title = strip_tags(label.to_s).squish %>
-                <div class="flex items-start justify-between gap-3 rounded-xl bg-white px-3 py-2 dark:bg-slate-800">
-                  <dt class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500"><%= label %></dt>
-                  <dd class="flex min-w-0 items-center justify-end gap-2">
-                    <span class="max-w-[9rem] truncate text-right font-black text-slate-950 dark:text-white"><%= value %></span>
+                <div class="flex items-start justify-between gap-3 rounded-xl bg-white/90 px-3 py-2 ring-1 ring-sky-100/70 dark:bg-slate-800/85 dark:ring-sky-400/10">
+                  <dt class="w-24 shrink-0 text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500"><%= label %></dt>
+                  <dd class="flex min-w-0 flex-1 items-start justify-end gap-2">
+                    <span class="min-w-0 break-all text-right font-black text-slate-950 dark:text-white"><%= value %></span>
                     <% if copyable && value != "Not set" %>
                       <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-black text-slate-500 transition hover:border-red-200 hover:text-red-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-red-300" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= copy_title %>">
                         <%= icon_svg(:copy, classes: "h-3.5 w-3.5") %>
@@ -116,18 +116,18 @@
             </dl>
           </div>
 
-          <div class="rounded-2xl border border-red-100 bg-red-50 p-3 dark:border-red-500/20 dark:bg-red-500/10">
-            <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">From ゆうちょ銀行</p>
+          <div class="rounded-2xl border border-red-100 bg-gradient-to-br from-red-50 to-white p-3 shadow-sm shadow-red-950/5 dark:border-red-400/20 dark:from-red-500/10 dark:to-slate-900">
+            <p class="inline-flex rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-yellow-900 ring-1 ring-yellow-200 dark:bg-yellow-400/15 dark:text-yellow-100 dark:ring-yellow-300/20">From ゆうちょ銀行</p>
             <div class="mt-3 space-y-2">
               <% [
-                [ "Yuucho Symbol<br><span class=\"normal-case tracking-normal\">記号</span>".html_safe, value_for.call("yucho_symbol") ],
-                [ "Yuucho Number<br><span class=\"normal-case tracking-normal\">番号</span>".html_safe, value_for.call("yucho_number") ]
+                [ "Yuucho Symbol<br><span class=\"text-inherit normal-case tracking-normal\">記号</span>".html_safe, value_for.call("yucho_symbol") ],
+                [ "Yuucho Number<br><span class=\"text-inherit normal-case tracking-normal\">番号</span>".html_safe, value_for.call("yucho_number") ]
               ].each do |label, value| %>
                 <% copy_title = strip_tags(label.to_s).squish %>
-                <div class="flex items-start justify-between gap-3 rounded-xl bg-white px-3 py-2 dark:bg-slate-900">
-                  <p class="text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500"><%= label %></p>
-                  <div class="flex min-w-0 items-center justify-end gap-2">
-                    <p class="max-w-[9rem] truncate text-right text-sm font-black text-slate-950 dark:text-white"><%= value %></p>
+                <div class="flex items-start justify-between gap-3 rounded-xl bg-white/90 px-3 py-2 ring-1 ring-red-100/70 dark:bg-slate-800/85 dark:ring-red-400/10">
+                  <p class="w-24 shrink-0 text-xs font-black uppercase tracking-wide text-slate-400 dark:text-slate-500"><%= label %></p>
+                  <div class="flex min-w-0 flex-1 items-start justify-end gap-2">
+                    <p class="min-w-0 break-all text-right text-sm font-black text-slate-950 dark:text-white"><%= value %></p>
                     <% if value != "Not set" %>
                       <button type="button" class="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-black text-slate-500 transition hover:border-red-200 hover:text-red-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-red-300" data-controller="clipboard" data-clipboard-text-value="<%= value %>" data-action="clipboard#copy" title="Copy <%= copy_title %>">
                         <%= icon_svg(:copy, classes: "h-3.5 w-3.5") %>
