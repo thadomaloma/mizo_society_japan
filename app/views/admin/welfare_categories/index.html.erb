@@ -58,11 +58,16 @@
       <% end %>
     </div>
   <% else %>
+    <% empty_state_action = capture do %>
+      <%= link_to new_admin_welfare_category_path, class: action_button_classes(:primary) do %>
+        <%= icon_svg(:plus, classes: "h-4 w-4") %>
+        <span>Add Category</span>
+      <% end %>
+    <% end %>
+
     <%= render "shared/empty_state",
       title: "No welfare categories found",
       message: "Create categories before adding welfare cases.",
-      action: link_to(new_admin_welfare_category_path, class: action_button_classes(:primary)) do
-        safe_join([ icon_svg(:plus, classes: "h-4 w-4"), tag.span("Add Category") ])
-      end %>
+      action: empty_state_action %>
   <% end %>
 </div>

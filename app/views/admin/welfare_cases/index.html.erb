@@ -25,7 +25,7 @@
   <%= render "shared/page_header",
     eyebrow: "Confidential welfare",
     title: "Welfare Cases",
-    subtitle: "Review support requests, assign officers, and track case progress.",
+    subtitle: "Review support requests, assign Office Bearers, and track case progress.",
     actions: header_actions %>
 
   <section class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -52,7 +52,7 @@
     <%= form.select :status, options_for_select([ [ "All statuses", "" ] ] + WelfareCase.statuses.keys.map { |status| [ status.humanize, status ] }, @status), {}, class: "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white" %>
     <%= form.select :priority, options_for_select([ [ "All priorities", "" ] ] + WelfareCase.priorities.keys.map { |priority| [ priority.humanize, priority ] }, @priority), {}, class: "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white" %>
     <%= form.collection_select :category_id, @welfare_categories, :id, :name, { include_blank: "All categories", selected: @category_id }, class: "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white" %>
-    <%= form.collection_select :assigned_to_id, @assignable_users, :id, :display_name, { include_blank: "All officers", selected: @assigned_to_id }, class: "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white" %>
+    <%= form.collection_select :assigned_to_id, @assignable_users, :id, :display_name, { include_blank: "All Office Bearers", selected: @assigned_to_id }, class: "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white" %>
     <%= form.button type: :submit, class: action_button_classes(:dark, full_width: true, extra: "lg:w-auto") do %>
       <%= icon_svg(:filter, classes: "h-4 w-4") %>
       <span>Filter</span>
@@ -69,7 +69,7 @@
             <th class="px-5 py-3">Category</th>
             <th class="px-5 py-3">Priority</th>
             <th class="px-5 py-3">Status</th>
-            <th class="px-5 py-3">Assigned To</th>
+            <th class="px-5 py-3">Office Bearer</th>
             <th class="px-5 py-3">Submitted</th>
             <th class="px-5 py-3 text-right">Actions</th>
           </tr>

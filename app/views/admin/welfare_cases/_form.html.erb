@@ -30,7 +30,7 @@
     </div>
 
     <div>
-      <%= form.label :assigned_to_id, "Assigned to", class: "block text-sm font-bold text-gray-700 dark:text-gray-200" %>
+      <%= form.label :assigned_to_id, "Office Bearer", class: "block text-sm font-bold text-gray-700 dark:text-gray-200" %>
       <%= form.collection_select :assigned_to_id, @assignable_users, :id, :display_name, { include_blank: "Unassigned" }, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 shadow-sm outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-white/10 dark:bg-gray-950 dark:text-white" %>
     </div>
   </div>

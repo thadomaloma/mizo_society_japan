@@ -2,12 +2,12 @@
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <h3 class="text-lg font-black text-gray-950">Internal notes</h3>
-      <p class="mt-1 text-sm text-gray-600">Visible only to authorized welfare officers.</p>
+      <p class="mt-1 text-sm text-gray-600">Visible only to authorized Office Bearers.</p>
     </div>
   </div>
 
   <%= form_with model: [ :admin, welfare_case, welfare_note ], class: "mt-4 space-y-3" do |form| %>
-    <%= form.text_area :body, rows: 4, placeholder: "Add private officer note...", class: "block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
+    <%= form.text_area :body, rows: 4, placeholder: "Add private Office Bearer note...", class: "block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
     <label class="flex items-center gap-3 text-sm font-bold text-gray-700">
       <%= form.check_box :internal, checked: true, class: "h-4 w-4 rounded border-gray-300 text-red-700 focus:ring-red-600" %>
       Internal note

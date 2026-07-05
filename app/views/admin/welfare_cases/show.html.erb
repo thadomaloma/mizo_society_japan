@@ -38,7 +38,7 @@
           <dd class="mt-1 font-black text-slate-950 dark:text-white"><%= @welfare_case.submitted_at.strftime("%b %d, %Y") %></dd>
         </div>
         <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900">
-          <dt class="text-xs font-black uppercase tracking-wide text-slate-400">Assigned To</dt>
+          <dt class="text-xs font-black uppercase tracking-wide text-slate-400">Office Bearer</dt>
           <dd class="mt-1 truncate font-black text-slate-950 dark:text-white"><%= @welfare_case.assigned_to&.display_name || "Unassigned" %></dd>
         </div>
       </dl>
@@ -60,9 +60,9 @@
 
       <% if policy(@welfare_case).assign? %>
         <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <h3 class="text-base font-black text-slate-950 dark:text-white">Assign officer</h3>
+          <h3 class="text-base font-black text-slate-950 dark:text-white">Assign Office Bearer</h3>
           <%= form_with model: [ :admin, @welfare_case ], url: assign_admin_welfare_case_path(@welfare_case), method: :patch, class: "mt-4 space-y-3" do |form| %>
-            <%= form.collection_select :assigned_to_id, @assignable_users, :id, :display_name, { include_blank: "Choose officer" }, class: "block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white" %>
+            <%= form.collection_select :assigned_to_id, @assignable_users, :id, :display_name, { include_blank: "Choose Office Bearer" }, class: "block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white" %>
             <%= form.button type: :submit, class: action_button_classes(:dark, full_width: true) do %>
               <%= icon_svg(:user_plus, classes: "h-4 w-4") %>
               <span>Assign</span>

@@ -191,7 +191,7 @@ module Admin
             "Manage finance",
             "Manage announcements",
             "Manage events",
-            "Manage documents",
+            "Manage official letters",
             "Manage welfare",
             "Manage reports",
             "Manage settings",
@@ -204,7 +204,7 @@ module Admin
         {
           name: "Office Bearers",
           users: "President, Vice President, Secretary, Assistant Secretary, Treasurer, Finance Secretary, Journal Secretary",
-          permissions: [ "View office-bearers-only documents", "View office-bearers-only events", "View office-bearers-only meeting minutes", "Pay membership fees and active fund plans" ],
+          permissions: [ "View office-bearers-only letters", "View office-bearers-only events", "View office-bearers-only meeting minutes", "Pay membership fees and active fund plans" ],
           restrictions: [ "Vice President and Journal Secretary use view-only access outside their permitted actions" ]
         },
         {
@@ -228,7 +228,7 @@ module Admin
         {
           name: "Executive Committee",
           users: "Executive Member",
-          permissions: [ "View reports", "View members", "View announcements", "View events", "View welfare records" ],
+          permissions: [ "View reports", "View members", "View events and announcements", "View welfare records" ],
           restrictions: [ "Cannot edit system data", "Cannot create, assign, resolve, or reject welfare cases" ]
         },
         {
@@ -239,7 +239,7 @@ module Admin
             "Update own profile",
             "Pay membership fees and active fund plans",
             "RSVP events",
-            "Download public documents",
+            "View public official letters",
             "Submit welfare requests"
           ],
           restrictions: []

@@ -14,7 +14,7 @@
       <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-700 text-white dark:bg-red-600"><%= icon_svg(:lock, classes: "h-5 w-5") %></span>
       <div>
         <p class="font-black">Confidential welfare support</p>
-        <p class="mt-1 leading-5 text-red-800 dark:text-red-100/80">Please share only what is needed. Authorized MSJ officers will review your request privately.</p>
+        <p class="mt-1 leading-5 text-red-800 dark:text-red-100/80">Please share only what is needed. Authorized Office Bearers will review your request privately.</p>
       </div>
     </div>
   </section>
@@ -43,7 +43,7 @@
     <div class="mt-4">
       <%= form.label :description, "What support do you need?", class: label_classes %>
       <%= form.text_area :description, rows: 6, placeholder: "Write the details here. Include dates, amount, or background only if useful.", class: input_classes %>
-      <p class="<%= hint_classes %>">This message is private to authorized welfare officers.</p>
+      <p class="<%= hint_classes %>">This message is private to authorized Office Bearers.</p>
     </div>
   </section>
 

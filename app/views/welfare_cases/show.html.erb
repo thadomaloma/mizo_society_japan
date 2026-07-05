@@ -29,7 +29,7 @@
           <dd class="mt-0.5 font-black text-slate-950 dark:text-white"><%= @welfare_case.submitted_at.strftime("%b %d, %Y") %></dd>
         </div>
         <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900">
-          <dt class="font-black uppercase tracking-wide text-slate-400">Assigned</dt>
+          <dt class="font-black uppercase tracking-wide text-slate-400">Office Bearer</dt>
           <dd class="mt-0.5 truncate font-black text-slate-950 dark:text-white"><%= @welfare_case.assigned_to&.display_name || "Not assigned" %></dd>
         </div>
       </dl>
@@ -46,7 +46,7 @@
             <dd class="mt-1 font-black text-slate-950 dark:text-white"><%= @welfare_case.submitted_at.strftime("%b %d, %Y %H:%M") %></dd>
           </div>
           <div>
-            <dt class="font-black uppercase tracking-wide text-slate-400">Assigned to</dt>
+            <dt class="font-black uppercase tracking-wide text-slate-400">Office Bearer</dt>
             <dd class="mt-1 font-black text-slate-950 dark:text-white"><%= @welfare_case.assigned_to&.display_name || "Not assigned yet" %></dd>
           </div>
           <div>
@@ -65,7 +65,7 @@
 
       <div class="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-900 shadow-sm dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100">
         <p class="flex items-center gap-2 font-black"><%= icon_svg(:lock, classes: "h-4 w-4") %><span>Privacy note</span></p>
-        <p class="mt-1 leading-5 text-red-800 dark:text-red-100/80">Your request details are visible only to authorized MSJ officers.</p>
+        <p class="mt-1 leading-5 text-red-800 dark:text-red-100/80">Your request details are visible only to authorized Office Bearers.</p>
       </div>
     </aside>
   </section>
