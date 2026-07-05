@@ -27,7 +27,7 @@
   <%= render "shared/page_header", eyebrow: "Events", title: @event.title, subtitle: "#{@event.event_date.strftime("%B %d, %Y")} · #{@event.start_time.strftime("%H:%M")}", actions: actions %>
 
   <% if @event.cover_image.attached? %>
-    <%= image_tag @event.cover_image, class: "h-64 w-full rounded-2xl object-cover shadow-sm sm:h-80" %>
+    <%= image_tag image_variant_or_original(@event.cover_image, resize_to_fill: [ 1280, 640 ], saver: { quality: 84 }), class: "h-64 w-full rounded-2xl object-cover shadow-sm sm:h-80", loading: "lazy", decoding: "async" %>
   <% end %>
 
   <section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -41,7 +41,7 @@
           <h2 class="font-black text-[#0F172A] dark:text-white">Event Gallery</h2>
           <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
             <% @event.photos.each do |photo| %>
-              <%= image_tag photo, class: "h-32 w-full rounded-xl object-cover" %>
+              <%= image_tag image_variant_or_original(photo, resize_to_fill: [ 480, 320 ], saver: { quality: 82 }), class: "h-32 w-full rounded-xl object-cover", loading: "lazy", decoding: "async" %>
             <% end %>
           </div>
         </div>

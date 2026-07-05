@@ -1,7 +1,7 @@
 <article class="group overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-red-200 hover:shadow-lg hover:shadow-slate-950/10 dark:border-[#334155] dark:bg-[#1E293B] dark:hover:border-red-400/40">
   <div class="relative h-24 overflow-hidden bg-gradient-to-br from-red-800 via-red-700 to-[#0F172A] dark:from-red-700 dark:via-red-900 dark:to-[#020617] sm:h-28">
     <% if event.cover_image.attached? %>
-      <%= image_tag event.cover_image, class: "h-full w-full object-cover transition duration-500 group-hover:scale-105" %>
+      <%= image_tag image_variant_or_original(event.cover_image, resize_to_fill: [ 640, 360 ], saver: { quality: 82 }), class: "h-full w-full object-cover transition duration-500 group-hover:scale-105", loading: "lazy", decoding: "async" %>
       <div class="absolute inset-0 bg-gradient-to-t from-[#0F172A]/70 via-[#0F172A]/10 to-transparent"></div>
     <% else %>
       <div class="absolute inset-0 opacity-30">

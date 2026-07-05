@@ -7,7 +7,7 @@
       <div class="flex min-w-0 items-start gap-4">
         <div class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-red-50 text-xl font-black text-red-700 ring-1 ring-red-100 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20 sm:h-20 sm:w-20">
           <% if @member_profile.avatar.attached? %>
-            <%= image_tag @member_profile.avatar, class: "h-full w-full object-cover", alt: @member_profile.full_name, loading: "lazy", decoding: "async" %>
+            <%= image_tag @member_profile.avatar.variant(resize_to_fill: [ 320, 320 ], saver: { quality: 84 }), class: "h-full w-full object-cover", alt: @member_profile.full_name, loading: "lazy", decoding: "async" %>
           <% else %>
             <%= @member_profile.full_name.first&.upcase || "M" %>
           <% end %>

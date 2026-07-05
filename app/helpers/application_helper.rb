@@ -423,7 +423,7 @@ module ApplicationHelper
     profile = user&.member_profile
 
     if profile&.avatar&.attached?
-      image_tag profile.avatar,
+      image_tag avatar_thumbnail(profile.avatar),
         alt: user.display_name,
         class: "#{base_classes} object-cover",
         loading: "lazy",
@@ -433,6 +433,16 @@ module ApplicationHelper
         (user&.display_name&.first&.upcase || "M"),
         class: "grid place-items-center font-black #{text_classes} #{base_classes}"
     end
+  end
+
+  def avatar_thumbnail(avatar)
+    image_variant_or_original(avatar, resize_to_fill: [ 96, 96 ], saver: { quality: 82 })
+  end
+
+  def image_variant_or_original(image, **options)
+    image.variant(**options)
+  rescue ActiveStorage::InvariableError, ActiveStorage::UnrepresentableError
+    image
   end
 
   def whatsapp_url_for(profile)

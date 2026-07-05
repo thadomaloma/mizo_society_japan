@@ -15,6 +15,7 @@ class NotificationsController < ApplicationController
   def mark_all_as_read
     authorize Notification, :mark_all_as_read?
     policy_scope(Notification).unread.update_all(read_at: Time.current, updated_at: Time.current)
+    Rails.cache.delete(current_user.notification_count_cache_key)
 
     redirect_back fallback_location: notifications_path, notice: "Notifications marked as read."
   end

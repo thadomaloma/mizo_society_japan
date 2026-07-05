@@ -19,6 +19,7 @@ class Notification < ApplicationRecord
   }
 
   validates :recipient, :action, :title, presence: true
+  after_commit :expire_recipient_notification_count
 
   scope :latest, -> { order(created_at: :desc) }
   scope :unread, -> { where(read_at: nil) }
@@ -35,5 +36,11 @@ class Notification < ApplicationRecord
 
   def mark_as_read!
     update!(read_at: Time.current) if unread?
+  end
+
+  private
+
+  def expire_recipient_notification_count
+    Rails.cache.delete(recipient.notification_count_cache_key) if recipient_id.present?
   end
 end

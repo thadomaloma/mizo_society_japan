@@ -187,7 +187,13 @@ class User < ApplicationRecord
   end
 
   def unread_notifications_count
-    notifications.unread.count
+    Rails.cache.fetch(notification_count_cache_key, expires_in: 1.minute) do
+      notifications.unread.count
+    end
+  end
+
+  def notification_count_cache_key
+    "users/#{id}/notifications/unread_count/v1"
   end
 
   def active_for_authentication?

@@ -55,25 +55,20 @@ class DashboardController < ApplicationController
     @latest_payments = current_user.membership_payments.where(payment_batch_id: nil).includes(:membership_plan).latest.limit(3)
     @latest_payment_batches = current_user.payment_batches.where.not(status: :pending).includes(membership_payments: :membership_plan).latest.limit(2)
     @pending_payment_count = current_user.membership_payments.pending.count + current_user.payment_batches.pending_verification.count
-    @unread_notification_count = current_user.notifications.unread.count
-    @latest_notifications = current_user.notifications.latest.limit(4)
     @visible_announcement_count = Announcement.visible_to_members.count
     @latest_announcements = Announcement.visible_to_members.limit(3)
     @upcoming_events = EventPolicy::Scope.new(current_user, Event).resolve.upcoming.limit(3)
-    @latest_documents = Document.visible_to(current_user)
-      .includes(:document_category, file_attachment: :blob)
-      .latest
-      .limit(3)
-    @latest_meeting_minutes = if current_user.minutes_access?
-      MeetingMinute.visible_to(current_user).with_attached_file.latest.limit(3)
+    @visible_meeting_minutes_count = if current_user.minutes_access?
+      MeetingMinute.visible_to(current_user).count
     else
-      MeetingMinute.none
+      0
     end
     @my_open_welfare_cases = current_user.welfare_cases
       .includes(:welfare_category, :assigned_to)
       .open_cases
       .latest
       .limit(3)
+    @my_open_welfare_case_count = current_user.welfare_cases.open_cases.count
     @recent_welfare_updates = current_user.welfare_cases
       .includes(:welfare_category)
       .latest
@@ -85,15 +80,14 @@ class DashboardController < ApplicationController
     @community_overview = community_overview
     @member_stats = member_stats
     @recent_updates = recent_updates
-    @dashboard_announcements = @latest_announcements.limit(3)
 
     @quick_links = [
       { label: "Updates", description: "Official notices and society updates", status: "#{@visible_announcement_count} available", path: events_path },
       { label: "Payments", description: "Membership dues and receipts", status: "#{@pending_payment_count} pending", path: membership_payments_path }
     ]
-    @quick_links.insert(3, { label: "Welfare", description: "Confidential help requests and support updates", status: "#{@my_open_welfare_cases.count} open", path: welfare_cases_path }) if @show_welfare_dashboard
+    @quick_links.insert(3, { label: "Welfare", description: "Confidential help requests and support updates", status: "#{@my_open_welfare_case_count} open", path: welfare_cases_path }) if @show_welfare_dashboard
     if current_user.minutes_access?
-      @quick_links.insert(3, { label: "Meeting Minutes", description: "Published minutes visible to your role", status: "#{@latest_meeting_minutes.count} available", path: meeting_minutes_path })
+      @quick_links.insert(3, { label: "Meeting Minutes", description: "Published minutes visible to your role", status: "#{@visible_meeting_minutes_count} available", path: meeting_minutes_path })
     end
   end
 
