@@ -3,10 +3,7 @@
     <div class="flex min-w-0 flex-1 items-center">
       <%= link_to(dashboard_home_path, class: "flex min-w-0 items-center gap-2.5 lg:hidden", aria: { label: "Go to dashboard" }) do %>
         <span class="h-9 w-1 shrink-0 rounded-full bg-red-600 shadow-sm shadow-red-950/10 dark:bg-red-500"></span>
-        <span class="min-w-0">
-          <span class="block truncate text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]">MIZO SOCIETY OF JAPAN</span>
-          <span class="mt-0.5 block truncate text-xs font-extrabold text-[#64748B] dark:text-[#CBD5E1]">Unity <span class="px-0.5 text-red-600 dark:text-red-300">•</span> Culture <span class="px-0.5 text-red-600 dark:text-red-300">•</span> Welfare</span>
-        </span>
+        <span class="block truncate text-base font-black tracking-tight text-[#0F172A] dark:text-[#F8FAFC]">MSJ Portal</span>
       <% end %>
       <button type="button" data-action="global-search#open" class="hidden h-11 w-full max-w-md items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 text-left text-sm font-semibold text-[#64748B] transition hover:border-red-200 hover:bg-white hover:text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#CBD5E1] dark:hover:bg-[#334155] dark:hover:text-[#F8FAFC] lg:flex" aria-label="Search members, events, letters, and announcements">
         <%= icon_svg(:search, classes: "h-5 w-5 shrink-0") %>
