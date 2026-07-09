@@ -163,32 +163,62 @@
       <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <h2 class="text-sm font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">Quick guide</h2>
         <div class="mt-4 space-y-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-          <div class="flex gap-3">
-            <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">1</span>
-            <p>Select member and plan first.</p>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/70">
+            <div class="flex gap-3">
+              <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-200">
+                <%= icon_svg(:user, classes: "h-4 w-4") %>
+              </span>
+              <div>
+                <p class="font-black text-slate-900 dark:text-slate-50">Select member</p>
+                <p class="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Members with an active or paid record for this plan/year are hidden.</p>
+              </div>
+            </div>
           </div>
-          <div class="flex gap-3">
-            <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">2</span>
-            <p>Leave amount blank if the plan amount is correct.</p>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/70">
+            <div class="flex gap-3">
+              <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">
+                <%= icon_svg(:tag, classes: "h-4 w-4") %>
+              </span>
+              <div>
+                <p class="font-black text-slate-900 dark:text-slate-50">Choose payment plan</p>
+                <p class="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">The amount fills automatically from the selected plan.</p>
+              </div>
+            </div>
           </div>
-          <div class="flex gap-3">
-            <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">3</span>
-            <p>Set status to Paid only after verification.</p>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/70">
+            <div class="flex gap-3">
+              <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
+                <%= icon_svg(:clock, classes: "h-4 w-4") %>
+              </span>
+              <div>
+                <p class="font-black text-slate-900 dark:text-slate-50">Save as waiting transfer</p>
+                <p class="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Mark Paid only after cash or bank transfer is verified.</p>
+              </div>
+            </div>
           </div>
-          <div class="flex gap-3">
-            <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-black text-amber-700 dark:bg-amber-500/20 dark:text-amber-200">!</span>
-            <p>If a matching active or paid record already exists, update that record instead of creating another one.</p>
+          <div class="flex gap-3 rounded-xl border border-red-100 bg-red-50 p-3 text-xs leading-5 text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100">
+            <%= icon_svg(:shield_check, classes: "mt-0.5 h-4 w-4 shrink-0") %>
+            <p>Use this page to create a payment request. Use the review page to approve real payments.</p>
           </div>
         </div>
       </div>
 
       <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-        <p class="font-black text-slate-900 dark:text-slate-50">Best use cases</p>
-        <ul class="mt-3 list-disc space-y-2 pl-5">
-          <li>Cash payment received by an officer.</li>
-          <li>Older bank transfer record needs entry.</li>
-          <li>Correction for a member payment.</li>
-        </ul>
+        <p class="font-black text-slate-900 dark:text-slate-50">Use this page for</p>
+        <div class="mt-3 space-y-2">
+          <div class="flex items-center gap-2 rounded-xl bg-white px-3 py-2 dark:bg-slate-800">
+            <%= icon_svg(:banknotes, classes: "h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300") %>
+            <span>Manual cash records</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-xl bg-white px-3 py-2 dark:bg-slate-800">
+            <%= icon_svg(:arrow_path, classes: "h-4 w-4 shrink-0 text-blue-600 dark:text-blue-300") %>
+            <span>Older transfer entries</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-xl bg-white px-3 py-2 dark:bg-slate-800">
+            <%= icon_svg(:pencil_square, classes: "h-4 w-4 shrink-0 text-amber-600 dark:text-amber-300") %>
+            <span>Treasurer corrections</span>
+          </div>
+        </div>
       </div>
     </aside>
   </div>
