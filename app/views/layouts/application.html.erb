@@ -12,11 +12,11 @@
 
     <%= yield :head %>
 
-    <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+    <%= tag.link rel: "manifest", href: "#{pwa_manifest_path(format: :json)}?v=20260709" %>
 
-    <link rel="icon" href="/icons/favicon-32x32.png" sizes="32x32" type="image/png">
-    <link rel="icon" href="/icons/favicon-16x16.png" sizes="16x16" type="image/png">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+    <link rel="icon" href="/icons/msj-portal-32x32-20260709.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="/icons/msj-portal-16x16-20260709.png" sizes="16x16" type="image/png">
+    <link rel="apple-touch-icon" href="/icons/msj-portal-180x180-20260709.png" sizes="180x180">
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
