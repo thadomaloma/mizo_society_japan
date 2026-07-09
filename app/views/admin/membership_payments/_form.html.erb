@@ -1,13 +1,13 @@
 <% input_classes = "mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-50 dark:focus:border-red-500 dark:focus:ring-red-500/20" %>
 <% label_classes = "block text-sm font-black text-slate-800 dark:text-slate-100" %>
 <% hint_classes = "mt-1 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400" %>
-<% section_classes = "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5" %>
+<% section_classes = "rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:rounded-2xl sm:p-5" %>
 <% user_options = @users.map { |user| { id: user.id, label: user_label(user) } } %>
 <% plan_billing_cycles = @membership_plans.index_with(&:billing_cycle).transform_keys(&:id) %>
 
 <%= form_with(
   model: [ :admin, membership_payment ],
-  class: "space-y-4",
+  class: "space-y-3 sm:space-y-4",
   data: {
     controller: "payment-member-filter",
     payment_member_filter_users_value: user_options.to_json,
@@ -18,35 +18,18 @@
 ) do |form| %>
   <%= render "devise/shared/error_messages", resource: membership_payment %>
 
-  <div class="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-950 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100">
-    <div class="flex gap-3">
-      <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-700 text-white dark:bg-red-600">
-        <%= icon_svg(:credit_card, classes: "h-4 w-4") %>
-      </span>
-      <div>
-        <p class="font-black">Admin-created payment record</p>
-        <p class="mt-1 font-semibold leading-5 text-red-800 dark:text-red-100/80">
-          Use this form for manual cash records, corrections, or older payments. Member bank transfer submissions should normally be reviewed from Payment Records.
-        </p>
-        <p class="mt-2 font-semibold leading-5 text-red-800 dark:text-red-100/80">
-          Do not create a new record if the same member already has this plan for the same year/period. Open and update the existing record instead.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
-    <div class="space-y-4">
+  <div class="grid gap-3 sm:gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="space-y-3 sm:space-y-4">
       <section class="<%= section_classes %>">
-        <div class="mb-4 flex items-start gap-3">
-          <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100">1</span>
+        <div class="mb-3 flex items-center gap-2.5 sm:mb-4 sm:items-start sm:gap-3">
+          <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-black text-slate-700 dark:bg-slate-700 dark:text-slate-100 sm:h-8 sm:w-8 sm:rounded-xl sm:text-sm">1</span>
           <div>
-            <h2 class="text-base font-black text-slate-950 dark:text-slate-50">Member and payment plan</h2>
-            <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Select the person and the fee, donation, or fund this record belongs to.</p>
+            <h2 class="text-sm font-black text-slate-950 dark:text-slate-50 sm:text-base">Member and payment plan</h2>
+            <p class="mt-1 hidden text-xs font-semibold text-slate-500 dark:text-slate-400 sm:block">Select the person and the fee, donation, or fund this record belongs to.</p>
           </div>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-3 sm:gap-4 md:grid-cols-2">
           <div>
             <%= form.label :user_id, "Member", class: label_classes %>
             <%= form.select :user_id,
@@ -75,15 +58,15 @@
       </section>
 
       <section class="<%= section_classes %>">
-        <div class="mb-4 flex items-start gap-3">
-          <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100">2</span>
+        <div class="mb-3 flex items-center gap-2.5 sm:mb-4 sm:items-start sm:gap-3">
+          <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-black text-slate-700 dark:bg-slate-700 dark:text-slate-100 sm:h-8 sm:w-8 sm:rounded-xl sm:text-sm">2</span>
           <div>
-            <h2 class="text-base font-black text-slate-950 dark:text-slate-50">Amount and period</h2>
-            <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Keep it simple: most MSJ payments are yearly or one-time records.</p>
+            <h2 class="text-sm font-black text-slate-950 dark:text-slate-50 sm:text-base">Amount and period</h2>
+            <p class="mt-1 hidden text-xs font-semibold text-slate-500 dark:text-slate-400 sm:block">Most MSJ payments are yearly or one-time records.</p>
           </div>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-3 sm:gap-4 md:grid-cols-2">
           <div>
             <%= form.label :amount, "Amount (JPY)", class: label_classes %>
             <%= form.number_field :amount, step: 1, min: 0, inputmode: "numeric", value: yen_input_value(membership_payment.amount), placeholder: "Use plan amount", class: input_classes %>
@@ -105,15 +88,15 @@
       </section>
 
       <section class="<%= section_classes %>">
-        <div class="mb-4 flex items-start gap-3">
-          <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100">3</span>
+        <div class="mb-3 flex items-center gap-2.5 sm:mb-4 sm:items-start sm:gap-3">
+          <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-black text-slate-700 dark:bg-slate-700 dark:text-slate-100 sm:h-8 sm:w-8 sm:rounded-xl sm:text-sm">3</span>
           <div>
-            <h2 class="text-base font-black text-slate-950 dark:text-slate-50">Payment status</h2>
-            <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Only mark as paid after cash or bank transfer has been confirmed.</p>
+            <h2 class="text-sm font-black text-slate-950 dark:text-slate-50 sm:text-base">Payment status</h2>
+            <p class="mt-1 hidden text-xs font-semibold text-slate-500 dark:text-slate-400 sm:block">Only mark as paid after cash or bank transfer has been confirmed.</p>
           </div>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-3">
+        <div class="grid gap-3 sm:gap-4 md:grid-cols-3">
           <div>
             <%= form.label :payment_method, "Payment Method", class: label_classes %>
             <%= form.select :payment_method, [
@@ -144,15 +127,15 @@
       </section>
 
       <section class="<%= section_classes %>">
-        <div class="mb-4 flex items-start gap-3">
-          <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-100">4</span>
+        <div class="mb-3 flex items-center gap-2.5 sm:mb-4 sm:items-start sm:gap-3">
+          <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-black text-slate-700 dark:bg-slate-700 dark:text-slate-100 sm:h-8 sm:w-8 sm:rounded-xl sm:text-sm">4</span>
           <div>
-            <h2 class="text-base font-black text-slate-950 dark:text-slate-50">Reference and notes</h2>
-            <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Optional details help treasurers trace this record later.</p>
+            <h2 class="text-sm font-black text-slate-950 dark:text-slate-50 sm:text-base">Reference and notes</h2>
+            <p class="mt-1 hidden text-xs font-semibold text-slate-500 dark:text-slate-400 sm:block">Optional details help treasurers trace this record later.</p>
           </div>
         </div>
 
-        <div class="grid gap-4">
+        <div class="grid gap-3 sm:gap-4">
           <div>
             <%= form.label :reference_number, "Reference Number", class: label_classes %>
             <%= form.text_field :reference_number, placeholder: "Bank reference, receipt number, or payer name", class: input_classes %>
@@ -160,13 +143,13 @@
 
           <div>
             <%= form.label :notes, class: label_classes %>
-            <%= form.text_area :notes, rows: 4, placeholder: "Add a short internal note if needed.", class: input_classes %>
+            <%= form.text_area :notes, rows: 3, placeholder: "Add a short internal note if needed.", class: input_classes %>
           </div>
         </div>
       </section>
     </div>
 
-    <aside class="space-y-4">
+    <aside class="hidden space-y-4 xl:block">
       <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <h2 class="text-sm font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">Quick guide</h2>
         <div class="mt-4 space-y-3 text-sm font-semibold text-slate-700 dark:text-slate-200">

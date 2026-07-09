@@ -1,6 +1,6 @@
 <% content_for :page_title, "Edit Payment" %>
 
-<div class="space-y-6">
+<div class="space-y-4 sm:space-y-6">
   <%= render "shared/page_header", eyebrow: "Finance", title: "Edit Payment", subtitle: user_label(@membership_payment.user) %>
   <%= render "form", membership_payment: @membership_payment %>
 </div>

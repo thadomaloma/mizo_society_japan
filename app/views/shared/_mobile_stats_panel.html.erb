@@ -17,6 +17,8 @@
 
   <div class="grid grid-cols-2 gap-2">
     <% stats.each do |stat| %>
+      <% value_text = stat[:value].to_s %>
+      <% value_classes = value_text.length >= 8 ? "text-[15px] leading-5" : "text-xl leading-6" %>
       <article class="min-w-0 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
         <div class="flex items-start gap-2.5">
           <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg <%= stat_card_classes(stat[:tone].presence || "red") %>">
@@ -24,7 +26,7 @@
           </span>
           <div class="min-w-0 flex-1">
             <p class="truncate text-[11px] font-black leading-4 text-[#64748B] dark:text-[#CBD5E1]"><%= stat[:label] %></p>
-            <p class="mt-0.5 truncate text-xl font-black leading-6 text-[#0F172A] dark:text-white"><%= stat[:value] %></p>
+            <p class="mt-0.5 whitespace-nowrap font-black tabular-nums text-[#0F172A] dark:text-white <%= value_classes %>"><%= stat[:value] %></p>
           </div>
         </div>
         <% if stat[:caption].present? %>
