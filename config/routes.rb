@@ -2,6 +2,8 @@ Rails.application.routes.draw do
   devise_for :users, controllers: { omniauth_callbacks: "users/omniauth_callbacks" }
 
   root "dashboard#index"
+  get "ai", to: "ai_assistant#index", as: :ai_assistant
+  post "ai", to: "ai_assistant#create"
   get "search", to: "searches#index", as: :global_search
   get "membership_payments", to: redirect("/payments"), as: nil
   get "membership_payments/:id", to: redirect("/payments/%{id}"), as: nil

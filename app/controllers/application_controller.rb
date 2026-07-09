@@ -49,6 +49,7 @@ class ApplicationController < ActionController::Base
     return false unless current_user
     return false if devise_controller?
     return false if controller_path == "profiles"
+    return false if controller_path == "ai_assistant"
     return false if controller_path == "rails/health"
 
     !current_user.profile_complete?

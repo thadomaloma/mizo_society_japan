@@ -66,6 +66,22 @@
 
   <%= render "shared/mobile_stats_panel", stats: @member_stats, title: "Member Overview", subtitle: "Your useful portal shortcuts" %>
 
+  <%= link_to ai_assistant_path, class: "group flex items-center justify-between gap-3 rounded-2xl border border-red-100 bg-white p-3 shadow-sm transition hover:border-red-200 hover:bg-red-50/50 dark:border-red-500/20 dark:bg-[#1E293B] dark:hover:bg-red-500/10 sm:p-4" do %>
+    <span class="flex min-w-0 items-center gap-3">
+      <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-50 text-red-700 transition group-hover:bg-red-600 group-hover:text-white dark:bg-red-500/15 dark:text-red-300 dark:group-hover:bg-red-500 dark:group-hover:text-white">
+        <%= icon_svg(:chat, classes: "h-5 w-5") %>
+      </span>
+      <span class="min-w-0">
+        <span class="block text-sm font-black text-[#0F172A] dark:text-white sm:text-base">AI Assistant</span>
+        <span class="mt-0.5 block truncate text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1] sm:text-sm">Mizo tawngin portal hman dan zawt rawh.</span>
+      </span>
+    </span>
+    <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-black text-red-700 dark:bg-red-500/15 dark:text-red-300">
+      Ask
+      <%= icon_svg(:arrow_right, classes: "h-3.5 w-3.5") %>
+    </span>
+  <% end %>
+
   <section class="hidden gap-4 lg:grid lg:grid-cols-4">
     <% @member_stats.each do |stat| %>
       <%= render "shared/stat_card", label: stat[:label], value: stat[:value], tone: "red", icon: stat[:icon], caption: "Visible to your role" %>

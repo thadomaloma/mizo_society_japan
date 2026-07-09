@@ -7,11 +7,11 @@
         elsif current_user.minutes_access?
           { label: "Minutes", path: meeting_minutes_path, icon: :documents }
         else
-          { label: "Events", path: events_path, icon: :events }
+          { label: "Ask AI", path: ai_assistant_path, icon: :chat }
         end %>
       <% last_item =
         if admin_portal_user?
-          { label: "Events", path: events_path, icon: :events }
+          { label: "Ask AI", path: ai_assistant_path, icon: :chat }
         elsif current_user.welfare_viewer?
           { label: "Welfare", path: admin_portal_user? ? admin_welfare_cases_path : welfare_cases_path, icon: :welfare }
         else

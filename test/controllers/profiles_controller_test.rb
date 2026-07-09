@@ -21,6 +21,8 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
       member_profile: {
         full_name: "Complete Member",
         mobile_number: "09024681357",
+        date_of_birth: "1990-01-01",
+        family_status: "single",
         postal_code: "169-0075",
         prefecture: "Tokyo",
         city: "Shinjuku",
@@ -40,6 +42,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
       member_profile: {
         full_name: "Family Member",
         mobile_number: "09024681357",
+        date_of_birth: "1990-01-01",
         postal_code: "169-0075",
         prefecture: "Tokyo",
         city: "Shinjuku",
@@ -69,6 +72,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     other_profile = other_user.create_member_profile!(
       full_name: "Other Member",
       mobile_number: "08013572468",
+      date_of_birth: Date.new(1990, 1, 1),
       postal_code: "169-0075",
       prefecture: "Tokyo",
       city: "Shinjuku",
@@ -80,6 +84,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     @member.create_member_profile!(
       full_name: "Complete Member",
       mobile_number: "09024681357",
+      date_of_birth: Date.new(1990, 1, 1),
       postal_code: "169-0075",
       prefecture: "Tokyo",
       city: "Shinjuku",
@@ -92,6 +97,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
       member_profile: {
         full_name: "Complete Member",
         mobile_number: "09024681357",
+        date_of_birth: "1990-01-01",
         postal_code: "169-0075",
         prefecture: "Tokyo",
         city: "Shinjuku",
@@ -113,6 +119,8 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     @member.create_member_profile!(
       full_name: "Complete Member",
       mobile_number: "09024681357",
+      date_of_birth: Date.new(1990, 1, 1),
+      family_status: :single,
       postal_code: "169-0075",
       prefecture: "Tokyo",
       city: "Shinjuku",

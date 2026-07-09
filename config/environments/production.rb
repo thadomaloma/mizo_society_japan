@@ -74,8 +74,8 @@ Rails.application.configure do
       address: ENV.fetch("SMTP_ADDRESS"),
       port: ENV.fetch("SMTP_PORT", 587).to_i,
       domain: ENV.fetch("SMTP_DOMAIN", ENV.fetch("APP_HOST", "mizosocietyjapan.org")),
-      user_name: ENV["SMTP_USERNAME"],
-      password: ENV["SMTP_PASSWORD"],
+      user_name: ENV["BREVO_LOGIN"],
+      password: ENV["BREVO_SMTP_KEY"],
       authentication: ENV.fetch("SMTP_AUTHENTICATION", "plain").to_sym,
       enable_starttls_auto: ActiveModel::Type::Boolean.new.cast(ENV.fetch("SMTP_ENABLE_STARTTLS_AUTO", "true")),
       openssl_verify_mode: ENV.fetch("SMTP_OPENSSL_VERIFY_MODE", "peer")

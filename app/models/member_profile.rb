@@ -15,6 +15,8 @@ class MemberProfile < ApplicationRecord
   REQUIRED_PROFILE_FIELDS = %i[
     full_name
     mobile_number
+    date_of_birth
+    family_status
     postal_code
     prefecture
     city
@@ -37,7 +39,7 @@ class MemberProfile < ApplicationRecord
   before_validation :clear_household_details_unless_family
   after_save :remove_children_unless_family
 
-  validates :full_name, :mobile_number, :postal_code, :prefecture, :city, :address_line1, presence: true
+  validates :full_name, :mobile_number, :date_of_birth, :family_status, :postal_code, :prefecture, :city, :address_line1, presence: true
   validates :membership_number, presence: true, uniqueness: true
   validates :status, presence: true
   validate :address_line1_includes_street_number

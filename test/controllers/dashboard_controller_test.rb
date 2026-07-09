@@ -175,6 +175,8 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     user.create_member_profile!(
       full_name: user.name,
       mobile_number: mobile_number,
+        date_of_birth: Date.new(1990, 1, 1),
+        family_status: :single,
       postal_code: "169-0075",
       prefecture: prefecture,
       city: "Shinjuku",

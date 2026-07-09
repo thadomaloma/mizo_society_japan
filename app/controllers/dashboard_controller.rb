@@ -82,6 +82,7 @@ class DashboardController < ApplicationController
     @recent_updates = recent_updates
 
     @quick_links = [
+      { label: "AI Assistant", description: "Mizo tawnga portal help", status: "Ask anytime", path: ai_assistant_path },
       { label: "Updates", description: "Official notices and society updates", status: "#{@visible_announcement_count} available", path: events_path },
       { label: "Payments", description: "Membership dues and receipts", status: "#{@pending_payment_count} pending", path: membership_payments_path }
     ]

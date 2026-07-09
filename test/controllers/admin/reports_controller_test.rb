@@ -94,6 +94,8 @@ module Admin
       user.create_member_profile!(
         full_name: user.name,
         mobile_number: "0902468#{suffix}",
+        date_of_birth: Date.new(1990, 1, 1),
+        family_status: :single,
         postal_code: "169-0075",
         prefecture: "Tokyo",
         city: "Shinjuku",

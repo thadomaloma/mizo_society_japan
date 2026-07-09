@@ -2,6 +2,7 @@ module Admin
   class MembershipPaymentsController < ApplicationController
     before_action :set_membership_payment, only: [ :show, :edit, :update, :destroy, :approve, :reject ]
     before_action :set_form_collections, only: [ :new, :create, :edit, :update ]
+    rescue_from ActiveRecord::RecordNotUnique, with: :handle_duplicate_payment_record
 
     def index
       authorize MembershipPayment
@@ -145,6 +146,19 @@ module Admin
         plans = plans.or(MembershipPlan.where(id: @membership_payment.membership_plan_id))
       end
       @membership_plans = plans.includes(:membership_plan_type).order(:name)
+      @blocked_payment_memberships = MembershipPayment
+        .where(status: MembershipPayment::DUPLICATE_BLOCKING_STATUSES)
+        .where(membership_plan_id: @membership_plans.select(:id))
+        .where.not(id: @membership_payment&.id)
+        .pluck(:user_id, :membership_plan_id, :payment_year, :payment_month)
+        .map do |user_id, plan_id, payment_year, payment_month|
+          {
+            user_id: user_id,
+            plan_id: plan_id,
+            payment_year: payment_year,
+            payment_month: payment_month
+          }
+        end
     end
 
     def membership_payment_params
@@ -175,6 +189,13 @@ module Admin
         transfer_reference_name: payment.transfer_reference_name,
         reference_number: payment.reference_number
       }
+    end
+
+    def handle_duplicate_payment_record
+      @membership_payment ||= MembershipPayment.new(membership_payment_params)
+      @membership_payment.errors.add(:base, "This member already has an active or paid record for this payment plan and period. Use the existing record instead.")
+      set_form_collections
+      render @membership_payment.persisted? ? :edit : :new, status: :unprocessable_entity
     end
   end
 end

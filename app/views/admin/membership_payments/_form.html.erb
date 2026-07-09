@@ -2,8 +2,20 @@
 <% label_classes = "block text-sm font-black text-slate-800 dark:text-slate-100" %>
 <% hint_classes = "mt-1 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400" %>
 <% section_classes = "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5" %>
+<% user_options = @users.map { |user| { id: user.id, label: user_label(user) } } %>
+<% plan_billing_cycles = @membership_plans.index_with(&:billing_cycle).transform_keys(&:id) %>
 
-<%= form_with model: [ :admin, membership_payment ], class: "space-y-4" do |form| %>
+<%= form_with(
+  model: [ :admin, membership_payment ],
+  class: "space-y-4",
+  data: {
+    controller: "payment-member-filter",
+    payment_member_filter_users_value: user_options.to_json,
+    payment_member_filter_blocked_value: @blocked_payment_memberships.to_json,
+    payment_member_filter_plan_cycles_value: plan_billing_cycles.to_json,
+    payment_member_filter_current_user_id_value: membership_payment.user_id
+  }
+) do |form| %>
   <%= render "devise/shared/error_messages", resource: membership_payment %>
 
   <div class="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-950 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100">
@@ -15,6 +27,9 @@
         <p class="font-black">Admin-created payment record</p>
         <p class="mt-1 font-semibold leading-5 text-red-800 dark:text-red-100/80">
           Use this form for manual cash records, corrections, or older payments. Member bank transfer submissions should normally be reviewed from Payment Records.
+        </p>
+        <p class="mt-2 font-semibold leading-5 text-red-800 dark:text-red-100/80">
+          Do not create a new record if the same member already has this plan for the same year/period. Open and update the existing record instead.
         </p>
       </div>
     </div>
@@ -34,13 +49,26 @@
         <div class="grid gap-4 md:grid-cols-2">
           <div>
             <%= form.label :user_id, "Member", class: label_classes %>
-            <%= form.select :user_id, @users.map { |user| [ user_label(user), user.id ] }, { prompt: "Select member" }, class: input_classes, required: true %>
-            <p class="<%= hint_classes %>">Choose the member who paid or needs this record.</p>
+            <%= form.select :user_id,
+              user_options.map { |user| [ user[:label], user[:id] ] },
+              { prompt: "Select member" },
+              class: input_classes,
+              required: true,
+              data: { payment_member_filter_target: "userSelect" } %>
+            <p class="<%= hint_classes %>" data-payment-member-filter-target="hint">Choose the member who paid or needs this record.</p>
           </div>
 
           <div>
             <%= form.label :membership_plan_id, "Payment Plan", class: label_classes %>
-            <%= form.select :membership_plan_id, @membership_plans.map { |plan| [ "#{plan.name} - #{plan.plan_type_label} (#{yen(plan.amount)})", plan.id ] }, { prompt: "Select payment plan" }, class: input_classes, required: true %>
+            <%= form.select :membership_plan_id,
+              @membership_plans.map { |plan| [ "#{plan.name} - #{plan.plan_type_label} (#{yen(plan.amount)})", plan.id ] },
+              { prompt: "Select payment plan" },
+              class: input_classes,
+              required: true,
+              data: {
+                payment_member_filter_target: "planSelect",
+                action: "payment-member-filter#filter"
+              } %>
             <p class="<%= hint_classes %>">The plan controls the default amount and payment type.</p>
           </div>
         </div>
@@ -64,7 +92,13 @@
 
           <div>
             <%= form.label :payment_year, "Year", class: label_classes %>
-            <%= form.number_field :payment_year, min: 2000, class: input_classes %>
+            <%= form.number_field :payment_year,
+              min: 2000,
+              class: input_classes,
+              data: {
+                payment_member_filter_target: "yearInput",
+                action: "input->payment-member-filter#filter change->payment-member-filter#filter"
+              } %>
             <p class="<%= hint_classes %>">Use the payment year. Monthly records are handled automatically when needed.</p>
           </div>
         </div>
@@ -147,6 +181,10 @@
           <div class="flex gap-3">
             <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">3</span>
             <p>Set status to Paid only after verification.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-black text-amber-700 dark:bg-amber-500/20 dark:text-amber-200">!</span>
+            <p>If a matching active or paid record already exists, update that record instead of creating another one.</p>
           </div>
         </div>
       </div>

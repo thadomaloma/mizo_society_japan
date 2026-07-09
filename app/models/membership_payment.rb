@@ -1,6 +1,7 @@
 class MembershipPayment < ApplicationRecord
   CURRENT_STATUSES = %i[pending pending_verification failed expired].freeze
   HISTORY_STATUSES = %i[paid cancelled refunded].freeze
+  DUPLICATE_BLOCKING_STATUSES = %i[pending pending_verification failed expired paid].freeze
 
   belongs_to :user
   belongs_to :membership_plan
@@ -27,6 +28,7 @@ class MembershipPayment < ApplicationRecord
   validates :payment_month, allow_blank: true, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than_or_equal_to: 12 }
   validates :payment_method, :status, presence: true
   validate :amounts_are_whole_yen
+  validate :no_duplicate_active_payment_for_plan
 
   before_validation :copy_plan_amount, if: -> { amount.blank? && membership_plan.present? }
   before_validation :assign_payment_year, if: -> { payment_year.blank? }
@@ -120,5 +122,31 @@ class MembershipPayment < ApplicationRecord
     errors.add(attribute, "must be a whole yen amount")
   rescue ArgumentError
     errors.add(attribute, "is not a number")
+  end
+
+  def no_duplicate_active_payment_for_plan
+    return if user_id.blank? || membership_plan_id.blank?
+    return if cancelled? || refunded?
+
+    duplicate_scope = self.class
+      .where(user_id: user_id, membership_plan_id: membership_plan_id, status: DUPLICATE_BLOCKING_STATUSES)
+      .where.not(id: id)
+
+    duplicate_scope = if membership_plan&.one_time?
+      duplicate_scope
+    else
+      duplicate_scope.where(payment_year: payment_year, payment_month: payment_month)
+    end
+
+    return unless duplicate_scope.exists?
+
+    errors.add(:base, duplicate_payment_error_message)
+  end
+
+  def duplicate_payment_error_message
+    plan_name = membership_plan&.name || "this payment plan"
+    period = membership_plan&.one_time? ? "one-time payment" : period_label
+
+    "#{plan_name} already has an active or paid payment record for #{period}. Use the existing record instead of creating another one."
   end
 end

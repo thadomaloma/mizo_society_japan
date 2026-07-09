@@ -57,6 +57,8 @@ class MemberProfileTest < ActiveSupport::TestCase
     users(:member).build_member_profile(
       full_name: "Member User",
       mobile_number: mobile_number,
+      date_of_birth: Date.new(1990, 1, 1),
+      family_status: :single,
       postal_code: "169-0075",
       prefecture: "東京都",
       city: "新宿区",

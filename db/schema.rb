@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_04_121000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_09_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -346,6 +346,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_04_121000) do
     t.date "transferred_on"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index "user_id, membership_plan_id, payment_year, COALESCE(payment_month, 0)", name: "idx_unique_active_membership_payment_period", unique: true, where: "(status = ANY (ARRAY[0, 3, 4, 5, 8]))"
     t.index ["approved_by_id"], name: "index_membership_payments_on_approved_by_id"
     t.index ["membership_plan_id"], name: "index_membership_payments_on_membership_plan_id"
     t.index ["payment_batch_id"], name: "index_membership_payments_on_payment_batch_id"

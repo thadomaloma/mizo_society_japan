@@ -109,6 +109,7 @@ module ApplicationHelper
     items = [
       { label: "Dashboard", path: dashboard_home_path, short: "Home", icon: :dashboard },
       { label: "Payments", path: membership_payments_path, short: "Finance", icon: :credit_card },
+      { label: "AI Assistant", path: ai_assistant_path, short: "AI", icon: :chat },
       { label: "Welfare", path: welfare_cases_path, short: "Welfare", icon: :welfare },
       { label: "Events", path: events_path, short: "Events", icon: :events },
       { label: "Profile", path: profile_path, short: "Profile", icon: :members }
@@ -125,6 +126,7 @@ module ApplicationHelper
   def admin_nav_items
     items = [
       { label: "Dashboard", path: admin_dashboard_path, icon: :dashboard, roles: :operations },
+      { label: "AI Assistant", path: ai_assistant_path, icon: :chat },
       { label: "Payments", path: membership_payments_path, icon: :credit_card },
       { label: "Payment Records", path: admin_membership_payments_path, icon: :credit_card, roles: :finance },
       { label: "Payment Plans", path: admin_membership_plans_path, icon: :tag, roles: :finance },
