@@ -1,16 +1,18 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["userSelect", "planSelect", "yearInput", "hint"]
+  static targets = ["userSelect", "planSelect", "yearInput", "amountInput", "hint"]
   static values = {
     users: Array,
     blocked: Array,
     planCycles: Object,
+    planAmounts: Object,
     currentUserId: Number
   }
 
   connect() {
     this.filter()
+    this.fillAmount()
   }
 
   filter() {
@@ -46,7 +48,7 @@ export default class extends Controller {
     if (billingCycle === "one_time") return true
     if (!paymentYear) return false
 
-    return Number.parseInt(record.payment_year, 10) === paymentYear && record.payment_month === null
+    return Number.parseInt(record.payment_year, 10) === paymentYear
   }
 
   keepVisible(userId, selectedUserId) {
@@ -75,5 +77,17 @@ export default class extends Controller {
     } else {
       this.hintTarget.textContent = "Choose the member who paid or needs this record."
     }
+  }
+
+  fillAmount() {
+    if (!this.hasAmountInputTarget) return
+    if (this.amountInputTarget.value && this.amountInputTarget.dataset.autofilled !== "true") return
+
+    const planId = this.planSelectTarget.value
+    const amount = this.planAmountsValue[String(planId)]
+    if (amount === undefined || amount === null || amount === "") return
+
+    this.amountInputTarget.value = amount
+    this.amountInputTarget.dataset.autofilled = "true"
   }
 }

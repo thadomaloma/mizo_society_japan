@@ -4,6 +4,7 @@
 <% section_classes = "rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:rounded-2xl sm:p-5" %>
 <% user_options = @users.map { |user| { id: user.id, label: user_label(user) } } %>
 <% plan_billing_cycles = @membership_plans.index_with(&:billing_cycle).transform_keys(&:id) %>
+<% plan_amounts = @membership_plans.index_with { |plan| yen_input_value(plan.amount) }.transform_keys(&:id) %>
 
 <%= form_with(
   model: [ :admin, membership_payment ],
@@ -13,6 +14,7 @@
     payment_member_filter_users_value: user_options.to_json,
     payment_member_filter_blocked_value: @blocked_payment_memberships.to_json,
     payment_member_filter_plan_cycles_value: plan_billing_cycles.to_json,
+    payment_member_filter_plan_amounts_value: plan_amounts.to_json,
     payment_member_filter_current_user_id_value: membership_payment.user_id
   }
 ) do |form| %>
@@ -50,7 +52,7 @@
               required: true,
               data: {
                 payment_member_filter_target: "planSelect",
-                action: "payment-member-filter#filter"
+                action: "payment-member-filter#filter payment-member-filter#fillAmount"
               } %>
             <p class="<%= hint_classes %>">The plan controls the default amount and payment type.</p>
           </div>
@@ -69,8 +71,15 @@
         <div class="grid gap-3 sm:gap-4 md:grid-cols-2">
           <div>
             <%= form.label :amount, "Amount (JPY)", class: label_classes %>
-            <%= form.number_field :amount, step: 1, min: 0, inputmode: "numeric", value: yen_input_value(membership_payment.amount), placeholder: "Use plan amount", class: input_classes %>
-            <p class="<%= hint_classes %>">Leave blank to use the payment plan amount.</p>
+            <%= form.number_field :amount,
+              step: 1,
+              min: 0,
+              inputmode: "numeric",
+              value: yen_input_value(membership_payment.amount),
+              placeholder: "Select a payment plan",
+              class: input_classes,
+              data: { payment_member_filter_target: "amountInput" } %>
+            <p class="<%= hint_classes %>">Auto-filled from the selected payment plan.</p>
           </div>
 
           <div>
@@ -106,7 +115,7 @@
             <p class="<%= hint_classes %>">Bank transfer is the normal MSJ method.</p>
           </div>
 
-          <% if current_user.finance_approver? %>
+          <% if current_user.finance_approver? && membership_payment.persisted? %>
             <div>
               <%= form.label :status, class: label_classes %>
               <%= form.select :status, MembershipPayment.statuses.keys.map { |status| [ status.humanize, status ] }, {}, class: input_classes %>
@@ -114,11 +123,12 @@
             </div>
           <% else %>
             <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm font-bold text-amber-800 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-100">
-              New records are submitted as pending for approval.
+              <p class="text-xs font-black uppercase tracking-wide">Status</p>
+              <p class="mt-1 text-sm font-black">Waiting Transfer</p>
             </div>
           <% end %>
 
-          <div>
+          <div class="<%= membership_payment.persisted? ? "" : "hidden md:block md:invisible" %>">
             <%= form.label :paid_on, "Paid Date", class: label_classes %>
             <%= form.date_field :paid_on, class: input_classes %>
             <p class="<%= hint_classes %>">Fill when status is paid.</p>

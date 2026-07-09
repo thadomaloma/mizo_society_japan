@@ -49,8 +49,8 @@ class PaymentBatch < ApplicationRecord
   def approve!(approver)
     transaction do
       update!(status: :paid, approved_by: approver, approved_at: Time.current)
-      membership_payments.find_each do |payment|
-        payment.update!(status: :paid, approved_by: approver, paid_on: payment.paid_on || Time.current)
+      MembershipPayment.where(payment_batch_id: id).find_each do |payment|
+        payment.approve!(approver)
       end
     end
   end

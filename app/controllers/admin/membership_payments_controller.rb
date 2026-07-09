@@ -75,6 +75,7 @@ module Admin
       authorize @membership_payment
 
       if @membership_payment.update(membership_payment_params)
+        MembershipPaymentFinanceRecorder.call(payment: @membership_payment, actor: current_user) if @membership_payment.paid?
         AuditLogger.call(
           user: current_user,
           action: "membership_payment_updated",
@@ -173,7 +174,7 @@ module Admin
         :reference_number,
         :notes
       )
-      permitted[:status] = params.dig(:membership_payment, :status) if current_user.finance_approver?
+      permitted[:status] = params.dig(:membership_payment, :status) if current_user.finance_approver? && action_name == "update"
       permitted
     end
 

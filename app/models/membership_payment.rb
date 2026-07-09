@@ -55,7 +55,10 @@ class MembershipPayment < ApplicationRecord
   }
 
   def approve!(approver)
-    update!(status: :paid, approved_by: approver, paid_on: paid_on || Time.current)
+    transaction do
+      update!(status: :paid, approved_by: approver, paid_on: paid_on || Time.current)
+      MembershipPaymentFinanceRecorder.call(payment: self, actor: approver)
+    end
   end
 
   def reject!(approver)
@@ -80,7 +83,7 @@ class MembershipPayment < ApplicationRecord
   end
 
   def finance_reference_number
-    transfer_reference_name.presence || reference_number.presence || "membership-payment-#{id}"
+    "membership-payment-#{id || 'new'}"
   end
 
   def period_label
@@ -128,25 +131,46 @@ class MembershipPayment < ApplicationRecord
     return if user_id.blank? || membership_plan_id.blank?
     return if cancelled? || refunded?
 
-    duplicate_scope = self.class
-      .where(user_id: user_id, membership_plan_id: membership_plan_id, status: DUPLICATE_BLOCKING_STATUSES)
+    duplicate_scope = matching_member_identity_scope
+      .where(membership_plan_id: membership_plan_id, status: DUPLICATE_BLOCKING_STATUSES)
       .where.not(id: id)
 
-    duplicate_scope = if membership_plan&.one_time?
-      duplicate_scope
-    else
-      duplicate_scope.where(payment_year: payment_year, payment_month: payment_month)
-    end
+    duplicate_scope = matching_period_scope(duplicate_scope)
 
     return unless duplicate_scope.exists?
 
     errors.add(:base, duplicate_payment_error_message)
   end
 
+  def matching_member_identity_scope
+    scope = self.class.left_joins(user: :member_profile)
+    membership_number = member_registration_number
+
+    return scope.where(user_id: user_id) if membership_number.blank?
+
+    scope.where(
+      "membership_payments.user_id = :user_id OR member_profiles.membership_number = :membership_number",
+      user_id: user_id,
+      membership_number: membership_number
+    )
+  end
+
+  def matching_period_scope(scope)
+    return scope if membership_plan&.one_time?
+
+    scope = scope.where(payment_year: payment_year)
+    payment_month.present? ? scope.where(payment_month: payment_month) : scope
+  end
+
   def duplicate_payment_error_message
     plan_name = membership_plan&.name || "this payment plan"
     period = membership_plan&.one_time? ? "one-time payment" : period_label
+    member_reference = member_registration_number.presence || "this member"
 
-    "#{plan_name} already has an active or paid payment record for #{period}. Use the existing record instead of creating another one."
+    "#{member_reference} already has an active or paid #{plan_name} record for #{period}. Use the existing record instead of creating another one."
+  end
+
+  def member_registration_number
+    user&.member_profile&.membership_number
   end
 end
