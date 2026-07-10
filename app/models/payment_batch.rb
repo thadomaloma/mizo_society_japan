@@ -64,6 +64,21 @@ class PaymentBatch < ApplicationRecord
     end
   end
 
+  def cancel_by_member!
+    transaction do
+      membership_payments.find_each do |payment|
+        payment.update!(
+          payment_batch: nil,
+          status: :pending,
+          transferred_on: nil,
+          transfer_amount: nil,
+          transfer_reference_name: nil
+        )
+      end
+      update!(status: :cancelled)
+    end
+  end
+
   def item_count
     membership_payments.size
   end

@@ -105,7 +105,7 @@
           </div>
         </div>
 
-        <div class="grid gap-3 sm:gap-4 md:grid-cols-3">
+        <div class="grid gap-3 sm:gap-4 md:grid-cols-2">
           <div>
             <%= form.label :payment_method, "Payment Method", class: label_classes %>
             <%= form.select :payment_method, [
@@ -117,22 +117,42 @@
 
           <% if current_user.finance_approver? && membership_payment.persisted? %>
             <div>
-              <%= form.label :status, class: label_classes %>
-              <%= form.select :status, MembershipPayment.statuses.keys.map { |status| [ status.humanize, status ] }, {}, class: input_classes %>
-              <p class="<%= hint_classes %>">Use Paid only for verified payments.</p>
+              <%= form.label :status, "Record Status", class: label_classes %>
+              <%= form.select :status,
+                [
+                  [ "Waiting transfer", "pending" ],
+                  [ "To verify", "pending_verification" ],
+                  [ "Paid", "paid" ],
+                  [ "Failed", "failed" ],
+                  [ "Cancelled", "cancelled" ],
+                  [ "Refunded", "refunded" ]
+                ],
+                {},
+                class: input_classes %>
+              <p class="<%= hint_classes %>">Use Paid only after the transfer or cash receipt is verified.</p>
             </div>
           <% else %>
             <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm font-bold text-amber-800 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-100">
-              <p class="text-xs font-black uppercase tracking-wide">Status</p>
-              <p class="mt-1 text-sm font-black">Waiting Transfer</p>
+              <div class="flex items-start gap-2.5">
+                <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-amber-700 shadow-sm dark:bg-slate-900 dark:text-amber-200">
+                  <%= icon_svg(:clock, classes: "h-4 w-4") %>
+                </span>
+                <div>
+                  <p class="text-xs font-black uppercase tracking-wide">Record Status</p>
+                  <p class="mt-1 text-sm font-black text-slate-950 dark:text-white">Waiting transfer</p>
+                  <p class="mt-1 text-xs leading-5 text-amber-800 dark:text-amber-100/80">This creates an unpaid record. Approve it only after real payment is confirmed.</p>
+                </div>
+              </div>
             </div>
           <% end %>
 
-          <div class="<%= membership_payment.persisted? ? "" : "hidden md:block md:invisible" %>">
-            <%= form.label :paid_on, "Paid Date", class: label_classes %>
-            <%= form.date_field :paid_on, class: input_classes %>
-            <p class="<%= hint_classes %>">Fill when status is paid.</p>
-          </div>
+          <% if membership_payment.persisted? %>
+            <div>
+              <%= form.label :paid_on, "Paid Date", class: label_classes %>
+              <%= form.date_field :paid_on, class: input_classes %>
+              <p class="<%= hint_classes %>">Fill when status is paid.</p>
+            </div>
+          <% end %>
         </div>
       </section>
 

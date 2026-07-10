@@ -34,6 +34,7 @@ Rails.application.routes.draw do
   resources :payment_batches, path: "combined_payments", only: [ :show, :create ] do
     member do
       patch :submit_transfer
+      patch :cancel
     end
   end
   resources :welfare_cases, only: [ :index, :show, :new, :create, :edit, :update ]

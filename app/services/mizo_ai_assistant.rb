@@ -3,9 +3,87 @@ require "json"
 
 class MizoAiAssistant
   OPENAI_ENDPOINT = URI("https://api.openai.com/v1/chat/completions")
+  MEMBER_QUESTIONS = [
+    "Ka role hian eng nge ka tih theih?",
+    "Membership fee engtin nge ka pek ang?",
+    "Fee leh fund tam tak vawi khat transfer dan min hrilh rawh.",
+    "Payment status ka check dan eng nge?",
+    "Yuucho bank atangin transfer engtin nge ka tih ang?",
+    "Bank dang atangin transfer engtin nge ka tih ang?",
+    "Transfer zawh hnuah eng nge ka submit ang?",
+    "Profile complete dan min hrilh rawh.",
+    "Japan mobile number eng format nge ka hmang ang?",
+    "Welfare support dil dan eng nge?",
+    "Event RSVP engtin nge ka tih ang?",
+    "Password ka theihnghilh chuan engtin nge ka tih ang?"
+  ].freeze
+
+  SUPER_ADMIN_QUESTIONS = [
+    "Super Admin tan portal hman dan kimchang min hrilh rawh.",
+    "Payment approve/reject dan min hrilh rawh.",
+    "Payment plans engtin nge ka manage ang?",
+    "Transactions leh finance report engtin nge ka check ang?",
+    "Welfare case assign/resolve dan eng nge?",
+    "Meeting minutes siam leh publish dan min hrilh rawh.",
+    "Official letter siam leh download dan min hrilh rawh.",
+    "Events leh announcements publish dan eng nge?",
+    "User roles thlak dan min hrilh rawh.",
+    "Audit logs khawi atanga en tur nge?",
+    "Settings page-ah eng nge ka control theih?"
+  ].freeze
+
+  FINANCE_QUESTIONS = [
+    "Finance Admin tan portal hman dan min hrilh rawh.",
+    "Pending transfer engtin nge ka verify ang?",
+    "Payment approve/reject dan min hrilh rawh.",
+    "Combined payment review dan eng nge?",
+    "Payment plans engtin nge ka manage ang?",
+    "Transactions income/expense record dan min hrilh rawh.",
+    "Finance report leh CSV export engtin nge ka hman ang?",
+    "Paid tawh duplicate payment ven dan eng nge?"
+  ].freeze
+
+  SECRETARIAT_QUESTIONS = [
+    "Assistant Secretary tan portal hman dan min hrilh rawh.",
+    "Welfare case assign/resolve dan eng nge?",
+    "Meeting minutes siam leh publish dan min hrilh rawh.",
+    "Official letter siam leh download dan min hrilh rawh.",
+    "Events leh announcements publish dan eng nge?",
+    "Payments ka mahni fee/fund pek dan eng nge?",
+    "Reports ka hmuh theih chin eng nge?"
+  ].freeze
+
+  OFFICE_BEARER_VIEWER_QUESTIONS = [
+    "Vice President/Journal Secretary tan ka tih theih chin eng nge?",
+    "View-only page te ka hman dan min hrilh rawh.",
+    "Payments ka mahni fee/fund pek dan eng nge?",
+    "Payment Records ka en theih chin eng nge?",
+    "Minutes leh Letters ka en theih chin eng nge?",
+    "Reports export ka ti thei em?",
+    "Action official ngai chuan tu nge ka contact ang?"
+  ].freeze
+
+  EXECUTIVE_QUESTIONS = [
+    "Executive Committee member tan ka tih theih chin eng nge?",
+    "Payments ka mahni fee/fund pek dan eng nge?",
+    "Minutes ka en theih chin eng nge?",
+    "Reports ka en theih chin eng nge?",
+    "Welfare records ka en theih chin eng nge?",
+    "CSV export ka ti thei em?"
+  ].freeze
 
   def self.call(user:, question:)
     new(user: user, question: question).call
+  end
+
+  def self.suggested_questions(user:)
+    questions = MEMBER_QUESTIONS.dup
+    questions += SUPER_ADMIN_QUESTIONS if user.super_admin?
+    questions += FINANCE_QUESTIONS if user.finance_admin?
+    questions += SECRETARIAT_QUESTIONS if user.assistant_secretary?
+    questions += OFFICE_BEARER_VIEWER_QUESTIONS if user.observer_office_bearer?
+    questions += EXECUTIVE_QUESTIONS if user.executive_committee?
+    questions.uniq
   end
 
   def initialize(user:, question:)
@@ -81,6 +159,10 @@ class MizoAiAssistant
       - Answer for this user's role only.
       - If this role can only view, do not give create/edit/approve instructions.
       - If this role cannot access a feature, say it is not available for this role.
+      - Super Admin can receive complete portal management steps.
+      - Vice President and Journal Secretary are Office Bearer view-only roles for most admin pages.
+      - Executive Committee can view permitted records but should not receive edit/approve/export instructions.
+      - Members should receive only member-facing guidance.
       - Prefer practical steps using visible page names in the portal.
       - Use Japanese banking terms with romaji/explanation in brackets when helpful.
 
@@ -120,7 +202,19 @@ class MizoAiAssistant
     permissions << "view-only office bearer areas" if user.observer_office_bearer?
     permissions << "view-only executive committee areas" if user.executive_committee?
 
-    "Role: #{User.role_label(user.role)}. Allowed: #{permissions.uniq.join(', ')}."
+    restrictions = role_restrictions
+
+    "Role: #{User.role_label(user.role)}. Allowed: #{permissions.uniq.join(', ')}. Restrictions: #{restrictions.join(', ')}."
+  end
+
+  def role_restrictions
+    return [ "full portal control, but payment confirmation and role changes must still follow real records and audit accountability" ] if user.super_admin?
+    return [ "can manage finance records but cannot change settings, user roles, or audit logs" ] if user.finance_admin?
+    return [ "can manage welfare, events, minutes, and letters but cannot approve finance unless also President/Secretary, and cannot change settings/user roles" ] if user.assistant_secretary?
+    return [ "Office Bearer view-only for most admin areas; can pay own fees/funds; cannot approve, edit, delete, export confidential CSV, change settings, or change roles" ] if user.observer_office_bearer?
+    return [ "Executive Committee view-only; can pay own fees/funds; cannot approve, edit, delete, export CSV, change settings, or change roles" ] if user.executive_committee?
+
+    [ "member-only access; cannot view private admin, finance approval, role management, audit logs, or confidential welfare records" ]
   end
 
   def navigation_context
@@ -187,7 +281,7 @@ class MizoAiAssistant
   def admin_context
     return unless user.operations_team?
 
-    "Admin: Finance viewers can view finance areas according to role. Payment approval is for President, Secretary, Treasurer, and Finance Secretary. Settings, audit logs, and user roles are super-admin only."
+    "Admin: Finance viewers can view finance areas according to role. Payment approval is for President, Secretary, Treasurer, and Finance Secretary. Vice President and Journal Secretary are Office Bearer view-only for most admin areas. Settings, audit logs, and user roles are President/Secretary super-admin only."
   end
 
   def fallback_answer
@@ -199,6 +293,8 @@ class MizoAiAssistant
       yuucho_transfer_answer
     elsif includes_any?(normalized, "other bank", "mufg", "smbc", "mizuho", "branch", "store name", "store", "bank dang", "another bank")
       other_bank_transfer_answer
+    elsif includes_any?(normalized, "ka role", "my role", "tih theih", "access", "permission", "sidebar", "view-only", "view only", "hmuh theih", "role base", "role-based")
+      role_access_answer
     elsif includes_any?(normalized, "dashboard", "stat", "summary", "overview")
       dashboard_answer
     elsif includes_any?(normalized, "screenshot", "reference name", "transfer date", "submit transfer", "amount due", "current payment", "payment history")
@@ -261,6 +357,22 @@ class MizoAiAssistant
 
         Private admin data, finance details, welfare confidential records te member dashboard-ah a lang lo tur a ni.
       ANSWER
+    end
+  end
+
+  def role_access_answer
+    if user.super_admin?
+      super_admin_general_answer
+    elsif user.finance_admin?
+      finance_admin_general_answer
+    elsif user.assistant_secretary?
+      assistant_secretary_general_answer
+    elsif user.observer_office_bearer?
+      observer_general_answer
+    elsif user.executive_committee?
+      executive_general_answer
+    else
+      member_general_answer
     end
   end
 
@@ -330,12 +442,12 @@ class MizoAiAssistant
 
         1. Payment Plans page-ah lut rawh.
         2. Membership fee, chhiatni fund, donation, fundraiser, fee dang te plan anga siam theih a ni.
-      3. Active plan chauh member Payments page-ah unpaid/current payment atan lo lang thei.
-      4. Amount, year, due date, plan type, active status te dik takin dah rawh.
-      5. #{manage_text}
-      6. Same member + same plan + same year/period record a awm tawh chuan record thar siam suh; existing record open la update rawh.
+        3. Active plan chauh member Payments page-ah unpaid/current payment atan lo lang thei.
+        4. Amount, year, due date, plan type, active status te dik takin dah rawh.
+        5. #{manage_text}
+        6. Same member + same plan + same year/period record a awm tawh chuan record thar siam suh; existing record open la update rawh.
 
-      Plan delete hma chuan payment record existing a inzawm em check rawh.
+        Plan delete hma chuan payment record existing a inzawm em check rawh.
       ANSWER
     else
       <<~ANSWER.strip
@@ -560,17 +672,32 @@ class MizoAiAssistant
   end
 
   def finance_viewer_answer
-    <<~ANSWER.strip
-      Finance page i role tan view-only angin a awm thei.
+    if user.observer_office_bearer?
+      <<~ANSWER.strip
+        Finance page hi i role tan view-only a ni.
 
-      I tih theih:
+        I tih theih:
 
-      1. Payments, Payment Records, Payment Plans, Transactions page en rawh.
-      2. Member payment status leh finance records check rawh.
-      3. Export CSV button a lang loh chuan i role-in export permission a nei lo tihna a ni.
+        1. Payments, Payment Records, Payment Plans, Transactions page en rawh.
+        2. Member payment status leh finance records check rawh.
+        3. Own Payments-ah i fee/fund pe ve thei.
+        4. Approve, reject, edit, delete, CSV export, settings te i role tan available lo a ni.
 
-      Approve/Reject tih chu President, Secretary, Treasurer, Finance Secretary tan chauh a ni.
-    ANSWER
+        Official finance action ngai chuan President, Secretary, Treasurer, emaw Finance Secretary contact rawh.
+      ANSWER
+    else
+      <<~ANSWER.strip
+        Finance page i role tan view-only angin a awm thei.
+
+        I tih theih:
+
+        1. Payments, Payment Records, Payment Plans, Transactions page en rawh.
+        2. Member payment status leh finance records check rawh.
+        3. Export CSV button a lang loh chuan i role-in export permission a nei lo tihna a ni.
+
+        Approve/Reject tih chu President, Secretary, Treasurer, Finance Secretary tan chauh a ni.
+      ANSWER
+    end
   end
 
   def non_admin_answer
@@ -660,8 +787,8 @@ class MizoAiAssistant
       super_admin_general_answer
     elsif user.finance_admin?
       finance_admin_general_answer
-    elsif user.welfare_manager? || user.event_manager? || user.minute_manager?
-      secretariat_general_answer
+    elsif user.assistant_secretary?
+      assistant_secretary_general_answer
     elsif user.observer_office_bearer?
       observer_general_answer
     elsif user.executive_committee?
@@ -694,6 +821,8 @@ class MizoAiAssistant
       3. Payment Plans-ah membership fee, chhiatni fund, donation, fundraiser plan manage rawh.
       4. Welfare, Minutes, Events, Letters module te manage rawh.
       5. Settings-ah General Settings, User Roles, Audit Logs, Permissions enkawl rawh.
+      6. Reports-ah finance/member/event/welfare summary leh export options i role-in a phal chin hmang rawh.
+      7. User role change hma chuan role responsibility leh audit impact check rawh.
 
       Security atan, paid confirmation leh role change chu record dik tak check hnuah chauh tih tur a ni.
     ANSWER
@@ -708,33 +837,36 @@ class MizoAiAssistant
       3. Payment Plans-ah fee/fund plan manage rawh.
       4. Transactions-ah income/expense records enkawl rawh.
       5. Reports-ah finance report en/export rawh, i role-in a phal chuan.
+      6. Same member + same plan + same year/period duplicate record siam loh turin existing record check rawh.
 
       Settings, User Roles, Audit Logs chu finance admin tan available lo a ni.
     ANSWER
   end
 
-  def secretariat_general_answer
+  def assistant_secretary_general_answer
     <<~ANSWER.strip
-      Secretariat/Office Bearer manager tan portal hman dan:
+      Assistant Secretary tan portal hman dan:
 
-      1. Welfare cases, Events, Minutes, Letters chu i role-in a phal chin manage rawh.
+      1. Welfare cases, Events, Minutes, Letters chu Secretary ang deuhin manage theih a ni.
       2. Payments chu own fee/fund pek nan i hmang ve thei.
       3. Payment approval chu President/Secretary/Treasurer/Finance Secretary permission a ngai.
       4. Settings/User Roles/Audit Logs chu President leh Secretary super admin tan chauh a ni.
       5. Confidential records chu portal pawnah share suh.
+      6. Report/finance confidential data chu i role permission a zirin view-only emaw hidden emaw a ni thei.
     ANSWER
   end
 
   def observer_general_answer
     <<~ANSWER.strip
-      Office Bearer view-only role tan portal hman dan:
+      Vice President/Journal Secretary tan portal hman dan:
 
-      1. Dashboard leh sidebar-ah admin-style pages i hmu thei ang.
-      2. Finance/Welfare/Reports/Minutes/Letters chu view-only angin a awm thei.
+      1. Office Bearer an nih avangin dashboard/sidebar-ah admin-style pages i hmu thei ang.
+      2. Finance, Payment Records, Payment Plans, Transactions, Welfare, Minutes, Letters, Reports chu view-only angin a awm thei.
       3. Own Payments chu member ang bawkin pay together theih a ni.
-      4. Edit, approve, delete, settings, user roles tih te chu i role tan a lang lo ang.
+      4. Edit, approve, reject, delete, CSV export, settings, user roles tih te chu i role tan a lang lo ang.
+      5. Official action ngai chuan relevant manager contact rawh.
 
-      Action official ngai chuan relevant Office Bearer manager contact rawh.
+      Hei hi expected behavior a ni; permission a lo inang loh chuan security/confidentiality vang a ni.
     ANSWER
   end
 
@@ -747,6 +879,7 @@ class MizoAiAssistant
       3. Minutes/Reports/Welfare records chu i role-in a phal chin view-only a ni.
       4. CSV export, approve, edit, delete, settings tih te chu security avangin a lang lo ang.
       5. Official action ngai chuan Office Bearer contact rawh.
+      6. Member private data leh welfare confidential details chu i role-in a phal chin chauh i hmu ang.
     ANSWER
   end
 

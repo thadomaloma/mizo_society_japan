@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["checkbox", "total", "count", "submit"]
+  static targets = ["checkbox", "total", "count", "submit", "emptyHint"]
 
   connect() {
     this.update()
@@ -23,6 +23,19 @@ export default class extends Controller {
 
     this.submitTargets.forEach((target) => {
       target.disabled = checkedBoxes.length === 0
+    })
+
+    this.checkboxTargets.forEach((checkbox) => {
+      const row = checkbox.closest("[data-payment-selection-row]")
+      if (!row) return
+
+      row.classList.toggle("border-red-200", checkbox.checked)
+      row.classList.toggle("bg-red-50", checkbox.checked)
+      row.classList.toggle("dark:bg-red-500/10", checkbox.checked)
+    })
+
+    this.emptyHintTargets.forEach((target) => {
+      target.classList.toggle("hidden", checkedBoxes.length > 0)
     })
   }
 

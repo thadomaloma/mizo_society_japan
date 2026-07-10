@@ -1,5 +1,5 @@
 class PaymentBatchesController < ApplicationController
-  before_action :set_payment_batch, only: [ :show, :submit_transfer ]
+  before_action :set_payment_batch, only: [ :show, :submit_transfer, :cancel ]
   before_action :set_bank_transfer_details, only: [ :show, :submit_transfer ]
 
   def create
@@ -9,6 +9,7 @@ class PaymentBatchesController < ApplicationController
       .includes(membership_plan: :membership_plan_type)
       .where(id: selected_payment_ids)
       .select(&:bank_transfer_submittable?)
+      .reject { |payment| settled_payment_plan_ids.include?(payment.membership_plan_id) }
 
     if payments.empty?
       redirect_to membership_payments_path, alert: "Select at least one unpaid payment."
@@ -69,6 +70,13 @@ class PaymentBatchesController < ApplicationController
     redirect_to payment_batch_path(@payment_batch), notice: "Combined bank transfer submitted. Treasurer will verify the payment."
   end
 
+  def cancel
+    authorize @payment_batch
+    @payment_batch.cancel_by_member!
+
+    redirect_to membership_payments_path, notice: "Combined payment was cancelled. Select payments again."
+  end
+
   private
 
   def set_payment_batch
@@ -101,5 +109,14 @@ class PaymentBatchesController < ApplicationController
 
   def set_bank_transfer_details
     @bank_transfer_details = BankTransferDetails.call
+  end
+
+  def settled_payment_plan_ids
+    @settled_payment_plan_ids ||= current_user.membership_payments
+      .includes(:membership_plan, :payment_batch)
+      .select { |payment| payment.paid? || payment.payment_batch&.paid? }
+      .select { |payment| payment.one_time_payment? || payment.payment_year == Date.current.year }
+      .map(&:membership_plan_id)
+      .uniq
   end
 end

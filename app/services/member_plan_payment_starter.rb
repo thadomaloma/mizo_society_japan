@@ -9,7 +9,7 @@ class MemberPlanPaymentStarter
   end
 
   def call
-    reusable_payment || settled_payment || create_payment!
+    settled_payment || reusable_payment || create_payment!
   end
 
   private

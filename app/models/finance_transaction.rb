@@ -10,6 +10,7 @@ class FinanceTransaction < ApplicationRecord
   validates :transaction_date, presence: true
   validates :transaction_type, :status, presence: true
   validate :category_matches_transaction_type
+  validate :amount_is_whole_yen
 
   before_validation :assign_transaction_date, if: -> { transaction_date.blank? }
   before_validation :copy_category_type, if: -> { transaction_type.blank? && finance_category.present? }
@@ -64,5 +65,14 @@ class FinanceTransaction < ApplicationRecord
     return if finance_category.blank? || transaction_type.blank?
 
     errors.add(:finance_category, "must match transaction type") unless finance_category.category_type == transaction_type
+  end
+
+  def amount_is_whole_yen
+    return if amount.blank?
+    return if BigDecimal(amount.to_s).frac.zero?
+
+    errors.add(:amount, "must be a whole yen amount")
+  rescue ArgumentError
+    errors.add(:amount, "is not a number")
   end
 end

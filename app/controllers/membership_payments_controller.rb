@@ -14,16 +14,16 @@ class MembershipPaymentsController < ApplicationController
 
     @current_payments = payment_scope
       .current_for_member
+      .where(payment_batch_id: nil)
       .latest
       .to_a
     @current_payments.reject! { |payment| settled_payment_plan?(payment) }
     @current_payment_batches = current_user.payment_batches
       .includes(membership_payments: { membership_plan: :membership_plan_type })
-      .pending_verification
+      .current_for_member
       .latest
       .to_a
-    active_batch_payment_ids = @current_payment_batches.flat_map { |batch| batch.membership_payments.map(&:id) }
-    @current_payments.reject! { |payment| active_batch_payment_ids.include?(payment.id) }
+    @current_payment_batches.reject!(&:paid?)
     @payment_history = payment_scope
       .history_for_member
       .by_status(@status)
@@ -112,10 +112,13 @@ class MembershipPaymentsController < ApplicationController
 
   def settled_payment_plan_ids
     @settled_payment_plan_ids ||= begin
-      paid_scope = current_user.membership_payments.paid.includes(:membership_plan)
-      paid_scope.select do |payment|
+      settled_payments = current_user.membership_payments
+        .includes(:membership_plan, :payment_batch)
+        .select { |payment| payment.paid? || payment.payment_batch&.paid? }
+
+      settled_payments.select do |payment|
         payment.one_time_payment? || payment.payment_year == Date.current.year
-      end.map(&:membership_plan_id)
+      end.map(&:membership_plan_id).uniq
     end
   end
 end

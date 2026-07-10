@@ -12,6 +12,7 @@ module Admin
       @query = params[:query]
       @membership_payments = policy_scope(MembershipPayment)
         .includes({ membership_plan: :membership_plan_type }, user: :member_profile)
+        .merge(visible_payment_records)
         .search(@query)
         .by_year(@year)
         .by_plan_type(@plan_type_id)
@@ -138,6 +139,11 @@ module Admin
 
     def set_membership_payment
       @membership_payment = MembershipPayment.find(params[:id])
+    end
+
+    def visible_payment_records
+      paid_batch_ids = PaymentBatch.paid.select(:id)
+      MembershipPayment.where(payment_batch_id: nil).or(MembershipPayment.where(payment_batch_id: paid_batch_ids))
     end
 
     def set_form_collections

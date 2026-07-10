@@ -54,7 +54,8 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "pending", payment.status
     assert_includes response.body, @plan.name
     assert_includes response.body, "Pay Together"
-    assert_match(/Current Payments.*Optional Payment Plans.*Payment History/m, response.body)
+    assert_match(/Select Payments.*Optional Payment Plans.*Payment History/m, response.body)
+    assert_includes response.body, "0</span> selected"
   end
 
   test "office bearer without a payment gets required fees on My Payments" do
@@ -102,8 +103,150 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     get membership_payments_path
 
     assert_response :success
-    assert_match(/Current Payments.*#{@payment.membership_plan.name}/m, response.body)
+    assert_match(/Select Payments.*#{@payment.membership_plan.name}/m, response.body)
     assert_match(/Payment History.*#{paid_payment.membership_plan.name}/m, response.body)
+  end
+
+  test "settled optional plan hides stale unpaid duplicate from current payments" do
+    paid_payment = MembershipPayment.create!(
+      user: @member,
+      membership_plan: @donation_plan,
+      amount: @donation_plan.amount,
+      payment_year: Date.current.year,
+      payment_method: :manual_bank_transfer,
+      status: :paid,
+      paid_on: Time.current
+    )
+    stale_payment = MembershipPayment.new(
+      user: @member,
+      membership_plan: @donation_plan,
+      amount: @donation_plan.amount,
+      payment_year: Date.current.year - 1,
+      payment_method: :bank_transfer,
+      status: :pending
+    )
+    stale_payment.save!(validate: false)
+
+    sign_in @member
+    get membership_payments_path
+
+    assert_response :success
+    assert_match(/Payment History.*#{paid_payment.membership_plan.name}/m, response.body)
+    assert_not_includes response.body, "value=\"#{stale_payment.id}\""
+    assert_not_includes response.body, "value=\"#{@donation_plan.id}\""
+  end
+
+  test "pending combined batch remains visible on payments page" do
+    donation_payment = MembershipPayment.create!(
+      user: @member,
+      membership_plan: @donation_plan,
+      amount: @donation_plan.amount,
+      payment_year: Date.current.year,
+      payment_method: :bank_transfer,
+      status: :pending
+    )
+    batch = @member.payment_batches.create!(status: :pending)
+    @payment.update!(payment_batch: batch)
+    donation_payment.update!(payment_batch: batch)
+    batch.update!(total_amount: @payment.amount + donation_payment.amount)
+
+    sign_in @member
+    get membership_payments_path
+
+    assert_response :success
+    assert_includes response.body, "Submitted Combined Payments"
+    assert_includes response.body, payment_batch_path(batch)
+    assert_not_includes response.body, "value=\"#{@payment.id}\""
+    assert_not_includes response.body, "value=\"#{donation_payment.id}\""
+  end
+
+  test "member can create combined payment from selected payments without javascript" do
+    donation_payment = MembershipPayment.create!(
+      user: @member,
+      membership_plan: @donation_plan,
+      amount: @donation_plan.amount,
+      payment_year: Date.current.year,
+      payment_method: :bank_transfer,
+      status: :pending
+    )
+
+    sign_in @member
+
+    assert_difference -> { @member.payment_batches.count }, 1 do
+      post payment_batches_path, params: { membership_payment_ids: [ @payment.id, donation_payment.id ] }
+    end
+
+    batch = @member.payment_batches.order(:id).last
+    assert_redirected_to payment_batch_path(batch)
+    assert_equal "pending", batch.status
+    assert_equal @payment.amount + donation_payment.amount, batch.total_amount
+    assert_equal [ @payment.id, donation_payment.id ].sort, batch.membership_payment_ids.sort
+  end
+
+  test "member can review pending combined payment before submitting transfer" do
+    donation_payment = MembershipPayment.create!(
+      user: @member,
+      membership_plan: @donation_plan,
+      amount: @donation_plan.amount,
+      payment_year: Date.current.year,
+      payment_method: :bank_transfer,
+      status: :pending
+    )
+    batch = @member.payment_batches.create!(status: :pending)
+    @payment.update!(payment_batch: batch)
+    donation_payment.update!(payment_batch: batch)
+    batch.update!(total_amount: @payment.amount + donation_payment.amount)
+
+    sign_in @member
+    get payment_batch_path(batch)
+
+    assert_response :success
+    assert_includes response.body, "Combined Payment"
+    assert_includes response.body, "Submit Transfer"
+    assert_includes response.body, "Change Selection"
+    assert_includes response.body, @plan.name
+    assert_includes response.body, @donation_plan.name
+  end
+
+  test "member can cancel pending combined payment and select again" do
+    donation_payment = MembershipPayment.create!(
+      user: @member,
+      membership_plan: @donation_plan,
+      amount: @donation_plan.amount,
+      payment_year: Date.current.year,
+      payment_method: :bank_transfer,
+      status: :pending
+    )
+    batch = @member.payment_batches.create!(status: :pending)
+    @payment.update!(payment_batch: batch)
+    donation_payment.update!(payment_batch: batch)
+    batch.update!(total_amount: @payment.amount + donation_payment.amount)
+
+    sign_in @member
+
+    patch cancel_payment_batch_path(batch)
+
+    assert_redirected_to membership_payments_path
+    assert_equal "cancelled", batch.reload.status
+    assert_nil @payment.reload.payment_batch_id
+    assert_nil donation_payment.reload.payment_batch_id
+
+    get membership_payments_path
+
+    assert_response :success
+    assert_includes response.body, "value=\"#{@payment.id}\""
+    assert_includes response.body, "value=\"#{donation_payment.id}\""
+  end
+
+  test "empty combined payment selection redirects back with alert" do
+    sign_in @member
+
+    assert_no_difference -> { @member.payment_batches.count } do
+      post payment_batches_path, params: { membership_payment_ids: [] }
+    end
+
+    assert_redirected_to membership_payments_path
+    assert_equal "Select at least one unpaid payment.", flash[:alert]
   end
 
   test "member can submit bank transfer details for treasurer verification" do
@@ -195,6 +338,63 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "option[value='#{@donation_plan.id}']", text: /Emergency Relief Donation/
+  end
+
+  test "admin payment records hide prepared combined payments until transfer is submitted" do
+    plan = MembershipPlan.create!(
+      name: "Prepared Batch Fund",
+      amount: 1500,
+      membership_plan_type: @donation_plan.membership_plan_type,
+      billing_cycle: :one_time,
+      active: true
+    )
+    payment = MembershipPayment.create!(
+      user: @member,
+      membership_plan: plan,
+      amount: plan.amount,
+      payment_year: Date.current.year,
+      payment_method: :bank_transfer,
+      status: :pending
+    )
+    batch = @member.payment_batches.create!(status: :pending)
+    payment.update!(payment_batch: batch)
+    batch.update!(total_amount: payment.amount)
+
+    sign_in @president
+    get admin_membership_payments_path
+
+    assert_response :success
+    assert_not_includes response.body, "Prepared Batch Fund"
+    assert_not_includes response.body, admin_membership_payment_path(payment)
+  end
+
+  test "admin payment records show paid payments from approved combined batches" do
+    plan = MembershipPlan.create!(
+      name: "Approved Batch Fund",
+      amount: 2500,
+      membership_plan_type: @donation_plan.membership_plan_type,
+      billing_cycle: :one_time,
+      active: true
+    )
+    batch = @member.payment_batches.create!(status: :paid, total_amount: plan.amount, approved_by: @president, approved_at: Time.current)
+    payment = MembershipPayment.create!(
+      user: @member,
+      membership_plan: plan,
+      amount: plan.amount,
+      payment_year: Date.current.year,
+      payment_method: :manual_bank_transfer,
+      status: :paid,
+      paid_on: Time.current,
+      approved_by: @president,
+      payment_batch: batch
+    )
+
+    sign_in @president
+    get admin_membership_payments_path(status: "paid")
+
+    assert_response :success
+    assert_includes response.body, "Approved Batch Fund"
+    assert_includes response.body, admin_membership_payment_path(payment)
   end
 
   test "member cannot open the admin membership payments page" do

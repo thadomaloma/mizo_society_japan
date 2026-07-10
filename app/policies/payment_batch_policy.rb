@@ -11,6 +11,10 @@ class PaymentBatchPolicy < ApplicationPolicy
     owns_record? && (record.pending? || record.rejected?)
   end
 
+  def cancel?
+    owns_record? && (record.pending? || record.rejected?)
+  end
+
   def approve?
     finance_approver? && record.pending_verification?
   end

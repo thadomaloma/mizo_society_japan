@@ -115,7 +115,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Other Child" ], other_profile.child_family_members.reload.pluck(:name)
   end
 
-  test "member profile shows map but hides admin contact actions" do
+  test "member profile shows address but hides map and admin contact actions" do
     @member.create_member_profile!(
       full_name: "Complete Member",
       mobile_number: "09024681357",
@@ -132,8 +132,8 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Okubo"
-    assert_includes response.body, "Google Map"
-    assert_includes response.body, "google.com/maps"
+    assert_not_includes response.body, "Google Map"
+    assert_not_includes response.body, "google.com/maps"
     assert_no_match(/>Call</, response.body)
     assert_no_match(/>WhatsApp</, response.body)
   end

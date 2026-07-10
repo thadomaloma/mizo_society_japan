@@ -44,8 +44,8 @@
           <section>
             <div class="mb-3 flex items-center justify-between gap-3">
               <div>
-                <h3 class="text-sm font-black text-[#0F172A] dark:text-white">Suggested Questions</h3>
-                <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Tap one. No typing needed.</p>
+                <h3 class="text-sm font-black text-[#0F172A] dark:text-white">Role-based Questions</h3>
+                <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= User.role_label(current_user.role) %> tan question remchang te.</p>
               </div>
               <span class="hidden rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600 dark:bg-slate-700 dark:text-slate-200 sm:inline-flex"><%= @suggested_questions.size %> topics</span>
             </div>
