@@ -93,6 +93,7 @@ class MizoAiAssistant
     [
       role_context,
       navigation_context,
+      dashboard_context,
       payment_context,
       profile_context,
       welfare_context,
@@ -133,18 +134,26 @@ class MizoAiAssistant
     "Visible/expected pages for this role: #{pages.uniq.join(', ')}."
   end
 
+  def dashboard_context
+    if user.operations_team?
+      "Dashboard: Admin/Office Bearer dashboard shows member activity, payment review, welfare, meeting minutes, upcoming events, official letters, and yearly finance overview according to role permissions."
+    else
+      "Dashboard: Member dashboard focuses on own payments, profile completion, announcements/updates, visible events, welfare support, and basic member community summary. It should not expose private admin data."
+    end
+  end
+
   def payment_context
     pending_count = user.membership_payments.pending.count
     pending_verification_count = user.payment_batches.pending_verification.count + user.membership_payments.pending_verification.where(payment_batch_id: nil).count
 
-    "Payments: Members should use Payments page to select unpaid fees/funds, pay together by one bank transfer, then submit transfer date, amount, and reference name. Bank transfer is the main method. Yuucho-to-Yuucho transfer uses 記号 (kigou / symbol) and 番号 (bangou / number). Transfers from other banks use 店名 (tenmei / store name) and 口座番号 (kouza bangou / account number). Current user has #{pending_count} waiting transfer and #{pending_verification_count} pending verification."
+    "Payments: Members should use Payments page to select unpaid fees/funds, pay together by one bank transfer, then submit transfer date, amount, and reference name. Screenshot is optional unless Office Bearers request it. Paid/approved items should not remain in current unpaid payments. Bank transfer is the main method. Yuucho-to-Yuucho transfer uses 記号 (kigou / symbol) and 番号 (bangou / number). Transfers from other banks use 店名 (tenmei / store name) and 口座番号 (kouza bangou / account number). Current user has #{pending_count} waiting transfer and #{pending_verification_count} pending verification."
   end
 
   def profile_context
     profile = user.member_profile
     completion = profile&.profile_completion_percentage || 0
 
-    "Profile: Members must complete full name, Japan mobile number, date of birth, family status, postal code, prefecture, city, and address line 1 before using protected portal areas. Avatar/profile photo is optional. Current profile completion is #{completion}%."
+    "Profile: Members must complete full name, Japan mobile number, date of birth, family status, postal code, prefecture, city, and address line 1 before using protected portal areas. Father name, mother name, spouse name, and family members may be captured for member records. Avatar/profile photo is optional. Current profile completion is #{completion}%."
   end
 
   def welfare_context
@@ -158,7 +167,7 @@ class MizoAiAssistant
   def event_context
     upcoming_count = EventPolicy::Scope.new(user, Event).resolve.upcoming.count
 
-    "Events: Members can view published events visible to their role and RSVP when registration is open. Current visible upcoming event count is #{upcoming_count}."
+    "Events/Announcements: Members can view published events and portal announcements/updates visible to their role and RSVP when registration is open. Current visible upcoming event count is #{upcoming_count}."
   end
 
   def minutes_context
@@ -188,23 +197,29 @@ class MizoAiAssistant
       outside_portal_answer
     elsif includes_any?(normalized, "yuucho", "ゆうちょ", "yucho", "jp bank")
       yuucho_transfer_answer
-    elsif includes_any?(normalized, "other bank", "mufg", "smbc", "mizuho", "branch", "store name", "store", "bank dang")
+    elsif includes_any?(normalized, "other bank", "mufg", "smbc", "mizuho", "branch", "store name", "store", "bank dang", "another bank")
       other_bank_transfer_answer
-    elsif includes_any?(normalized, "approve", "verify", "verification", "treasurer")
-      payment_review_answer
-    elsif includes_any?(normalized, "payment plan", "payment plans", "plan", "fundraiser", "donation", "chhiatni")
-      payment_plan_answer
-    elsif includes_any?(normalized, "payment", "fee", "fund", "bank", "transfer", "pawisa", "pek")
+    elsif includes_any?(normalized, "dashboard", "stat", "summary", "overview")
+      dashboard_answer
+    elsif includes_any?(normalized, "screenshot", "reference name", "transfer date", "submit transfer", "amount due", "current payment", "payment history")
       payment_answer
-    elsif includes_any?(normalized, "profile", "address", "mobile", "phone", "postal", "complete")
+    elsif includes_any?(normalized, "approve", "verify", "verification", "treasurer", "reject", "review")
+      payment_review_answer
+    elsif includes_any?(normalized, "payment plan", "payment plans", "plan", "fundraiser", "donation", "chhiatni", "plan type")
+      payment_plan_answer
+    elsif includes_any?(normalized, "payment", "fee", "fund", "bank", "transfer", "pawisa", "pek", "paid")
+      payment_answer
+    elsif includes_any?(normalized, "profile", "address", "mobile", "phone", "postal", "complete", "avatar", "photo", "father", "mother", "family", "spouse", "date of birth")
       profile_answer
     elsif includes_any?(normalized, "welfare", "support", "help", "tanpuina", "chhiah")
       welfare_answer
+    elsif includes_any?(normalized, "announcement", "notice", "updates")
+      announcement_answer
     elsif includes_any?(normalized, "event", "rsvp", "programme", "program")
       event_answer
-    elsif includes_any?(normalized, "minute", "meeting", "record")
+    elsif includes_any?(normalized, "minute", "meeting", "record", "signature", "pdf", "publish", "draft", "attendance", "agenda", "decision", "resolution")
       minutes_answer
-    elsif includes_any?(normalized, "letter", "official")
+    elsif includes_any?(normalized, "letter", "official", "document", "documents", "docx", "subject", "archive final", "reference no")
       letters_answer
     elsif includes_any?(normalized, "report", "csv", "export")
       reports_answer
@@ -218,6 +233,34 @@ class MizoAiAssistant
       admin_answer
     else
       general_answer
+    end
+  end
+
+  def dashboard_answer
+    if user.operations_team?
+      <<~ANSWER.strip
+        Dashboard-ah i hmuh tur chu i role azirin a inang lo thei:
+
+        1. Member summary leh new member activity.
+        2. Payment review/pending verification summary.
+        3. Welfare case summary.
+        4. Meeting minutes leh upcoming events.
+        5. Official letters leh yearly finance overview.
+
+        Card thenkhat a lang loh chuan i role permission emaw data awm loh vang emaw a ni thei.
+      ANSWER
+    else
+      <<~ANSWER.strip
+        Member dashboard-ah i hmuh tur pawimawh te:
+
+        1. Own payments leh pending transfer status.
+        2. Profile completion.
+        3. Announcements/updates.
+        4. Upcoming events.
+        5. Welfare support link.
+
+        Private admin data, finance details, welfare confidential records te member dashboard-ah a lang lo tur a ni.
+      ANSWER
     end
   end
 
@@ -429,6 +472,34 @@ class MizoAiAssistant
       ANSWER
     else
       "Meeting minutes hi role-based a ni. I account-in access a neih loh chuan a lang lo ang."
+    end
+  end
+
+  def announcement_answer
+    if user.event_manager?
+      <<~ANSWER.strip
+        Announcement/Notice siam dan:
+
+        1. Events page-ah lut rawh.
+        2. Announcements/Official Notices section-ah kal rawh.
+        3. New Notice click la, title, category, body, pinned setting, expires date te fill up rawh.
+        4. Save Draft hmang la, ready chuan Publish rawh.
+        5. Published notice chauh member dashboard leh Events page-ah lang ang.
+        6. Notice pawimawh chu pinned-a dah theih a ni.
+
+        Announcement hi member zawng zawng hriat tur official update atan hmang rawh.
+      ANSWER
+    else
+      <<~ANSWER.strip
+        Announcement/Updates en dan:
+
+        1. Dashboard-ah Announcements & Updates card en rawh.
+        2. Events page-ah Latest Announcements section a awm bawk ang.
+        3. Notice title click chuan details i en thei.
+        4. Pinned notice chu pawimawh bik a ni.
+
+        Member role chuan published notice chauh a hmu ang.
+      ANSWER
     end
   end
 

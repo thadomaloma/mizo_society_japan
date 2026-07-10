@@ -51,6 +51,7 @@ module ApplicationHelper
 
   ICONS = {
     dashboard: "M3 11.5 12 4l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
+    home: "M3 11.5 12 4l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z",
     members: "M8 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm8.5 1a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7ZM2 21a6 6 0 0 1 12 0H2Zm12.5 0a7.5 7.5 0 0 0-2-5.1A5.5 5.5 0 0 1 22 19.5V21h-7.5Z",
     finance: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v1.2a3 3 0 0 1 2.2 1.4l-1.6.9A1.5 1.5 0 0 0 12.2 10h-.5c-.8 0-1.2.3-1.2.8 0 .6.5.8 1.8 1.1 1.8.4 3.2 1 3.2 2.8 0 1.5-1 2.5-2.5 2.9V19h-2v-1.3a3.6 3.6 0 0 1-2.8-1.8l1.7-1a2 2 0 0 0 1.9 1h.4c.9 0 1.3-.4 1.3-.9 0-.6-.5-.8-1.9-1.1-1.7-.4-3.1-1-3.1-2.8 0-1.4 1-2.5 2.5-2.8V7h2Z",
     welfare: "M12 21s-8-4.8-8-12a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 7.2-8 12-8 12Zm-1-6h2v-3h3v-2h-3V7h-2v3H8v2h3v3Z",
@@ -73,7 +74,6 @@ module ApplicationHelper
     banknotes: "M4 6h16a2 2 0 0 1 2 2v9H6a2 2 0 0 1-2-2V6Zm2 2v7h14V8H6Zm6 1.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4ZM2 9h2v8h14v2H4a2 2 0 0 1-2-2V9Z",
     arrow_path: "M12 4a8 8 0 0 1 7.4 5H22l-3.8 4L14.4 9H17a6 6 0 0 0-10.7-1.7L4.8 6A8 8 0 0 1 12 4Zm-7.4 11H2l3.8-4 3.8 4H7a6 6 0 0 0 10.7 1.7l1.5 1.3A8 8 0 0 1 4.6 15Z",
     pencil_square: "M5 3h10v2H5v14h14V9h2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm13.8-.2 2.4 2.4-8.7 8.7H10v-2.5l8.8-8.6Z",
-    sparkles: "M12 2 14 8l6 2-6 2-2 6-2-6-6-2 6-2 2-6Zm6 12 1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3ZM5 14l1 2.5L8.5 18 6 19.5 5 22l-1-2.5L1.5 18 4 16.5 5 14Z",
     eye: "M12 5c5 0 8.8 4.4 10 7-1.2 2.6-5 7-10 7S3.2 14.6 2 12c1.2-2.6 5-7 10-7Zm0 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z",
     eye_slash: "M3.3 2 22 20.7 20.7 22l-4-4A11.4 11.4 0 0 1 12 19c-5 0-8.8-4.4-10-7 .6-1.3 1.9-3.1 3.7-4.5L2 3.3 3.3 2Zm4 7.3A8.9 8.9 0 0 0 4.2 12c1 1.8 4 5 7.8 5 1.1 0 2.2-.3 3.2-.8l-1.7-1.7a4 4 0 0 1-5-5L7.3 9.3ZM12 5c5 0 8.8 4.4 10 7a13.2 13.2 0 0 1-2.6 3.7l-2.1-2.1c.3-.5.4-1 .4-1.6a4 4 0 0 0-5.3-3.8L10.7 6.5c.4-.1.9-.1 1.3-.1V5Z",
     edit: "M4 17.3V21h3.7L18.5 10.2l-3.7-3.7L4 17.3ZM20.7 8a1 1 0 0 0 0-1.4l-3.3-3.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.7 3.7L20.7 8Z",
@@ -373,6 +373,41 @@ module ApplicationHelper
     content.match?(%r{</?(?:p|div|strong|b|em|i|u|ul|ol|li|br)\b}i)
   end
 
+  def ai_answer_content(answer)
+    blocks = answer.to_s.lines.map(&:strip).reject(&:blank?).map do |line|
+      case line
+      when /\A(\d+)[.)]\s+(.+)\z/
+        ai_answer_step(Regexp.last_match(1), Regexp.last_match(2))
+      when /\A[-•]\s+(.+)\z/
+        ai_answer_bullet(Regexp.last_match(1))
+      when /\A.{1,70}:\z/
+        tag.p(line, class: "pt-1 text-sm font-black text-slate-950 dark:text-white")
+      else
+        tag.p(line, class: "text-sm font-semibold leading-7 text-slate-700 dark:text-slate-200")
+      end
+    end
+
+    safe_join(blocks)
+  end
+
+  def ai_answer_step(number, text)
+    tag.div(class: "flex gap-3 rounded-xl px-1 py-1.5") do
+      safe_join([
+        tag.span(number, class: "mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-red-600 text-xs font-black text-white shadow-sm shadow-red-950/10 dark:bg-red-500"),
+        tag.p(text, class: "min-w-0 flex-1 text-sm font-semibold leading-7 text-slate-800 dark:text-slate-100")
+      ])
+    end
+  end
+
+  def ai_answer_bullet(text)
+    tag.div(class: "flex gap-3 rounded-xl px-1 py-1") do
+      safe_join([
+        tag.span("", class: "mt-2 h-2 w-2 shrink-0 rounded-full bg-red-500"),
+        tag.p(text, class: "min-w-0 flex-1 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200")
+      ])
+    end
+  end
+
   def global_search_result_path(type, record)
     case type.to_sym
     when :members
@@ -455,17 +490,5 @@ module ApplicationHelper
 
   def whatsapp_url_for(profile)
     profile&.whatsapp_url
-  end
-
-  def google_maps_query_for(profile)
-    ERB::Util.url_encode(profile.full_address)
-  end
-
-  def google_maps_embed_url_for(profile)
-    "https://www.google.com/maps?q=#{google_maps_query_for(profile)}&output=embed"
-  end
-
-  def google_maps_search_url_for(profile)
-    "https://www.google.com/maps/search/?api=1&query=#{google_maps_query_for(profile)}"
   end
 end
