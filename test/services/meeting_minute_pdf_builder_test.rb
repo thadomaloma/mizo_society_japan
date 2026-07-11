@@ -15,17 +15,16 @@ class MeetingMinutePdfBuilderTest < ActiveSupport::TestCase
     assert_equal [ 10, 20, 30, 40, 11, 22, 33, 44, 12, 24, 36, 48 ], decoded
   end
 
-  test "decision headings stay bold while numbering body and sub-items stay regular" do
+  test "decision numbering and headings stay bold while body and sub-items stay regular" do
     builder = MeetingMinutePdfBuilder.allocate
     lines = builder.send(
       :decision_rich_lines,
-      "<div>1. <strong>Chapchar kut chungchang:</strong> Decision body</div><div>1) Pastor Tawnluia</div>"
+      "<div><strong>1. Chapchar kut chungchang:</strong> Decision body</div><div>1) Pastor Tawnluia</div>"
     )
 
     assert_equal [
       [
-        { text: "1. ", bold: false },
-        { text: "Chapchar kut chungchang:", bold: true },
+        { text: "1. Chapchar kut chungchang:", bold: true },
         { text: " Decision body", bold: false }
       ],
       [ { text: "1) Pastor Tawnluia", bold: false } ]

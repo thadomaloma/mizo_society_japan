@@ -38,12 +38,13 @@ export default class extends Controller {
     const agendaText = this.agendaPointTarget.selectedOptions[0]?.dataset.agendaText || "Agenda item"
     const decisionLine = document.createElement("div")
     const agendaTitle = document.createElement("strong")
+    const bodyStart = document.createTextNode(" ")
 
     decisionLine.dataset.decisionMain = "true"
-    agendaTitle.textContent = `${agendaText}:`
-    decisionLine.append(`${agendaNumber}. `, agendaTitle, " ")
+    agendaTitle.textContent = `${agendaNumber}. ${agendaText}:`
+    decisionLine.append(agendaTitle, bodyStart)
     this.appendLine(this.decisionsTarget, decisionLine)
-    this.moveCursorToEnd(decisionLine)
+    this.moveCursorToEnd(bodyStart)
     this.syncEditor(this.decisionsTarget)
   }
 
