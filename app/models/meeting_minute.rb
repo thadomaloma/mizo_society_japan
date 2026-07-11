@@ -4,6 +4,10 @@ class MeetingMinute < ApplicationRecord
   ].freeze
   RICH_TEXT_TAGS = %w[p br div strong b em i u ul ol li].freeze
   ATTENDANCE_COUNT_FIELDS = %i[present_count absent_count].freeze
+  SIGNATURE_CONTENT_TYPE = "image/png"
+  SIGNATURE_MAX_SIZE = 2.megabytes
+  SIGNATURE_MIN_WIDTH = 300
+  SIGNATURE_MIN_HEIGHT = 60
 
   belongs_to :uploaded_by, class_name: "User"
   has_one_attached :file
@@ -144,10 +148,59 @@ class MeetingMinute < ApplicationRecord
       secretary_signature: secretary_signature
     }.each do |attribute, attachment|
       next unless attachment.attached?
-      next if attachment.blob.content_type == "image/png"
 
-      errors.add(attribute, "must be a PNG image")
+      validate_signature_png(attribute, attachment)
     end
+  end
+
+  def validate_signature_png(attribute, attachment)
+    unless attachment.blob.content_type == SIGNATURE_CONTENT_TYPE &&
+        attachment.filename.extension_without_delimiter.to_s.downcase == "png" &&
+        png_signature?(attachment)
+      errors.add(attribute, "must be a PNG image")
+      return
+    end
+
+    if attachment.blob.byte_size > SIGNATURE_MAX_SIZE
+      errors.add(attribute, "must be smaller than 2MB")
+      return
+    end
+
+    width, height = png_dimensions(attachment)
+    return if width.blank? || height.blank?
+    return if width >= SIGNATURE_MIN_WIDTH && height >= SIGNATURE_MIN_HEIGHT
+
+    errors.add(attribute, "must be at least #{SIGNATURE_MIN_WIDTH}x#{SIGNATURE_MIN_HEIGHT}px for clear PDF export")
+  end
+
+  def png_signature?(attachment)
+    signature_source_bytes(attachment).byteslice(0, 8) == "\x89PNG\r\n\x1A\n".b
+  rescue StandardError
+    false
+  end
+
+  def png_dimensions(attachment)
+    header = signature_source_bytes(attachment).byteslice(0, 24)
+    return if header.blank? || header.bytesize < 24 || header.byteslice(12, 4) != "IHDR"
+
+    header.byteslice(16, 8).unpack("NN")
+  rescue StandardError
+    nil
+  end
+
+  def signature_source_bytes(attachment)
+    attachable = attachment_changes[attachment.name.to_s]&.attachable
+    io = attachable[:io] if attachable.respond_to?(:[])
+    return read_signature_io(io) if io.present?
+
+    attachment.blob.download
+  end
+
+  def read_signature_io(io)
+    io.rewind if io.respond_to?(:rewind)
+    bytes = io.read
+    io.rewind if io.respond_to?(:rewind)
+    bytes.to_s.b
   end
 
   def sanitize_rich_text

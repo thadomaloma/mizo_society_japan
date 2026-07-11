@@ -36,11 +36,12 @@ export default class extends Controller {
     }
 
     const agendaText = this.agendaPointTarget.selectedOptions[0]?.dataset.agendaText || "Agenda item"
-    const decisionLine = this.buildNumberedLine(this.decisionsTarget, "")
+    const decisionLine = document.createElement("div")
     const agendaTitle = document.createElement("strong")
 
+    decisionLine.dataset.decisionMain = "true"
     agendaTitle.textContent = `${agendaText}:`
-    decisionLine.append(agendaTitle, " ")
+    decisionLine.append(`${agendaNumber}. `, agendaTitle, " ")
     this.appendLine(this.decisionsTarget, decisionLine)
     this.moveCursorToEnd(decisionLine)
     this.syncEditor(this.decisionsTarget)
@@ -65,7 +66,25 @@ export default class extends Controller {
     if (!currentLine.match(/^\s*\d+[.)]\s+/)) return
 
     event.preventDefault()
-    this.insertNumberedLineAtCursor(event.target)
+    if (event.target === this.decisionsTarget) {
+      this.insertDecisionSubLineAtCursor(event.target, currentLine)
+    } else {
+      this.insertNumberedLineAtCursor(event.target)
+    }
+  }
+
+  normalizeNumbering(event) {
+    const editor = event.target
+    if (editor !== this.agendaTarget && editor !== this.decisionsTarget) return
+
+    let changed = false
+
+    Array.from(editor.childNodes).forEach((line) => {
+      changed = this.normalizeLinePrefix(line, editor) || changed
+    })
+
+    if (changed) this.syncEditor(editor)
+    if (editor === this.agendaTarget) this.refreshAgendaPoints()
   }
 
   appendNumberedLine(editor) {
@@ -89,9 +108,28 @@ export default class extends Controller {
     this.syncEditor(editor)
   }
 
+  insertDecisionSubLineAtCursor(editor, currentLineText) {
+    const line = document.createElement("div")
+    const currentLine = this.currentLineElement(editor)
+    const currentSubNumber = currentLineText.match(/^\s*(\d+)\)\s+/)?.[1]
+    const number = currentSubNumber ? Number(currentSubNumber) + 1 : 1
+
+    line.dataset.decisionSub = "true"
+    line.append(`${number}) `, "\u00A0")
+
+    if (currentLine && currentLine !== editor) {
+      currentLine.after(line)
+    } else {
+      this.appendLine(editor, line)
+    }
+
+    this.moveCursorToEnd(line, editor)
+    this.syncEditor(editor)
+  }
+
   buildNumberedLine(editor, trailingText = "\u00A0") {
     const line = document.createElement("div")
-    line.append(`${this.nextNumber(editor.innerText)}. `, trailingText)
+    line.append(`${this.nextNumber(editor.innerText)}) `, trailingText)
     return line
   }
 
@@ -106,6 +144,31 @@ export default class extends Controller {
   nextNumber(value) {
     const numbers = Array.from(value.matchAll(/^\s*(\d+)[.)]\s+/gm), (match) => Number(match[1]))
     return numbers.length ? Math.max(...numbers) + 1 : 1
+  }
+
+  normalizeLinePrefix(line, editor) {
+    const mainDecision = editor === this.decisionsTarget && line.nodeType === Node.ELEMENT_NODE &&
+      (line.dataset.decisionMain === "true" || line.querySelector("strong, b"))
+    const suffix = mainDecision ? "." : ")"
+
+    if (line.nodeType === Node.TEXT_NODE) {
+      return this.normalizeTextNodePrefix(line, suffix)
+    }
+
+    const textNode = Array.from(line.childNodes).find((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length)
+    if (!textNode) return false
+
+    return this.normalizeTextNodePrefix(textNode, suffix)
+  }
+
+  normalizeTextNodePrefix(textNode, suffix = ")") {
+    const originalText = textNode.textContent
+    const normalizedText = originalText.replace(/^(\s*)(\d+)(?:[.)]|[-:])?\s+/, `$1$2${suffix} `)
+
+    if (normalizedText === originalText) return false
+
+    textNode.textContent = normalizedText
+    return true
   }
 
   moveCursorToEnd(element, editor = this.decisionsTarget) {

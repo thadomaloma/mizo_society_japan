@@ -1,4 +1,5 @@
 require "digest"
+require "nokogiri"
 require "zlib"
 
 class MeetingMinutePdfBuilder
@@ -43,7 +44,7 @@ class MeetingMinutePdfBuilder
 
     if @meeting_minute.decisions.present?
       section "II. THU RELTE (RESOLUTIONS)"
-      text_block rich_text_to_plain(@meeting_minute.decisions), bold_heading_lines: true
+      formatted_decisions_block @meeting_minute.decisions
     end
 
     section "MEETING KHARNA"
@@ -133,6 +134,86 @@ class MeetingMinutePdfBuilder
     end
   end
 
+  def formatted_decisions_block(content)
+    decision_rich_lines(content).each do |runs|
+      if runs.blank?
+        move_down 8
+        next
+      end
+
+      draw_rich_runs(runs)
+    end
+  end
+
+  def decision_rich_lines(content)
+    fragment = Nokogiri::HTML.fragment(content.to_s.gsub(/&nbsp;|\u00A0/, " "))
+    nodes = fragment.children.flat_map do |node|
+      node.text? ? node.text.split("\n").map { |text| Nokogiri::XML::Text.new(text, fragment.document) } : [ node ]
+    end
+
+    nodes.filter_map do |node|
+      runs = decision_node_runs(node)
+      runs if runs.any? { |run| run[:text].present? }
+    end
+  end
+
+  def decision_node_runs(node, bold: false)
+    return [ { text: node.text.to_s, bold: bold } ] if node.text?
+    return [ { text: "\n", bold: false } ] if node.name == "br"
+
+    node.children.flat_map do |child|
+      decision_node_runs(child, bold: bold || node.name.in?([ "strong", "b" ]))
+    end
+  end
+
+  def draw_rich_runs(runs)
+    wrap_rich_runs(runs).each do |line_runs|
+      ensure_space LINE_HEIGHT
+      draw_pdf_rich_line(line_runs, MARGIN, @cursor_y, size: 11)
+      @cursor_y -= LINE_HEIGHT
+    end
+  end
+
+  def wrap_rich_runs(runs, width: 84)
+    lines = [ [] ]
+    line_length = 0
+
+    runs.each do |run|
+      run[:text].to_s.scan(/\S+\s*|\s+/).each do |token|
+        if line_length.positive? && line_length + token.length > width && token.strip.present?
+          lines << []
+          line_length = 0
+          token = token.lstrip
+        end
+
+        next if token.blank? && line_length.zero?
+
+        append_rich_run(lines.last, token, run[:bold])
+        line_length += token.length
+      end
+    end
+
+    lines.reject(&:blank?)
+  end
+
+  def append_rich_run(line, text, bold)
+    if line.last&.dig(:bold) == bold
+      line.last[:text] << text
+    else
+      line << { text: text.dup, bold: bold }
+    end
+  end
+
+  def draw_pdf_rich_line(runs, x, y, size:)
+    @current_content << "BT #{format('%.2f', x)} #{format('%.2f', y)} Td "
+    runs.each do |run|
+      font = run[:bold] ? "F2" : "F1"
+      text = escape_pdf_string(pdf_safe_text(run[:text]))
+      @current_content << "/#{font} #{size} Tf (#{text}) Tj "
+    end
+    @current_content << "ET\n"
+  end
+
   def numbered_users(users, empty_message)
     if users.any?
       users.each_with_index { |user, index| paragraph "#{index + 1}. #{user.display_name}" }
@@ -179,7 +260,7 @@ class MeetingMinutePdfBuilder
     return false if image.blank?
 
     max_width = signature_image_width_for(display_name)
-    max_height = 36.0
+    max_height = 56.0
     scale = [ max_width / image[:width], max_height / image[:height], 1.0 ].min
     width = image[:width] * scale
     height = image[:height] * scale
@@ -195,7 +276,7 @@ class MeetingMinutePdfBuilder
 
   def signature_image_width_for(display_name)
     name_width = approximate_text_width(display_name.to_s.upcase, 10.5)
-    [ [ name_width * 1.2, 72.0 ].max, 126.0 ].min
+    [ [ name_width * 1.4, 120.0 ].max, 210.0 ].min
   end
 
   def draw_text(text, x, y, size:, bold: false, align: :left)
@@ -262,6 +343,7 @@ class MeetingMinutePdfBuilder
   end
 
   def build_pdf
+    assign_image_object_ids
     objects = []
     objects << "<< /Type /Catalog /Pages 2 0 R >>"
     page_object_ids = @pages.each_index.map { |index| 3 + (index * 2) }
@@ -278,10 +360,8 @@ class MeetingMinutePdfBuilder
     objects << "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
     objects << "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"
     @images.each do |image|
-      image_object = +"<< /Type /XObject /Subtype /Image /Width #{image[:width]} /Height #{image[:height]} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /#{image[:filter]} /Length #{image[:data].bytesize} >>\nstream\n".b
-      image_object << image[:data]
-      image_object << "\nendstream".b
-      objects << image_object
+      objects << pdf_image_object(image)
+      objects << pdf_image_object(image[:smask]) if image[:smask].present?
     end
 
     serialize_pdf(objects)
@@ -302,11 +382,31 @@ class MeetingMinutePdfBuilder
   def image_resources
     return "" if @images.empty?
 
-    xobjects = @images.each_with_index.map do |image, index|
-      "/#{image[:name]} #{first_image_object_id + index} 0 R"
+    xobjects = @images.map do |image|
+      "/#{image[:name]} #{image[:object_id]} 0 R"
     end.join(" ")
 
     " /XObject << #{xobjects} >>"
+  end
+
+  def assign_image_object_ids
+    object_id = first_image_object_id
+    @images.each do |image|
+      image[:object_id] = object_id
+      object_id += 1
+      next unless image[:smask].present?
+
+      image[:smask][:object_id] = object_id
+      object_id += 1
+    end
+  end
+
+  def pdf_image_object(image)
+    smask = image[:smask].present? ? " /SMask #{image[:smask][:object_id]} 0 R" : ""
+    image_object = +"<< /Type /XObject /Subtype /Image /Width #{image[:width]} /Height #{image[:height]} /ColorSpace /#{image[:color_space]} /BitsPerComponent 8 /Interpolate false /Filter /#{image[:filter]}#{smask} /Length #{image[:data].bytesize} >>\nstream\n".b
+    image_object << image[:data]
+    image_object << "\nendstream".b
+    image_object
   end
 
   def register_image(image)
@@ -319,7 +419,7 @@ class MeetingMinutePdfBuilder
   end
 
   def prepared_pdf_image(attachment)
-    source = attachment.download
+    source = attachment.blob.download
     if source.start_with?("\x89PNG\r\n\x1A\n".b)
       parse_png_image(source)
     elsif source.start_with?("\xFF\xD8".b)
@@ -335,6 +435,7 @@ class MeetingMinutePdfBuilder
       data: source.b,
       width: width,
       height: height,
+      color_space: "DeviceRGB",
       filter: "DCTDecode",
       checksum: Digest::SHA256.hexdigest(source)
     }
@@ -352,16 +453,25 @@ class MeetingMinutePdfBuilder
     transparency = chunks.find { |chunk| chunk[:type] == "tRNS" }&.dig(:data)
     compressed = chunks.select { |chunk| chunk[:type] == "IDAT" }.map { |chunk| chunk[:data] }.join.b
     raw = Zlib::Inflate.inflate(compressed)
-    rgb = png_scanlines_to_rgb(raw, width, height, color_type, palette, transparency)
-    return if rgb.blank?
+    components = png_scanlines_to_pdf_components(raw, width, height, color_type, palette, transparency)
+    return if components.blank?
 
-    data = Zlib::Deflate.deflate(rgb)
+    data = Zlib::Deflate.deflate(components[:color])
+    alpha_data = components[:alpha].present? ? Zlib::Deflate.deflate(components[:alpha]) : nil
     {
       data: data.b,
       width: width,
       height: height,
+      color_space: components[:color_space],
       filter: "FlateDecode",
-      checksum: Digest::SHA256.hexdigest(data)
+      checksum: Digest::SHA256.hexdigest([ data, alpha_data ].compact.join),
+      smask: alpha_data.present? ? {
+        data: alpha_data.b,
+        width: width,
+        height: height,
+        color_space: "DeviceGray",
+        filter: "FlateDecode"
+      } : nil
     }
   rescue Zlib::Error
     nil
@@ -381,7 +491,7 @@ class MeetingMinutePdfBuilder
     chunks
   end
 
-  def png_scanlines_to_rgb(raw, width, height, color_type, palette, transparency)
+  def png_scanlines_to_pdf_components(raw, width, height, color_type, palette, transparency)
     channels = png_channels(color_type)
     return if channels.blank?
 
@@ -389,7 +499,8 @@ class MeetingMinutePdfBuilder
     row_bytes = width * bytes_per_pixel
     previous = Array.new(row_bytes, 0)
     offset = 0
-    rgb = +"".b
+    color = +"".b
+    alpha = +"".b
 
     height.times do
       filter_type = raw.getbyte(offset)
@@ -397,11 +508,17 @@ class MeetingMinutePdfBuilder
       encoded = raw.byteslice(offset, row_bytes).bytes
       offset += row_bytes
       decoded = png_unfilter(encoded, previous, bytes_per_pixel, filter_type)
-      rgb << png_row_to_rgb(decoded, color_type, palette, transparency)
+      row_components = png_row_to_pdf_components(decoded, color_type, palette, transparency)
+      color << row_components[:color]
+      alpha << row_components[:alpha].to_s.b
       previous = decoded
     end
 
-    rgb
+    {
+      color: color,
+      alpha: alpha.bytesize.positive? ? alpha : nil,
+      color_space: png_pdf_color_space(color_type)
+    }
   end
 
   def png_channels(color_type)
@@ -415,8 +532,10 @@ class MeetingMinutePdfBuilder
   end
 
   def png_unfilter(row, previous, bytes_per_pixel, filter_type)
-    row.each_index.map do |index|
-      left = index >= bytes_per_pixel ? row[index - bytes_per_pixel] : 0
+    decoded = Array.new(row.length, 0)
+
+    row.each_index do |index|
+      left = index >= bytes_per_pixel ? decoded[index - bytes_per_pixel] : 0
       up = previous[index] || 0
       up_left = index >= bytes_per_pixel ? previous[index - bytes_per_pixel].to_i : 0
 
@@ -429,8 +548,10 @@ class MeetingMinutePdfBuilder
       else row[index]
       end
 
-      value & 0xff
+      decoded[index] = value & 0xff
     end
+
+    decoded
   end
 
   def png_paeth(left, up, up_left)
@@ -445,24 +566,26 @@ class MeetingMinutePdfBuilder
     up_left
   end
 
-  def png_row_to_rgb(row, color_type, palette, transparency)
-    rgb = +"".b
+  def png_pdf_color_space(color_type)
+    color_type.in?([ 0, 4 ]) ? "DeviceGray" : "DeviceRGB"
+  end
+
+  def png_row_to_pdf_components(row, color_type, palette, transparency)
+    color = +"".b
+    alpha = +"".b
 
     case color_type
     when 0
       transparent_gray = png_transparent_gray(transparency)
       row.each do |gray|
-        value = transparent_gray == gray ? 255 : gray
-        rgb << value << value << value
+        color << gray
+        alpha << (transparent_gray == gray ? 0 : 255) if transparent_gray.present?
       end
     when 2
       transparent_rgb = png_transparent_rgb(transparency)
       row.each_slice(3) do |red, green, blue|
-        if transparent_rgb == [ red, green, blue ]
-          rgb << 255 << 255 << 255
-        else
-          rgb << red << green << blue
-        end
+        color << red << green << blue
+        alpha << (transparent_rgb == [ red, green, blue ] ? 0 : 255) if transparent_rgb.present?
       end
     when 3
       palette_alpha = png_palette_alpha(transparency)
@@ -472,25 +595,22 @@ class MeetingMinutePdfBuilder
         red ||= 255
         green ||= 255
         blue ||= 255
-        alpha = palette_alpha.fetch(index, 255)
-        rgb << composite_over_white(red, alpha)
-        rgb << composite_over_white(green, alpha)
-        rgb << composite_over_white(blue, alpha)
+        color << red << green << blue
+        alpha << palette_alpha.fetch(index, 255) if palette_alpha.present?
       end
     when 4
-      row.each_slice(2) do |gray, alpha|
-        value = composite_over_white(gray, alpha)
-        rgb << value << value << value
+      row.each_slice(2) do |gray, alpha_value|
+        color << gray
+        alpha << alpha_value
       end
     when 6
-      row.each_slice(4) do |red, green, blue, alpha|
-        rgb << composite_over_white(red, alpha)
-        rgb << composite_over_white(green, alpha)
-        rgb << composite_over_white(blue, alpha)
+      row.each_slice(4) do |red, green, blue, alpha_value|
+        color << red << green << blue
+        alpha << alpha_value
       end
     end
 
-    rgb
+    { color: color, alpha: alpha }
   end
 
   def png_palette_alpha(transparency)
@@ -509,10 +629,6 @@ class MeetingMinutePdfBuilder
     return if transparency.blank? || transparency.bytesize < 6
 
     transparency.unpack("nnn")
-  end
-
-  def composite_over_white(channel, alpha)
-    (((channel.to_i * alpha.to_i) + (255 * (255 - alpha.to_i))) / 255.0).round.clamp(0, 255)
   end
 
   def jpeg_dimensions(source)

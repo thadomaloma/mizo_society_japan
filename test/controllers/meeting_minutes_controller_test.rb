@@ -105,7 +105,7 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Signature block"
     assert_includes response.body, "Chairman Signature PNG"
     assert_includes response.body, "Secretary Signature PNG"
-    assert_includes response.body, "PNG file only"
+    assert_includes response.body, "PNG only"
     assert_includes response.body, "Save Draft"
     assert_includes response.body, "Publish"
     assert_not_includes response.body, "PDF Attachment"
@@ -143,7 +143,7 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
 
   test "authorised minutes viewers can export the record as an A4 PDF" do
     minute = create_minute(status: :published)
-    signature_file = Rails.root.join("public/icons/favicon-32x32.png")
+    signature_file = Rails.root.join("public/icons/msj-portal-512x512-20260709.png")
     minute.chairman_signature.attach(
       io: File.open(signature_file),
       filename: "chairman-signature.png",
@@ -163,6 +163,7 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "%PDF-1.4"
     assert_includes response.body, "/Subtype /Image"
     assert_includes response.body, "/XObject"
+    assert_includes response.body, "/Interpolate false"
   end
 
   test "members cannot access meeting minutes" do
@@ -263,4 +264,5 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
       address_line1: "1-1-1 Okubo"
     )
   end
+
 end
