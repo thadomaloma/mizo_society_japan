@@ -11,7 +11,7 @@
         <div class="flex min-w-0 items-center gap-4">
           <div class="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/15 text-2xl font-black text-white ring-2 ring-white/25 sm:h-24 sm:w-24">
             <% if @member_profile.avatar.attached? %>
-              <%= image_tag @member_profile.avatar.variant(resize_to_fill: [ 320, 320 ], saver: { quality: 84 }), class: "h-full w-full object-cover", alt: @member_profile.full_name, loading: "lazy", decoding: "async" %>
+              <%= image_tag image_variant_or_original(@member_profile.avatar, resize_to_fill: [ 320, 320 ], saver: { quality: 84 }), class: "h-full w-full object-cover", alt: @member_profile.full_name, loading: "lazy", decoding: "async" %>
             <% else %>
               <%= @member_profile.full_name.first&.upcase || "M" %>
             <% end %>

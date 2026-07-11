@@ -69,6 +69,25 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil minute.published_at
   end
 
+  test "invalid minute with pending signatures rerenders without generating signed ids" do
+    sign_in @president
+    signature = Rack::Test::UploadedFile.new(
+      Rails.root.join("public/icons/msj-portal-512x512-20260709.png"),
+      "image/png"
+    )
+
+    post meeting_minutes_path, params: {
+      meeting_minute: valid_minute_params(title: "").merge(
+        chairman_signature: signature,
+        secretary_signature: signature
+      )
+    }
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "Title can&#39;t be blank"
+    assert_equal 2, response.body.scan("No PNG selected").size
+  end
+
   test "formatted meeting agenda is saved when the rich text editor submits its hidden field" do
     sign_in @president
 

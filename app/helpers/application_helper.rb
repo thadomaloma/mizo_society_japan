@@ -485,9 +485,32 @@ module ApplicationHelper
   end
 
   def image_variant_or_original(image, **options)
+    return image unless image_variant_processor_available?
+
     image.variant(**options)
   rescue ActiveStorage::InvariableError, ActiveStorage::UnrepresentableError
     image
+  end
+
+  def image_variant_processor_available?
+    return @image_variant_processor_available unless @image_variant_processor_available.nil?
+
+    @image_variant_processor_available = case ActiveStorage.variant_processor
+    when :vips
+      require "vips"
+      true
+    when :mini_magick
+      require "mini_magick"
+      true
+    else
+      false
+    end
+  rescue LoadError
+    false
+  end
+
+  def persisted_attachment?(attachment)
+    attachment.attached? && attachment.attachment.persisted? && attachment.blob.persisted?
   end
 
   def whatsapp_url_for(profile, message: nil)
