@@ -39,6 +39,13 @@ class BrevoApiDeliveryMethodTest < ActiveSupport::TestCase
     assert http.use_ssl
   end
 
+  test "exposes delivery settings for Action Mailer compatibility" do
+    delivery = delivery_method(FakeHttp.new(FakeResponse.new("201", "{}")))
+
+    assert_equal "secret-api-key", delivery.settings[:api_key]
+    assert_equal "mizosocietyjapan@gmail.com", delivery.settings[:sender_email]
+  end
+
   test "raises a useful error without exposing the API key" do
     http = FakeHttp.new(FakeResponse.new("401", '{"message":"Key not found"}'))
 

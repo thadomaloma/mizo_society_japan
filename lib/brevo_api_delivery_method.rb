@@ -7,6 +7,8 @@ class BrevoApiDeliveryMethod
 
   class DeliveryError < StandardError; end
 
+  attr_reader :settings
+
   def initialize(settings)
     @settings = settings
   end
@@ -15,13 +17,13 @@ class BrevoApiDeliveryMethod
     request = Net::HTTP::Post.new(ENDPOINT)
     request["Accept"] = "application/json"
     request["Content-Type"] = "application/json"
-    request["api-key"] = @settings.fetch(:api_key)
+    request["api-key"] = settings.fetch(:api_key)
     request.body = payload_for(mail).to_json
 
     http = http_client
     http.use_ssl = true
-    http.open_timeout = @settings.fetch(:open_timeout, 5)
-    http.read_timeout = @settings.fetch(:read_timeout, 15)
+    http.open_timeout = settings.fetch(:open_timeout, 5)
+    http.read_timeout = settings.fetch(:read_timeout, 15)
     response = http.request(request)
 
     return response if response.code.to_i.between?(200, 299)
@@ -32,7 +34,7 @@ class BrevoApiDeliveryMethod
   private
 
   def http_client
-    return @settings[:http_factory].call if @settings[:http_factory].respond_to?(:call)
+    return settings[:http_factory].call if settings[:http_factory].respond_to?(:call)
 
     Net::HTTP.new(ENDPOINT.host, ENDPOINT.port)
   end
@@ -40,8 +42,8 @@ class BrevoApiDeliveryMethod
   def payload_for(mail)
     payload = {
       sender: {
-        email: mail.from&.first || @settings.fetch(:sender_email),
-        name: @settings.fetch(:sender_name, "Mizo Society of Japan")
+        email: mail.from&.first || settings.fetch(:sender_email),
+        name: settings.fetch(:sender_name, "Mizo Society of Japan")
       },
       to: recipients(mail.to),
       cc: recipients(mail.cc),
