@@ -68,14 +68,17 @@ Rails.application.configure do
     protocol: ENV.fetch("APP_PROTOCOL", "https")
   }
 
-  if ENV.values_at("SMTP_ADDRESS", "SMTP_USERNAME", "SMTP_PASSWORD").all?(&:present?)
+  smtp_username = ENV["BREVO_LOGIN"].presence || ENV["SMTP_USERNAME"].presence
+  smtp_password = ENV["BREVO_SMTP_KEY"].presence || ENV["SMTP_PASSWORD"].presence
+
+  if ENV["SMTP_ADDRESS"].present? && smtp_username.present? && smtp_password.present?
     config.action_mailer.delivery_method = :smtp
     config.action_mailer.smtp_settings = {
       address: ENV.fetch("SMTP_ADDRESS"),
       port: ENV.fetch("SMTP_PORT", 587).to_i,
       domain: ENV.fetch("SMTP_DOMAIN", ENV.fetch("APP_HOST", "mizosocietyjapan.org")),
-      user_name: ENV["BREVO_LOGIN"],
-      password: ENV["BREVO_SMTP_KEY"],
+      user_name: smtp_username,
+      password: smtp_password,
       authentication: ENV.fetch("SMTP_AUTHENTICATION", "plain").to_sym,
       enable_starttls_auto: ActiveModel::Type::Boolean.new.cast(ENV.fetch("SMTP_ENABLE_STARTTLS_AUTO", "true")),
       openssl_verify_mode: ENV.fetch("SMTP_OPENSSL_VERIFY_MODE", "peer")
