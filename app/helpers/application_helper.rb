@@ -202,15 +202,15 @@ module ApplicationHelper
 
   def action_button_classes(variant = :primary, size: :sm, full_width: false, extra: nil)
     size_classes = {
-      xs: "gap-1.5 rounded-md px-2.5 py-1.5 text-xs",
-      sm: "gap-1.5 rounded-lg px-3 py-2 text-xs sm:text-sm",
-      md: "gap-2 rounded-lg px-3.5 py-2.5 text-sm"
-    }.fetch(size.to_sym, "gap-1.5 rounded-lg px-3 py-2 text-xs sm:text-sm")
+      xs: "min-h-8 gap-1.5 rounded-md px-2.5 py-1.5 text-xs",
+      sm: "min-h-9 gap-1.5 rounded-lg px-3 py-2 text-xs sm:text-[13px]",
+      md: "min-h-10 gap-2 rounded-lg px-3.5 py-2.5 text-sm"
+    }.fetch(size.to_sym, "min-h-9 gap-1.5 rounded-lg px-3 py-2 text-xs sm:text-[13px]")
 
     variant_classes = {
-      primary: "bg-red-700 text-white shadow-sm shadow-red-950/10 hover:bg-red-800 focus:ring-red-600 dark:bg-red-600 dark:hover:bg-red-500",
-      secondary: "border border-[#E2E8F0] bg-white text-[#0F172A] shadow-sm hover:bg-slate-50 focus:ring-red-600 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:bg-[#334155]",
-      dark: "bg-[#0F172A] text-white shadow-sm hover:bg-[#1E293B] focus:ring-slate-600 dark:bg-[#334155] dark:hover:bg-[#475569]",
+      primary: "bg-red-600 text-white shadow-sm shadow-red-950/10 hover:bg-red-700 focus:ring-red-600 dark:bg-red-600 dark:hover:bg-red-500",
+      secondary: "border border-[#CBD5E1] bg-white text-[#0F172A] shadow-sm hover:border-slate-400 hover:bg-slate-50 focus:ring-red-600 dark:border-[#475569] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:bg-[#334155]",
+      dark: "bg-[#172033] text-white shadow-sm hover:bg-[#263247] focus:ring-slate-600 dark:bg-[#334155] dark:hover:bg-[#475569]",
       success: "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus:ring-emerald-600",
       danger: "bg-red-700 text-white shadow-sm hover:bg-red-800 focus:ring-red-600 dark:bg-red-600 dark:hover:bg-red-500",
       ghost: "text-red-700 hover:bg-red-50 focus:ring-red-600 dark:text-red-400 dark:hover:bg-red-500/10",
@@ -218,7 +218,7 @@ module ApplicationHelper
     }.fetch(variant.to_sym, "bg-red-700 text-white shadow-sm hover:bg-red-800 focus:ring-red-600")
 
     [
-      "inline-flex shrink-0 items-center justify-center whitespace-nowrap font-black transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:focus:ring-offset-[#0F172A]",
+      "inline-flex shrink-0 items-center justify-center whitespace-nowrap font-extrabold transition duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 dark:focus:ring-offset-[#0F172A]",
       size_classes,
       variant_classes,
       ("w-full" if full_width),

@@ -1,18 +1,12 @@
-<header class="sticky top-0 z-20 border-b border-[#E2E8F0] bg-white/95 shadow-sm shadow-slate-950/[0.03] backdrop-blur-xl dark:border-[#334155] dark:bg-[#0F172A]/95 dark:shadow-black/10">
-  <div class="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6 lg:h-20 lg:px-8">
+<header class="sticky top-0 z-20 border-b border-[#E2E8F0] bg-white/95 backdrop-blur-xl dark:border-[#334155] dark:bg-[#0F172A]/95">
+  <div class="mx-auto flex h-15 w-full max-w-[1480px] items-center justify-between gap-2 px-3.5 sm:h-16 sm:gap-3 sm:px-6 lg:h-[4.5rem] lg:px-8 xl:px-10">
     <div class="flex min-w-0 flex-1 items-center">
-      <%= link_to(dashboard_home_path, class: "flex min-w-0 items-center gap-2.5 lg:hidden", aria: { label: "Go to dashboard" }) do %>
-        <span class="h-9 w-1 shrink-0 rounded-full bg-red-600 shadow-sm shadow-red-950/10 dark:bg-red-500"></span>
-          <div class="w-[50px] leading-none">
-              <div class="text-center text-[18px] font-black tracking-[0.18em] text-slate-950 dark:text-white">
-                MSJ
-              </div>
-              <div class="mt-0.5 text-center text-[10px] font-extrabold tracking-[0.12em] text-red-700 dark:text-red-400">
-                PORTAL
-              </div>
-            </div>      
-        <% end %>
-      <button type="button" data-action="global-search#open" class="hidden h-11 w-full max-w-md items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 text-left text-sm font-semibold text-[#64748B] transition hover:border-red-200 hover:bg-white hover:text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#CBD5E1] dark:hover:bg-[#334155] dark:hover:text-[#F8FAFC] lg:flex" aria-label="Search members, events, letters, and announcements">
+      <%= link_to(dashboard_home_path, class: "flex min-w-0 items-center gap-2 lg:hidden", aria: { label: "Go to dashboard" }) do %>
+        <span class="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-white ring-1 ring-[#E2E8F0] dark:ring-[#334155]">
+          <%= image_tag "/icons/msj-portal-192x192-20260709.png", alt: "", class: "h-8 w-8 object-cover" %>
+        </span>
+      <% end %>
+      <button type="button" data-action="global-search#open" class="hidden h-10 w-full max-w-md items-center gap-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-3 text-left text-sm font-medium text-[#64748B] transition hover:border-slate-300 hover:bg-white hover:text-[#0F172A] dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#CBD5E1] dark:hover:border-[#475569] dark:hover:bg-[#334155] dark:hover:text-[#F8FAFC] lg:flex" aria-label="Search members, events, letters, and announcements">
         <%= icon_svg(:search, classes: "h-5 w-5 shrink-0") %>
         <span class="min-w-0 flex-1 truncate">Search members, events, letters...</span>
         <kbd class="rounded border border-[#E2E8F0] bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#64748B] dark:border-[#475569] dark:bg-[#0F172A] dark:text-[#CBD5E1]">⌘ K</kbd>

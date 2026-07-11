@@ -2,15 +2,15 @@
 <% title = local_assigns.fetch(:title, "Overview") %>
 <% subtitle = local_assigns[:subtitle] %>
 
-<section class="min-w-0 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] lg:hidden">
+<section class="min-w-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-[#334155] dark:bg-[#1E293B] lg:hidden">
   <div class="mb-3 flex items-center justify-between gap-3 px-1">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-wide text-red-700 dark:text-red-400"><%= title %></p>
+      <p class="msj-kicker"><%= title %></p>
       <% if subtitle.present? %>
         <p class="mt-0.5 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= subtitle %></p>
       <% end %>
     </div>
-    <span class="rounded-full bg-red-50 px-2 py-1 text-[10px] font-black text-red-700 dark:bg-red-500/15 dark:text-red-300">
+    <span class="rounded-md bg-red-50 px-2 py-1 text-[10px] font-extrabold text-red-700 dark:bg-red-500/15 dark:text-red-300">
       <%= pluralize(stats.size, "item") %>
     </span>
   </div>
@@ -19,7 +19,7 @@
     <% stats.each do |stat| %>
       <% value_text = stat[:value].to_s %>
       <% value_classes = value_text.length >= 8 ? "text-[15px] leading-5" : "text-xl leading-6" %>
-      <article class="min-w-0 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
+      <article class="min-w-0 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
         <div class="flex items-start gap-2.5">
           <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg <%= stat_card_classes(stat[:tone].presence || "red") %>">
             <%= icon_svg(stat[:icon] || :dashboard, classes: "h-4 w-4") %>

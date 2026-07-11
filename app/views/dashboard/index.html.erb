@@ -2,18 +2,21 @@
 
 <div class="space-y-5 lg:space-y-6">
   <%= render "shared/portal_notice" %>
-  <section class="overflow-hidden rounded-xl bg-gradient-to-br from-red-950 via-red-800 to-[#0F172A] shadow-lg shadow-slate-950/10 lg:hidden">
-    <div class="px-4 py-4">
-      <p class="text-xs font-bold text-red-100">Welcome back,</p>
-      <h2 class="mt-0.5 truncate text-[1.35rem] font-black leading-7 text-white"><%= current_user.display_name %></h2>
-      <p class="mt-1 text-[13px] font-bold text-red-100"><%= role_label(current_user.role) %></p>
+  <section class="overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B] lg:hidden">
+    <div class="flex items-center gap-3 border-l-4 border-red-600 px-4 py-3.5 dark:border-red-500">
+      <%= user_avatar(current_user, classes: "h-11 w-11 ring-1 ring-[#E2E8F0] dark:ring-[#475569]", text_classes: "text-sm") %>
+      <div class="min-w-0">
+        <p class="text-[11px] font-bold text-[#64748B] dark:text-[#CBD5E1]">Welcome back</p>
+        <h2 class="truncate text-lg font-black leading-6 text-[#0F172A] dark:text-white"><%= current_user.display_name %></h2>
+        <p class="mt-0.5 text-xs font-bold text-red-700 dark:text-red-300"><%= role_label(current_user.role) %></p>
+      </div>
     </div>
   </section>
 
   <section class="hidden lg:block">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <h2 class="text-2xl font-black tracking-tight text-gray-950 dark:text-white sm:text-3xl">
+        <h2 class="text-2xl font-black text-gray-950 dark:text-white sm:text-3xl">
           Welcome back, <%= current_user.display_name %>
         </h2>
         <p class="mt-2 text-sm font-semibold text-gray-500 dark:text-gray-400">

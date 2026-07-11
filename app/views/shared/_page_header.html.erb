@@ -1,15 +1,15 @@
-<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-  <div>
+<header class="flex min-w-0 flex-col gap-3 border-b border-[#E2E8F0] pb-4 dark:border-[#334155] sm:flex-row sm:items-end sm:justify-between sm:pb-5">
+  <div class="min-w-0">
     <% if local_assigns[:eyebrow].present? %>
-      <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400 sm:text-sm"><%= eyebrow %></p>
+      <p class="msj-kicker"><%= eyebrow %></p>
     <% end %>
-    <h2 class="mt-1 text-[1.65rem] font-black leading-8 text-[#0F172A] dark:text-[#F8FAFC] sm:text-3xl sm:leading-9"><%= title %></h2>
+    <h2 class="mt-1 text-[1.55rem] font-black leading-8 text-[#0F172A] dark:text-[#F8FAFC] sm:text-[1.875rem] sm:leading-9"><%= title %></h2>
     <% if local_assigns[:subtitle].present? %>
-      <p class="mt-2 max-w-3xl text-[13px] font-semibold leading-6 text-[#64748B] dark:text-[#CBD5E1] sm:text-sm"><%= subtitle %></p>
+      <p class="mt-1.5 max-w-3xl text-[13px] font-medium leading-5 text-[#64748B] dark:text-[#CBD5E1] sm:text-sm sm:leading-6"><%= subtitle %></p>
     <% end %>
   </div>
 
   <% if local_assigns[:actions].present? %>
-    <div class="flex flex-row flex-wrap gap-2 sm:flex-nowrap"><%= actions %></div>
+    <div class="flex flex-row flex-wrap items-center gap-2 sm:flex-nowrap"><%= actions %></div>
   <% end %>
-</div>
+</header>

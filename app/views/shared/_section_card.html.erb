@@ -1,12 +1,12 @@
-<section class="min-w-0 overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B] <%= local_assigns[:class] %>">
+<section class="min-w-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.035)] dark:border-[#334155] dark:bg-[#1E293B] <%= local_assigns[:class] %>">
   <% if local_assigns[:title].present? || local_assigns[:action].present? %>
-    <div class="flex items-center justify-between gap-3 border-b border-[#E2E8F0] px-5 py-4 dark:border-[#334155]">
-      <div>
+    <div class="flex min-h-14 items-center justify-between gap-3 border-b border-[#E2E8F0] px-4 py-3.5 dark:border-[#334155] sm:px-5">
+      <div class="min-w-0">
         <% if local_assigns[:title].present? %>
-          <h3 class="text-base font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= title %></h3>
+          <h3 class="truncate text-[15px] font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= title %></h3>
         <% end %>
         <% if local_assigns[:subtitle].present? %>
-          <p class="mt-1 text-sm font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= subtitle %></p>
+          <p class="mt-0.5 text-xs font-medium text-[#64748B] dark:text-[#CBD5E1]"><%= subtitle %></p>
         <% end %>
       </div>
       <% if local_assigns[:action].present? %>
