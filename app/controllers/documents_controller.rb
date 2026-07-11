@@ -8,7 +8,6 @@ class DocumentsController < ApplicationController
     authorize Document
     @can_manage_documents = policy(Document).update?
     @query = params[:query]
-    @category_id = params[:category_id].presence
     @visibility = params[:visibility].presence
     @status = @can_manage_documents ? params[:status].presence : nil
     @category_options = DocumentCategory.active.ordered
@@ -16,7 +15,6 @@ class DocumentsController < ApplicationController
     @documents = policy_scope(Document)
       .includes(:document_category, :uploaded_by, file_attachment: :blob)
       .search(@query)
-      .by_category(@category_id)
       .by_visibility(@visibility)
       .by_status(@status)
       .latest

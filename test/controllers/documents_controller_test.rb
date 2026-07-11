@@ -179,6 +179,9 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, target.title
     assert_not_includes response.body, "Finance Committee Letter"
     assert_not_includes response.body, "Draft Lawmthu Letter"
+    assert_select "select[name=category_id]", count: 0
+    assert_select "select[name=visibility] option", text: "Finance Team Only", count: 0
+    assert_select "select[name=visibility] option", text: "All Members", count: 0
   end
 
   test "members cannot access finance-only documents" do

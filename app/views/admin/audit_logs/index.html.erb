@@ -6,9 +6,9 @@
     title: "Audit Logs",
     subtitle: "Security and accountability records for important portal actions." %>
 
-  <%= form_with url: admin_audit_logs_path, method: :get, class: "grid gap-3 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm md:grid-cols-[1fr_1fr_11rem_11rem_auto] dark:border-[#334155] dark:bg-[#1E293B]" do |form| %>
-    <%= form.select :action_name, options_for_select([ [ "All actions", "" ] ] + @actions.map { |action| [ action.to_s.humanize, action ] }, @action), {}, class: "rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" %>
-    <%= form.collection_select :user_id, @users, :id, :display_name, { include_blank: "All users", selected: @user_id }, class: "rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" %>
+  <%= form_with url: admin_audit_logs_path, method: :get, class: "grid gap-3 rounded-lg border border-[#E2E8F0] bg-white p-4 shadow-sm md:grid-cols-[1fr_1fr_11rem_11rem_auto] dark:border-[#334155] dark:bg-[#1E293B]" do |form| %>
+    <%= form.search_field :action_query, value: @action_query, placeholder: "Search action...", class: "rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" %>
+    <%= form.search_field :user_query, value: @user_query, placeholder: "Search user or email...", class: "rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" %>
     <%= form.date_field :start_date, value: @start_date, class: "rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" %>
     <%= form.date_field :end_date, value: @end_date, class: "rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" %>
     <%= form.button type: :submit, class: action_button_classes(:dark) do %>

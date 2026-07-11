@@ -4,20 +4,18 @@ module Admin
 
     def index
       authorize AuditLog
-      @action = params[:action_name]
-      @user_id = params[:user_id]
+      @action_query = params[:action_query]
+      @user_query = params[:user_query]
       @start_date = params[:start_date]
       @end_date = params[:end_date]
       @audit_logs = policy_scope(AuditLog)
         .includes(:user, :auditable)
-        .by_action(@action)
-        .by_user(@user_id)
+        .search_action(@action_query)
+        .search_user(@user_query)
         .from_date(@start_date)
         .to_date(@end_date)
         .latest
         .limit(100)
-      @users = User.order(:name, :email)
-      @actions = AuditLog.action_options
     end
 
     def show

@@ -7,16 +7,12 @@ module Admin
       authorize WelfareCase
       @status = params[:status]
       @priority = params[:priority]
-      @category_id = params[:category_id]
-      @assigned_to_id = params[:assigned_to_id]
       @query = params[:query]
       @welfare_cases = policy_scope(WelfareCase)
         .includes(:welfare_category, :user, :assigned_to)
         .search(@query)
         .by_status(@status)
         .by_priority(@priority)
-        .by_category(@category_id)
-        .by_assigned_to(@assigned_to_id)
         .latest
     end
 

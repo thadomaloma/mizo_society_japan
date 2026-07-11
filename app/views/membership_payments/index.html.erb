@@ -228,9 +228,9 @@
     </div>
 
     <div class="p-3 sm:p-4">
-      <%= form_with url: membership_payments_path, method: :get, class: "grid gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-2 dark:border-[#334155] dark:bg-[#0F172A] sm:gap-3 sm:p-3 sm:grid-cols-[1fr_1fr_auto]" do |form| %>
+      <%= form_with url: membership_payments_path, method: :get, class: "grid gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-2 dark:border-[#334155] dark:bg-[#0F172A] sm:gap-3 sm:p-3 #{@years.many? ? "sm:grid-cols-[1fr_1fr_auto]" : "sm:grid-cols-[1fr_auto]"}" do |form| %>
         <%= form.select :status, options_for_select([ [ "All history statuses", "" ] ] + @history_status_options.map { |status| [ status.humanize, status ] }, @status), {}, class: "rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#1E293B] dark:text-white" %>
-        <%= form.select :year, options_for_select([ [ "All years", "" ] ] + @years.map { |year| [ year, year ] }, @year), {}, class: "rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#1E293B] dark:text-white" %>
+        <% if @years.many? %><%= form.select :year, options_for_select([ [ "All years", "" ] ] + @years.map { |year| [ year, year ] }, @year), {}, class: "rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#1E293B] dark:text-white" %><% end %>
         <%= form.button type: :submit, class: action_button_classes(:dark, full_width: true) do %><%= icon_svg(:filter, classes: "h-4 w-4") %><span>Filter</span><% end %>
       <% end %>
 

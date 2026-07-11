@@ -32,14 +32,12 @@
       [ "To verify", "pending_verification" ],
       [ "Waiting transfer", "pending" ],
       [ "Paid", "paid" ],
-      [ "Failed", "failed" ],
-      [ "Expired", "expired" ],
-      [ "Cancelled", "cancelled" ],
+      [ "Needs correction", "failed" ],
       [ "Refunded", "refunded" ]
     ] %>
     <%= form.select :status, options_for_select(status_options, @status), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
-    <%= form.select :year, options_for_select([ [ "All years", "" ] ] + @years.map { |year| [ year, year ] }, @year), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
-    <%= form.select :plan_type_id, options_for_select([ [ "All plan types", "" ] ] + @plan_type_options.map { |type| [ type.name, type.id ] }, @plan_type_id), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
+    <% if @years.many? %><%= form.select :year, options_for_select([ [ "All years", "" ] ] + @years.map { |year| [ year, year ] }, @year), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %><% end %>
+    <% if @plan_type_options.many? %><%= form.select :plan_type_id, options_for_select([ [ "All plan types", "" ] ] + @plan_type_options.map { |type| [ type.name, type.id ] }, @plan_type_id), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %><% end %>
     <%= form.button type: :submit, class: action_button_classes(:dark, full_width: true, extra: "col-span-2 px-3 xl:col-span-1 xl:w-auto") do %>
       <%= icon_svg(:filter, classes: "h-4 w-4") %>
       <span class="sm:inline">Filter</span>
