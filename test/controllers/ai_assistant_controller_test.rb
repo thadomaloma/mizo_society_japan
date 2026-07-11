@@ -13,10 +13,9 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h2", "AI Assistant"
-    assert_includes response.body, "Payment receipt WhatsApp-ah ka dawn dan"
-    assert_includes response.body, "Payment approved a nih ka hriat dan"
-    assert_includes response.body, "Welfare request hi private a ni em?"
-    assert_includes response.body, "Announcements/updates khawi atanga ka en ang?"
+    assert_includes response.body, "Transfer zawh hnuah eng nge ka submit a, status engtin nge ka check ang?"
+    assert_includes response.body, "Welfare support private taka engtin nge ka dil ang?"
+    assert_includes response.body, "Events, RSVP leh announcements engtin nge ka hman ang?"
     assert_no_match(/Profile complete dan/, response.body)
     assert_no_match(/Japan mobile number eng format/, response.body)
   end
@@ -24,7 +23,7 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
   test "signed in member can ask a payment question" do
     sign_in @member
 
-    post ai_assistant_path, params: { question: "Membership fee engtin nge ka pek ang?" }
+    post ai_assistant_path, params: { question: "Fee leh fund te vawi khat bank transfer-in engtin nge ka pek ang?" }
 
     assert_response :success
     assert_includes response.body, "Payment tih dan"
@@ -36,9 +35,10 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
     get ai_assistant_path
 
     assert_response :success
-    assert_includes response.body, "Super Admin tan portal hman dan kimchang"
-    assert_includes response.body, "User roles thlak dan"
-    assert_includes response.body, "Audit logs"
+    assert_includes response.body, "Super Admin daily checklist"
+    assert_includes response.body, "User role assign, change leh deactivate"
+    assert_includes response.body, "Settings, Permissions leh Audit Logs"
+    assert_no_match(/Member account hian eng nge/, response.body)
   end
 
   test "finance admin receives finance suggestions without settings suggestions" do
@@ -48,10 +48,10 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
     get ai_assistant_path
 
     assert_response :success
-    assert_includes response.body, "Finance Admin tan portal hman dan"
-    assert_includes response.body, "Pending transfer engtin nge ka verify ang?"
-    assert_no_match(/User roles thlak dan/, response.body)
-    assert_no_match(/Audit logs khawi/, response.body)
+    assert_includes response.body, "Finance Admin daily workflow"
+    assert_includes response.body, "Combined transfer verify, approve leh reject"
+    assert_no_match(/User role assign/, response.body)
+    assert_no_match(/Audit Logs hman dan/, response.body)
   end
 
   test "office bearer viewer receives view only guidance" do
@@ -59,7 +59,7 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
     sign_in vice_president
 
     with_openai_disabled do
-      post ai_assistant_path, params: { question: "Ka role hian eng nge ka tih theih?" }
+      post ai_assistant_path, params: { question: "Vice President/Journal Secretary access leh responsibility eng nge?" }
     end
 
     assert_response :success
@@ -73,7 +73,7 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
     sign_in executive
 
     with_openai_disabled do
-      post ai_assistant_path, params: { question: "Ka role hian eng nge ka tih theih?" }
+      post ai_assistant_path, params: { question: "Executive Committee member access leh responsibility eng nge?" }
     end
 
     assert_response :success
@@ -92,6 +92,31 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "available lo"
     assert_includes response.body, "Office Bearer"
+  end
+
+  test "every role receives a deduplicated question and answer catalog" do
+    users = [
+      @member,
+      @admin,
+      create_user("Treasurer Catalog", "treasurer_catalog@example.test", :treasurer),
+      create_user("Assistant Catalog", "assistant_catalog@example.test", :assistant_secretary),
+      create_user("Vice President Catalog", "vp_catalog@example.test", :vice_president),
+      create_user("Executive Catalog", "executive_catalog@example.test", :executive_member)
+    ]
+
+    users.each do |user|
+      entries = MizoAiAssistant.question_entries(user: user)
+
+      assert_equal entries.size, entries.pluck(:key).uniq.size, "duplicate keys for #{user.role}"
+      assert_equal entries.size, entries.pluck(:text).uniq.size, "duplicate questions for #{user.role}"
+      assert_equal entries.size, entries.pluck(:answer).uniq.size, "duplicate answer intents for #{user.role}"
+
+      entries.each do |entry|
+        answer = MizoAiAssistant.call(user: user, question: entry.fetch(:text))
+        assert answer.present?, "blank answer for #{user.role}: #{entry[:key]}"
+        assert_match(/1\./, answer, "answer is not step-based for #{user.role}: #{entry[:key]}")
+      end
+    end
   end
 
   private

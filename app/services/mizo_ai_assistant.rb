@@ -3,89 +3,86 @@ require "json"
 
 class MizoAiAssistant
   OPENAI_ENDPOINT = URI("https://api.openai.com/v1/chat/completions")
-  MEMBER_QUESTIONS = [
-    "Ka role hian eng nge ka tih theih?",
-    "Membership fee engtin nge ka pek ang?",
-    "Fee leh fund tam tak vawi khat transfer dan min hrilh rawh.",
-    "Payment status ka check dan eng nge?",
-    "Yuucho bank atangin transfer engtin nge ka tih ang?",
-    "Bank dang atangin transfer engtin nge ka tih ang?",
-    "Transfer zawh hnuah eng nge ka submit ang?",
-    "Payment receipt WhatsApp-ah ka dawn dan eng nge?",
-    "Payment approved a nih ka hriat dan eng nge?",
-    "Welfare support dil dan eng nge?",
-    "Welfare request hi private a ni em?",
-    "Event RSVP engtin nge ka tih ang?",
-    "Announcements/updates khawi atanga ka en ang?",
-    "Password ka theihnghilh chuan engtin nge ka tih ang?"
-  ].freeze
-
-  SUPER_ADMIN_QUESTIONS = [
-    "Super Admin tan portal hman dan kimchang min hrilh rawh.",
-    "Payment approve/reject dan min hrilh rawh.",
-    "Payment plans engtin nge ka manage ang?",
-    "Transactions leh finance report engtin nge ka check ang?",
-    "Welfare case assign/resolve dan eng nge?",
-    "Meeting minutes siam leh publish dan min hrilh rawh.",
-    "Official letter siam leh download dan min hrilh rawh.",
-    "Events leh announcements publish dan eng nge?",
-    "User roles thlak dan min hrilh rawh.",
-    "Audit logs khawi atanga en tur nge?",
-    "Settings page-ah eng nge ka control theih?"
-  ].freeze
-
-  FINANCE_QUESTIONS = [
-    "Finance Admin tan portal hman dan min hrilh rawh.",
-    "Pending transfer engtin nge ka verify ang?",
-    "Payment approve/reject dan min hrilh rawh.",
-    "Combined payment review dan eng nge?",
-    "Payment plans engtin nge ka manage ang?",
-    "Transactions income/expense record dan min hrilh rawh.",
-    "Finance report leh CSV export engtin nge ka hman ang?",
-    "Paid tawh duplicate payment ven dan eng nge?"
-  ].freeze
-
-  SECRETARIAT_QUESTIONS = [
-    "Assistant Secretary tan portal hman dan min hrilh rawh.",
-    "Welfare case assign/resolve dan eng nge?",
-    "Meeting minutes siam leh publish dan min hrilh rawh.",
-    "Official letter siam leh download dan min hrilh rawh.",
-    "Events leh announcements publish dan eng nge?",
-    "Payments ka mahni fee/fund pek dan eng nge?",
-    "Reports ka hmuh theih chin eng nge?"
-  ].freeze
-
-  OFFICE_BEARER_VIEWER_QUESTIONS = [
-    "Vice President/Journal Secretary tan ka tih theih chin eng nge?",
-    "View-only page te ka hman dan min hrilh rawh.",
-    "Payments ka mahni fee/fund pek dan eng nge?",
-    "Payment Records ka en theih chin eng nge?",
-    "Minutes leh Letters ka en theih chin eng nge?",
-    "Reports export ka ti thei em?",
-    "Action official ngai chuan tu nge ka contact ang?"
-  ].freeze
-
-  EXECUTIVE_QUESTIONS = [
-    "Executive Committee member tan ka tih theih chin eng nge?",
-    "Payments ka mahni fee/fund pek dan eng nge?",
-    "Minutes ka en theih chin eng nge?",
-    "Reports ka en theih chin eng nge?",
-    "Welfare records ka en theih chin eng nge?",
-    "CSV export ka ti thei em?"
-  ].freeze
+  ROLE_QUESTION_CATALOG = {
+    member: [
+      { key: :member_access, text: "Member account hian eng nge ka tih theih?", answer: :member_general_answer },
+      { key: :pay_together, text: "Fee leh fund te vawi khat bank transfer-in engtin nge ka pek ang?", answer: :payment_answer },
+      { key: :yuucho_transfer, text: "Yuucho bank atangin transfer engtin nge ka tih ang?", answer: :yuucho_transfer_answer },
+      { key: :other_bank_transfer, text: "Bank dang atangin transfer engtin nge ka tih ang?", answer: :other_bank_transfer_answer },
+      { key: :submit_and_track, text: "Transfer zawh hnuah eng nge ka submit a, status engtin nge ka check ang?", answer: :payment_submission_status_answer },
+      { key: :welfare_request, text: "Welfare support private taka engtin nge ka dil ang?", answer: :welfare_answer },
+      { key: :events_and_updates, text: "Events, RSVP leh announcements engtin nge ka hman ang?", answer: :member_events_updates_answer },
+      { key: :account_help, text: "Password ka theihnghilh emaw sign in harsatna ka neih chuan engtin nge ka tih ang?", answer: :account_answer }
+    ],
+    super_admin: [
+      { key: :admin_access, text: "Super Admin daily checklist leh portal control dan min hrilh rawh.", answer: :super_admin_general_answer },
+      { key: :review_transfers, text: "Submitted payment batch approve/reject dan min hrilh rawh.", answer: :payment_review_answer },
+      { key: :plans_and_duplicates, text: "Payment plans manage leh duplicate payment ven dan eng nge?", answer: :payment_plan_answer },
+      { key: :finance_operations, text: "Transactions leh yearly finance report check dan min hrilh rawh.", answer: :finance_operations_answer },
+      { key: :manage_welfare, text: "Welfare case assign/resolve dan eng nge?", answer: :welfare_answer },
+      { key: :manage_minutes, text: "Meeting minutes siam leh publish dan min hrilh rawh.", answer: :minutes_answer },
+      { key: :manage_updates, text: "Events leh announcements manage dan eng nge?", answer: :event_announcement_management_answer },
+      { key: :manage_letters, text: "Official letter siam leh download dan min hrilh rawh.", answer: :letters_answer },
+      { key: :manage_roles, text: "User role assign, change leh deactivate dan min hrilh rawh.", answer: :role_management_answer },
+      { key: :governance, text: "Settings, Permissions leh Audit Logs hman dan eng nge?", answer: :settings_answer },
+      { key: :admin_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer }
+    ],
+    finance_admin: [
+      { key: :finance_access, text: "Finance Admin daily workflow leh access chin min hrilh rawh.", answer: :finance_admin_general_answer },
+      { key: :review_transfers, text: "Combined transfer verify, approve leh reject dan eng nge?", answer: :payment_review_answer },
+      { key: :manual_payment, text: "Manual payment record duplicate lovin engtin nge ka siam ang?", answer: :manual_payment_answer },
+      { key: :manage_plans, text: "Payment plans engtin nge ka manage ang?", answer: :payment_plan_answer },
+      { key: :transactions, text: "Income leh expense transaction record dan min hrilh rawh.", answer: :finance_transactions_answer },
+      { key: :finance_reports, text: "Finance report leh CSV export engtin nge ka hman ang?", answer: :reports_answer },
+      { key: :finance_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer }
+    ],
+    assistant_secretary: [
+      { key: :assistant_access, text: "Assistant Secretary daily workflow leh access chin min hrilh rawh.", answer: :assistant_secretary_general_answer },
+      { key: :manage_welfare, text: "Welfare case assign/resolve dan eng nge?", answer: :welfare_answer },
+      { key: :manage_minutes, text: "Meeting minutes siam leh publish dan min hrilh rawh.", answer: :minutes_answer },
+      { key: :manage_updates, text: "Events leh announcements manage dan eng nge?", answer: :event_announcement_management_answer },
+      { key: :manage_letters, text: "Official letter siam leh download dan min hrilh rawh.", answer: :letters_answer },
+      { key: :assistant_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer }
+    ],
+    office_bearer_viewer: [
+      { key: :observer_access, text: "Vice President/Journal Secretary access leh responsibility eng nge?", answer: :observer_general_answer },
+      { key: :view_finance, text: "Finance leh Payment Records view-only anga en dan eng nge?", answer: :finance_viewer_answer },
+      { key: :view_minutes_letters, text: "Minutes leh Letters ka en/download theih chin eng nge?", answer: :observer_minutes_letters_answer },
+      { key: :view_welfare, text: "Welfare records view-only anga en dan eng nge?", answer: :welfare_answer },
+      { key: :view_reports, text: "Reports ka hmuh leh export theih chin eng nge?", answer: :reports_answer },
+      { key: :observer_updates, text: "Events leh announcements engtin nge ka en ang?", answer: :member_events_updates_answer },
+      { key: :observer_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer }
+    ],
+    executive: [
+      { key: :executive_access, text: "Executive Committee member access leh responsibility eng nge?", answer: :executive_general_answer },
+      { key: :executive_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer },
+      { key: :executive_minutes, text: "Minutes ka en/download theih chin eng nge?", answer: :minutes_answer },
+      { key: :executive_welfare, text: "Welfare records view-only anga en dan eng nge?", answer: :welfare_answer },
+      { key: :executive_reports, text: "Reports ka hmuh leh export theih chin eng nge?", answer: :reports_answer },
+      { key: :executive_updates, text: "Events leh announcements engtin nge ka en ang?", answer: :member_events_updates_answer }
+    ]
+  }.transform_values { |questions| questions.map(&:freeze).freeze }.freeze
 
   def self.call(user:, question:)
     new(user: user, question: question).call
   end
 
   def self.suggested_questions(user:)
-    questions = MEMBER_QUESTIONS.dup
-    questions += SUPER_ADMIN_QUESTIONS if user.super_admin?
-    questions += FINANCE_QUESTIONS if user.finance_admin?
-    questions += SECRETARIAT_QUESTIONS if user.assistant_secretary?
-    questions += OFFICE_BEARER_VIEWER_QUESTIONS if user.observer_office_bearer?
-    questions += EXECUTIVE_QUESTIONS if user.executive_committee?
-    questions.uniq
+    question_entries(user: user).pluck(:text)
+  end
+
+  def self.question_entries(user:)
+    ROLE_QUESTION_CATALOG.fetch(role_key(user))
+  end
+
+  def self.role_key(user)
+    return :super_admin if user.super_admin?
+    return :finance_admin if user.finance_admin?
+    return :assistant_secretary if user.assistant_secretary?
+    return :office_bearer_viewer if user.observer_office_bearer?
+    return :executive if user.executive_committee?
+
+    :member
   end
 
   def initialize(user:, question:)
@@ -95,6 +92,9 @@ class MizoAiAssistant
 
   def call
     return blank_question_answer if question.blank?
+
+    answer = curated_answer
+    return answer if answer
 
     if openai_available?
       openai_answer.presence || fallback_answer
@@ -109,6 +109,13 @@ class MizoAiAssistant
   private
 
   attr_reader :user, :question
+
+  def curated_answer
+    @curated_answer ||= begin
+      entry = self.class.question_entries(user: user).find { |item| item[:text] == question }
+      entry && send(entry.fetch(:answer))
+    end
+  end
 
   def openai_available?
     ENV["OPENAI_API_KEY"].present?
@@ -394,6 +401,125 @@ class MizoAiAssistant
       Screenshot chu optional a ni, mahse transfer verify a awlsam zawk nan upload theih a ni.
 
       Yuucho bank i hmang chuan “Yuucho to Yuucho” guide en rawh. Bank dang i hmang chuan “From another bank” guide en rawh.
+    ANSWER
+  end
+
+  def payment_submission_status_answer
+    <<~ANSWER.strip
+      Bank transfer i tih zawh hnuah heti hian kal rawh:
+
+      1. Payments page-ah kir leh rawh.
+      2. Transfer date chu bank transfer i tih ni dik tak thlang rawh.
+      3. Transfer amount chu portal-a selected total nen a inmil ngei tur a ni.
+      4. Reference name-ah bank account-a sender name lo lang tur kha check rawh.
+      5. Screenshot chu optional a ni; transfer hriat hran a harsat chuan upload rawh.
+      6. Submit Transfer click rawh. Status chu Pending Verification-ah a inthlak ang.
+      7. Treasurer emaw Finance Secretary-in bank record nen verify hnuah Paid-ah a inthlak ang.
+      8. Payments history leh notification-ah approval i check thei ang. WhatsApp receipt an thawn chuan approved payment receipt a ni.
+
+      Pending Verification la nih chhung chuan payment nawn leh suh. Reject a nih chuan reason en la, transfer details dik takin submit leh rawh.
+    ANSWER
+  end
+
+  def member_events_updates_answer
+    <<~ANSWER.strip
+      Events leh announcements hman dan:
+
+      1. Events page-ah published events leh latest announcements en rawh.
+      2. Event card-a View click la, date, time, venue leh registration details check rawh.
+      3. Registration required a nih chuan RSVP button hmang rawh.
+      4. I kal theih loh chuan registration close hma in RSVP update/cancel rawh.
+      5. Announcement pawimawh leh pinned notice chu dashboard-ah pawh a lang thei.
+      6. Draft, expired, emaw i role tana visible lo notice/event chu a lang lo ang.
+    ANSWER
+  end
+
+  def finance_operations_answer
+    <<~ANSWER.strip
+      Transactions leh yearly finance report check dan:
+
+      1. Transactions page-ah income leh expense records, date, category, amount leh approval status check rawh.
+      2. Record thar siam hma in same payment/receipt record a awm tawh em search rawh.
+      3. Payment approval atanga income transaction auto-create a nih chuan manual duplicate siam suh.
+      4. Reports > Finance-ah current year thlang rawh.
+      5. Total income, total expense leh balance te transaction list nen compare rawh.
+      6. CSV export hma in filter year/date range dik em check rawh.
+      7. Figure a inmil loh chuan record delete nghal lovin source payment leh audit trail check phawt rawh.
+    ANSWER
+  end
+
+  def manual_payment_answer
+    <<~ANSWER.strip
+      Manual payment record duplicate lova siam dan:
+
+      1. Payment Records page-ah member name emaw membership number-in search rawh.
+      2. Same member, payment plan, year leh period-a Waiting Transfer, Pending Verification, emaw Paid record a awm em check rawh.
+      3. Existing active/paid record a awm chuan New Payment hmang suh; record existing kha open rawh.
+      4. Record a awm loh chuan Add Payment click la member leh payment plan thlang rawh.
+      5. Plan thlan hnuah amount auto-filled kha plan amount nen verify rawh.
+      6. Payment method leh status chu evidence dik tak azirin chauh thlang rawh.
+      7. Create Payment hnuah member name, membership number, plan, amount leh period check leh rawh.
+
+      Bank confirmation awm loh chuan Paid status hmang suh.
+    ANSWER
+  end
+
+  def finance_transactions_answer
+    <<~ANSWER.strip
+      Income leh expense transaction record dan:
+
+      1. Transactions page-ah existing record search/filter phawt rawh.
+      2. New Transaction click la Income emaw Expense thlang rawh.
+      3. Transaction date, category, description leh amount dik tak dah rawh.
+      4. Amount chu yen whole number-in enter la, decimal point tul lo.
+      5. Membership payment approved atanga income auto-create tawh chu manual-in siam nawn suh.
+      6. Save hnuah status leh amount check rawh; approval ngai a nih chuan authorized approver-in review rawh.
+      7. Edit/Delete hma in report leh audit impact check rawh.
+    ANSWER
+  end
+
+  def event_announcement_management_answer
+    <<~ANSWER.strip
+      Events leh announcements manage dan:
+
+      1. Events page-ah lut rawh.
+      2. Event thar atan New Event click la title, date, time, venue, description leh registration setting fill up rawh.
+      3. Draft-in save la, details check zawh hnuah publish rawh.
+      4. Announcement atan Official Notices/Announcements section open rawh.
+      5. New Notice click la title, body, pinned setting leh expiry date fill up rawh.
+      6. Member-te hriat tur ready a nih chauh publish rawh.
+      7. Event/notice update emaw cancel hma in RSVP users leh visible audience ngaihtuah rawh.
+    ANSWER
+  end
+
+  def role_management_answer
+    return settings_answer unless user.super_admin?
+
+    <<~ANSWER.strip
+      User role assign/change/deactivate dan:
+
+      1. Settings > User Roles-ah lut rawh.
+      2. User name emaw email-in search la current role leh status check rawh.
+      3. Edit/Change Role click la official appointment nen inmil role chauh thlang rawh.
+      4. Save hma in finance, welfare, minutes, events leh settings access a dawn tur ngaihtuah rawh.
+      5. User deactivate hma in active records emaw responsibility la nei em check rawh.
+      6. President/Secretary super admin account pakhat tal active reng tur a ni.
+      7. Change zawh hnuah Audit Logs-ah action record a awm em check rawh.
+
+      Treasurer, Finance Secretary leh role dangte chuan user role an thlak thei lo.
+    ANSWER
+  end
+
+  def observer_minutes_letters_answer
+    <<~ANSWER.strip
+      Minutes leh Letters view-only anga hman dan:
+
+      1. Minutes page-ah i role tana visible published records en rawh.
+      2. View click la meeting details chhiar rawh; available a nih chuan PDF download theih a ni.
+      3. Letters page-ah i role tana visible official letters en rawh.
+      4. Available a nih chuan final letter/download button hmang rawh.
+      5. New, Edit, Publish, Archive leh Delete actions chu i role tan available lo a ni.
+      6. Correction ngai a awm chuan President, Secretary emaw Assistant Secretary contact rawh.
     ANSWER
   end
 
@@ -772,15 +898,16 @@ class MizoAiAssistant
 
   def account_answer
     <<~ANSWER.strip
-      Sign in/account hman dan:
+      Sign in emaw password reset harsatna i neih chuan heti hian kal rawh:
 
-      1. Google account hmangin sign in theih a ni, Google OAuth setup a dik a ngai.
-      2. Email/password account i siam tawh chuan email/password hmangin sign in rawh.
-      3. Password i theihnghilh chuan Forgot your password? hmang rawh.
-      4. Password reset email a kal tur chuan SMTP setting live-ah a dik a ngai.
-      5. Sign in hnuah profile incomplete a nih chuan /profile/setup-ah kal tir ang.
+      1. Google account i hmang chuan Continue with Google click rawh.
+      2. Email/password account i siam tawh chuan Sign in with email hmang rawh.
+      3. Password i theihnghilh chuan Forgot your password? click la i registered email dah rawh.
+      4. Inbox leh Spam/Junk folder check rawh; reset link chu email-a instruction angin open rawh.
+      5. Link a lo kal loh chuan email spelling leh registered account a nih check la, Office Bearer contact rawh.
+      6. Google sign in error a awm chuan local password guess suh; Office Bearer hnenah screenshot nen report rawh.
 
-      Google sign in error a awm chuan authorized redirect URI leh app host setup check a ngai.
+      Password, reset link leh verification code chu midang hnenah share suh.
     ANSWER
   end
 
