@@ -37,7 +37,7 @@ Rails.application.configure do
   smtp_username = ENV["BREVO_LOGIN"].presence || ENV["SMTP_USERNAME"].presence
   smtp_password = ENV["BREVO_SMTP_KEY"].presence || ENV["SMTP_PASSWORD"].presence
 
-  if ENV["SMTP_ADDRESS"].present? && smtp_username.present? && smtp_password.present?
+  if ENV["BREVO_API_KEY"].blank? && ENV["SMTP_ADDRESS"].present? && smtp_username.present? && smtp_password.present?
     config.action_mailer.delivery_method = :smtp
     config.action_mailer.smtp_settings = {
       address: ENV.fetch("SMTP_ADDRESS"),
