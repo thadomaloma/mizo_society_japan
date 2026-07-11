@@ -14,6 +14,18 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to setup_profile_path
   end
 
+  test "profile setup uses simple year month and day selectors for date of birth" do
+    sign_in @member
+
+    get setup_profile_path
+
+    assert_response :success
+    assert_select "select#member_profile_date_of_birth_1i[required]"
+    assert_select "select#member_profile_date_of_birth_2i[required]"
+    assert_select "select#member_profile_date_of_birth_3i[required]"
+    assert_select "input#member_profile_date_of_birth[type=date]", count: 0
+  end
+
   test "member can complete profile setup" do
     sign_in @member
 
