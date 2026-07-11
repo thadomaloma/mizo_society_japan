@@ -10,7 +10,7 @@
           { label: "Ask AI", path: ai_assistant_path, icon: :chat }
         end %>
       <% last_item =
-        if admin_portal_user?
+        if admin_portal_user? || current_user.executive_member?
           { label: "Ask AI", path: ai_assistant_path, icon: :chat }
         elsif current_user.welfare_viewer?
           { label: "Welfare", path: admin_portal_user? ? admin_welfare_cases_path : welfare_cases_path, icon: :welfare }

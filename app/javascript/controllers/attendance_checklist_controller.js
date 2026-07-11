@@ -1,20 +1,29 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["input", "presentList", "absentList", "presentCount", "absentCount"]
+  static targets = ["presentInput", "apologyInput", "apologyOption", "presentList", "presentCount", "apologyCount"]
 
   connect() {
     this.sync()
   }
 
   sync() {
-    const present = this.inputTargets.filter((input) => input.checked)
-    const absent = this.inputTargets.filter((input) => !input.checked)
+    const present = this.presentInputTargets.filter((input) => input.checked)
+    const presentIds = new Set(present.map((input) => input.value))
+
+    this.apologyOptionTargets.forEach((option) => {
+      const hidden = presentIds.has(option.dataset.userId)
+      const input = option.querySelector("input[type='checkbox']")
+
+      option.classList.toggle("hidden", hidden)
+      if (hidden && input) input.checked = false
+    })
+
+    const apologies = this.apologyInputTargets.filter((input) => input.checked && !presentIds.has(input.value))
 
     this.renderMembers(this.presentListTarget, present, "No members marked present.")
-    this.renderMembers(this.absentListTarget, absent, "No members marked absent.")
     this.presentCountTarget.textContent = present.length
-    this.absentCountTarget.textContent = absent.length
+    this.apologyCountTarget.textContent = apologies.length
   }
 
   renderMembers(container, inputs, emptyMessage) {

@@ -3,7 +3,7 @@ class MeetingMinute < ApplicationRecord
     application/pdf
   ].freeze
   RICH_TEXT_TAGS = %w[p br div strong b em i u ul ol li].freeze
-  ATTENDANCE_COUNT_FIELDS = %i[present_count absent_count].freeze
+  ATTENDANCE_COUNT_FIELDS = %i[present_count apologies_count].freeze
   SIGNATURE_CONTENT_TYPE = "image/png"
   SIGNATURE_MAX_SIZE = 2.megabytes
   SIGNATURE_MIN_WIDTH = 300
@@ -112,11 +112,12 @@ class MeetingMinute < ApplicationRecord
     meeting_minute_attendances.select { |attendance| attendance.status == status.to_s }.map(&:user_id)
   end
 
-  def sync_checkbox_attendance!(attendance_user_ids:, present_ids:)
+  def sync_checkbox_attendance!(attendance_user_ids:, present_ids:, apology_ids:)
     allowed_user_ids = User.where(role: User::OFFICE_BEARER_ROLES + User::EXECUTIVE_ROLES).pluck(:id)
     eligible_user_ids = Array(attendance_user_ids).map(&:to_i).uniq & allowed_user_ids
     present_user_ids = Array(present_ids).map(&:to_i).uniq & eligible_user_ids
-    absent_user_ids = eligible_user_ids - present_user_ids
+    apology_user_ids = (Array(apology_ids).map(&:to_i).uniq & eligible_user_ids) - present_user_ids
+    recorded_user_ids = present_user_ids + apology_user_ids
 
     transaction do
       existing_attendances = meeting_minute_attendances.where(user_id: eligible_user_ids).index_by(&:user_id)
@@ -125,11 +126,12 @@ class MeetingMinute < ApplicationRecord
         (existing_attendances[user_id] || meeting_minute_attendances.build(user_id: user_id)).update!(status: :present)
       end
 
-      absent_user_ids.each do |user_id|
-        (existing_attendances[user_id] || meeting_minute_attendances.build(user_id: user_id)).update!(status: :absent)
+      apology_user_ids.each do |user_id|
+        (existing_attendances[user_id] || meeting_minute_attendances.build(user_id: user_id)).update!(status: :apology)
       end
 
-      update!(present_count: present_user_ids.size, absent_count: absent_user_ids.size)
+      meeting_minute_attendances.where(user_id: eligible_user_ids - recorded_user_ids).destroy_all
+      update!(present_count: present_user_ids.size, absent_count: 0, apologies_count: apology_user_ids.size)
     end
   end
 
@@ -215,7 +217,12 @@ class MeetingMinute < ApplicationRecord
   end
 
   def summary_contains_text
-    return if ActionView::Base.full_sanitizer.sanitize(summary.to_s).strip.present?
+    text = ActionView::Base.full_sanitizer.sanitize(summary.to_s)
+      .lines
+      .reject { |line| line.strip.match?(/\A\d+[.)]?\z/) }
+      .join
+      .strip
+    return if text.present?
 
     errors.add(:summary, "must include meeting agenda text")
   end

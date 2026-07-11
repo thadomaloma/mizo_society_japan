@@ -138,16 +138,18 @@ class MeetingMinutesController < ApplicationController
       :file,
       :chairman_signature,
       :secretary_signature,
-      present_attendee_ids: []
+      present_attendee_ids: [],
+      apology_attendee_ids: []
     )
 
-    permitted_params.except(:present_attendee_ids)
+    permitted_params.except(:present_attendee_ids, :apology_attendee_ids)
   end
 
   def sync_checkbox_attendance
     @meeting_minute.sync_checkbox_attendance!(
       attendance_user_ids: @attendance_users.map(&:id),
-      present_ids: params.dig(:meeting_minute, :present_attendee_ids)
+      present_ids: params.dig(:meeting_minute, :present_attendee_ids),
+      apology_ids: params.dig(:meeting_minute, :apology_attendee_ids)
     )
   end
 

@@ -33,7 +33,7 @@ class MeetingMinutePdfBuilder
     numbered_users(present_users, "No present members recorded.")
 
     section "Member pha (Members Apology)"
-    numbered_users(absent_users, "No apologies recorded.")
+    numbered_users(apology_users, "No apologies recorded.")
 
     section "I. PROGRAMME TLANGPUI"
     paragraph "Hun serh / Tawngtaina: #{@meeting_minute.opening_prayer}" if @meeting_minute.opening_prayer.present?
@@ -60,8 +60,8 @@ class MeetingMinutePdfBuilder
     @meeting_minute.meeting_minute_attendances.select { |attendance| attendance.status == "present" }.map(&:user)
   end
 
-  def absent_users
-    @meeting_minute.meeting_minute_attendances.select { |attendance| attendance.status == "absent" }.map(&:user)
+  def apology_users
+    @meeting_minute.meeting_minute_attendances.select { |attendance| attendance.status == "apology" }.map(&:user)
   end
 
   def start_page

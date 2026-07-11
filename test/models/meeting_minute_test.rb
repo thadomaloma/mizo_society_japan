@@ -1,6 +1,14 @@
 require "test_helper"
 
 class MeetingMinuteTest < ActiveSupport::TestCase
+  test "agenda numbering without agenda text is invalid" do
+    minute = signature_test_minute
+    minute.summary = "<div>1)&nbsp;</div>"
+
+    assert_not minute.valid?
+    assert_includes minute.errors[:summary], "must include meeting agenda text"
+  end
+
   test "signature uploads must be PNG files" do
     minute = signature_test_minute
     minute.chairman_signature.attach(

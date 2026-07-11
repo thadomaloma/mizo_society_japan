@@ -1,15 +1,16 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["agenda", "agendaPanel", "agendaPoint", "decisions", "decisionButton"]
+  static targets = ["agenda", "agendaPoint", "decisions", "decisionButton"]
 
   connect() {
     this.refreshAgendaPoints()
   }
 
-  insertAgenda() {
-    this.showAgendaEditor()
-    this.appendNumberedLine(this.agendaTarget)
+  startAgenda(event) {
+    if (event.target.innerText.trim().length) return
+
+    this.appendNumberedLine(event.target)
     this.refreshAgendaPoints()
   }
 
@@ -38,25 +39,28 @@ export default class extends Controller {
     const agendaText = this.agendaPointTarget.selectedOptions[0]?.dataset.agendaText || "Agenda item"
     const decisionLine = document.createElement("div")
     const agendaTitle = document.createElement("strong")
-    const bodyStart = document.createTextNode(" ")
+    const bodyStart = document.createElement("span")
 
     decisionLine.dataset.decisionMain = "true"
     agendaTitle.textContent = `${agendaNumber}. ${agendaText}:`
+    bodyStart.dataset.decisionBody = "true"
+    bodyStart.style.fontWeight = "normal"
+    bodyStart.textContent = "\u00A0"
     decisionLine.append(agendaTitle, bodyStart)
     this.appendLine(this.decisionsTarget, decisionLine)
-    this.moveCursorToEnd(bodyStart)
+    this.placeDecisionBodyCursor(bodyStart)
     this.syncEditor(this.decisionsTarget)
   }
 
   agendaItems() {
     return this.agendaTarget.innerText
       .split("\n")
-      .map((line, index) => {
-        const trimmed = line.trim()
-        const match = trimmed.match(/^(\d+)[.)]\s+(.+)$/)
-        return trimmed ? { number: match?.[1] || String(index + 1), text: match?.[2] || trimmed } : null
-      })
+      .map((line) => line.trim())
       .filter(Boolean)
+      .map((line, index) => {
+        const match = line.match(/^\d+[.)]\s+(.+)$/)
+        return { number: String(index + 1), text: match?.[1] || line }
+      })
   }
 
   continueNumbering(event) {
@@ -130,7 +134,7 @@ export default class extends Controller {
 
   buildNumberedLine(editor, trailingText = "\u00A0") {
     const line = document.createElement("div")
-    line.append(`${this.nextNumber(editor.innerText)}) `, trailingText)
+    line.append(`${this.nextNumber(editor.innerText)}. `, trailingText)
     return line
   }
 
@@ -150,7 +154,7 @@ export default class extends Controller {
   normalizeLinePrefix(line, editor) {
     const mainDecision = editor === this.decisionsTarget && line.nodeType === Node.ELEMENT_NODE &&
       (line.dataset.decisionMain === "true" || line.querySelector("strong, b"))
-    const suffix = mainDecision ? "." : ")"
+    const suffix = editor === this.agendaTarget || mainDecision ? "." : ")"
 
     if (line.nodeType === Node.TEXT_NODE) {
       return this.normalizeTextNodePrefix(line, suffix)
@@ -183,6 +187,14 @@ export default class extends Controller {
     selection.addRange(range)
   }
 
+  placeDecisionBodyCursor(bodyStart) {
+    this.moveCursorToEnd(bodyStart)
+
+    if (document.queryCommandState("bold")) {
+      document.execCommand("bold", false, null)
+    }
+  }
+
   currentLineElement(editor) {
     const selection = window.getSelection()
     if (!selection?.rangeCount || !editor.contains(selection.anchorNode)) return null
@@ -208,7 +220,4 @@ export default class extends Controller {
     editor.dispatchEvent(new Event("input", { bubbles: true }))
   }
 
-  showAgendaEditor() {
-    this.agendaPanelTarget.classList.remove("hidden")
-  }
 }

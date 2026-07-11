@@ -82,6 +82,11 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'href="/payments"'
     assert_includes response.body, 'href="/admin/reports"'
     assert_not_includes response.body, "Open admin"
+
+    mobile_nav = Nokogiri::HTML(response.body).at_css('nav[aria-label="Mobile navigation"]')
+    mobile_labels = mobile_nav.css("a span:last-child").map { |span| span.text.strip }
+    assert_includes mobile_labels, "Ask AI"
+    assert_not_includes mobile_labels, "Welfare"
   end
 
   test "regular member style dashboard and sidebar do not show reports" do

@@ -1,4 +1,4 @@
-<% action_name = field == :summary ? "input->simple-rich-text#sync input->minute-editor#refreshAgendaPoints keydown->minute-editor#continueNumbering blur->minute-editor#normalizeNumbering blur->simple-rich-text#sync blur->minute-editor#refreshAgendaPoints" : "input->simple-rich-text#sync keydown->minute-editor#continueNumbering blur->minute-editor#normalizeNumbering blur->simple-rich-text#sync" %>
+<% action_name = field == :summary ? "focus->minute-editor#startAgenda input->simple-rich-text#sync input->minute-editor#refreshAgendaPoints keydown->minute-editor#continueNumbering blur->minute-editor#normalizeNumbering blur->simple-rich-text#sync blur->minute-editor#refreshAgendaPoints" : "input->simple-rich-text#sync keydown->minute-editor#continueNumbering blur->minute-editor#normalizeNumbering blur->simple-rich-text#sync" %>
 <% target_name = field == :summary ? "agenda" : "decisions" %>
 <% text_weight_class = local_assigns.fetch(:text_weight_class, "font-semibold") %>
 

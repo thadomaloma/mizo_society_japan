@@ -30,7 +30,8 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
           summary: "The committee reviewed the portal update.",
           decisions: "1. Publish the new minutes format.",
           adjournment: "The meeting was closed with prayer.",
-          present_attendee_ids: [ @president.id ]
+          present_attendee_ids: [ @president.id ],
+          apology_attendee_ids: [ @assistant_secretary.id ]
         }
       }
     end
@@ -39,9 +40,12 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to meeting_minute_path(minute)
     assert minute.draft?
     assert_equal [ @president.id ], minute.attendance_ids_for(:present)
-    assert_equal [ @assistant_secretary.id, @finance_secretary.id, @executive.id ], minute.attendance_ids_for(:absent)
+    assert_equal [ @assistant_secretary.id ], minute.attendance_ids_for(:apology)
+    assert_empty minute.attendance_ids_for(:absent)
+    assert_not_includes minute.meeting_minute_attendances.map(&:user_id), @finance_secretary.id
+    assert_not_includes minute.meeting_minute_attendances.map(&:user_id), @executive.id
     assert_equal "1. Publish the new minutes format.", minute.decisions
-    assert_equal 4, minute.attendance_total
+    assert_equal 2, minute.attendance_total
     assert_equal "Lalrammawia", minute.chairman
     assert_equal "Welcome remarks by the Chairman.", minute.welcome_speech
     assert_equal "Previous minutes were read and approved.", minute.previous_minutes_approval
@@ -96,10 +100,13 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Previous Minute Approval"
     assert_includes response.body, "Reports"
     assert_includes response.body, "Meeting Agenda"
+    assert_not_includes response.body, "Add item"
+    assert_includes response.body, "Click to add the first agenda item"
     assert_includes response.body, "Decisions / Resolutions"
     assert_includes response.body, "Adjournment"
-    assert_includes response.body, "Tick members who attended. Unticked members are recorded as absent."
-    assert_includes response.body, "Absent"
+    assert_includes response.body, "Mark members who attended, then record apologies separately."
+    assert_includes response.body, "Apologies"
+    assert_not_includes response.body, "Marked absent."
     assert_includes response.body, "Underline"
     assert_not_includes response.body, "Bullet list"
     assert_includes response.body, "Signature block"

@@ -1,7 +1,7 @@
 <% content_for :page_title, @meeting_minute.title %>
 
 <% present_users = @meeting_minute.meeting_minute_attendances.select { |attendance| attendance.status == "present" }.map(&:user) %>
-<% absent_users = @meeting_minute.meeting_minute_attendances.select { |attendance| attendance.status == "absent" }.map(&:user) %>
+<% apology_users = @meeting_minute.meeting_minute_attendances.select { |attendance| attendance.status == "apology" }.map(&:user) %>
 
 <div class="space-y-6">
   <% page_actions = capture do %>
@@ -60,9 +60,9 @@
 
       <section class="mt-8">
         <h3 class="text-lg font-black">Member pha (Members Apology):</h3>
-        <% if absent_users.any? %>
+        <% if apology_users.any? %>
           <ol class="mt-5 list-decimal space-y-1 pl-12">
-            <% absent_users.each do |user| %>
+            <% apology_users.each do |user| %>
               <li class="pl-2"><%= user.display_name %></li>
             <% end %>
           </ol>
