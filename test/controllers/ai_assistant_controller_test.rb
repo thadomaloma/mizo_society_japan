@@ -13,6 +13,12 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h2", "AI Assistant"
+    assert_includes response.body, "Payment receipt WhatsApp-ah ka dawn dan"
+    assert_includes response.body, "Payment approved a nih ka hriat dan"
+    assert_includes response.body, "Welfare request hi private a ni em?"
+    assert_includes response.body, "Announcements/updates khawi atanga ka en ang?"
+    assert_no_match(/Profile complete dan/, response.body)
+    assert_no_match(/Japan mobile number eng format/, response.body)
   end
 
   test "signed in member can ask a payment question" do

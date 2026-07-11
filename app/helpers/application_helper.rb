@@ -374,6 +374,8 @@ module ApplicationHelper
   end
 
   def ai_answer_content(answer)
+    text_wrap_classes = "min-w-0 max-w-full whitespace-normal break-words [overflow-wrap:anywhere] [word-break:break-word]"
+
     blocks = answer.to_s.lines.map(&:strip).reject(&:blank?).map do |line|
       case line
       when /\A(\d+)[.)]\s+(.+)\z/
@@ -381,29 +383,29 @@ module ApplicationHelper
       when /\A[-•]\s+(.+)\z/
         ai_answer_bullet(Regexp.last_match(1))
       when /\A.{1,70}:\z/
-        tag.p(line, class: "pt-1 text-sm font-black text-slate-950 dark:text-white")
+        tag.p(line, class: "#{text_wrap_classes} pt-2 text-[13px] font-black uppercase tracking-wide text-red-700 dark:text-red-300")
       else
-        tag.p(line, class: "text-sm font-semibold leading-7 text-slate-700 dark:text-slate-200")
+        tag.p(line, class: "#{text_wrap_classes} text-sm font-semibold leading-7 text-slate-700 dark:text-slate-200")
       end
     end
 
-    safe_join(blocks)
+    tag.div(class: "min-w-0 max-w-full space-y-2.5 overflow-hidden") { safe_join(blocks) }
   end
 
   def ai_answer_step(number, text)
-    tag.div(class: "flex gap-3 rounded-xl px-1 py-1.5") do
+    tag.div(class: "flex min-w-0 max-w-full gap-3 overflow-hidden rounded-2xl bg-slate-50 px-3 py-2.5 ring-1 ring-slate-100 dark:bg-[#0F172A] dark:ring-[#334155]") do
       safe_join([
         tag.span(number, class: "mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-red-600 text-xs font-black text-white shadow-sm shadow-red-950/10 dark:bg-red-500"),
-        tag.p(text, class: "min-w-0 flex-1 text-sm font-semibold leading-7 text-slate-800 dark:text-slate-100")
+        tag.p(text, class: "min-w-0 max-w-full flex-1 whitespace-normal break-words text-sm font-semibold leading-7 text-slate-800 [overflow-wrap:anywhere] [word-break:break-word] dark:text-slate-100")
       ])
     end
   end
 
   def ai_answer_bullet(text)
-    tag.div(class: "flex gap-3 rounded-xl px-1 py-1") do
+    tag.div(class: "flex min-w-0 max-w-full gap-3 overflow-hidden rounded-xl px-3 py-1.5") do
       safe_join([
-        tag.span("", class: "mt-2 h-2 w-2 shrink-0 rounded-full bg-red-500"),
-        tag.p(text, class: "min-w-0 flex-1 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200")
+        tag.span("", class: "mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-red-500"),
+        tag.p(text, class: "min-w-0 max-w-full flex-1 whitespace-normal break-words text-sm font-semibold leading-6 text-slate-700 [overflow-wrap:anywhere] [word-break:break-word] dark:text-slate-200")
       ])
     end
   end
@@ -488,7 +490,69 @@ module ApplicationHelper
     image
   end
 
-  def whatsapp_url_for(profile)
-    profile&.whatsapp_url
+  def whatsapp_url_for(profile, message: nil)
+    url = profile&.whatsapp_url
+    return if url.blank?
+    return url if message.blank?
+
+    "#{url}?text=#{URI.encode_www_form_component(message)}"
+  end
+
+  def payment_receipt_whatsapp_message(payment, sender: current_user)
+    member_name = payment.user&.display_name || "Member"
+    sender_name = sender&.display_name.presence || "MSJ Finance Team"
+    sender_role = sender.present? ? User.role_label(sender.role) : "Finance Team"
+    status_line = if payment.paid?
+      "Status: Paid"
+    elsif payment.pending_verification?
+      "Status: Received for verification"
+    else
+      "Status: Waiting transfer"
+    end
+    date_line = if payment.paid_on.present?
+      "Paid on: #{payment.paid_on.strftime('%b %d, %Y')}"
+    elsif payment.transferred_on.present?
+      "Transfer date: #{payment.transferred_on.strftime('%b %d, %Y')}"
+    else
+      "Date: Not recorded yet"
+    end
+
+    [
+      "Chibai #{member_name},",
+      "",
+      "MSJ Payment Receipt",
+      "Payment/Fund: #{payment.membership_plan.name}",
+      "Type: #{payment.plan_type_label}",
+      "Period: #{payment.period_label}",
+      "Amount: #{yen(payment.amount)}",
+      status_line,
+      date_line,
+      ("Reference: #{payment.reference_number}" if payment.reference_number.present?),
+      "",
+      "Confirmed by: #{sender_name} (#{sender_role})",
+      "Mizo Society of Japan",
+      "",
+      "Thank you."
+    ].compact.join("\n")
+  end
+
+  def payment_receipt_label(payment)
+    return "Receipt sent" if payment.receipt_sent?
+    return "Receipt ready" if payment.receipt_sendable?
+    return "Verify first" unless payment.paid?
+
+    "No WhatsApp"
+  end
+
+  def payment_receipt_badge_classes(payment)
+    if payment.receipt_sent?
+      "bg-emerald-50 text-emerald-700 ring-emerald-200"
+    elsif payment.receipt_sendable?
+      "bg-sky-50 text-sky-700 ring-sky-200"
+    elsif payment.paid?
+      "bg-slate-100 text-slate-700 ring-slate-200"
+    else
+      "bg-amber-50 text-amber-700 ring-amber-200"
+    end
   end
 end

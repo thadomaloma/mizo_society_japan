@@ -1,13 +1,10 @@
 <% profile = local_assigns[:profile] || local_assigns[:user]&.member_profile %>
+<% message = local_assigns[:message] %>
 
 <% if profile&.mobile_number.present? %>
   <div class="flex flex-wrap gap-2">
-    <%= link_to "tel:#{profile.mobile_number}", class: action_button_classes(:secondary, size: :xs) do %>
-      <%= icon_svg(:phone, classes: "h-3.5 w-3.5") %>
-      <span>Call</span>
-    <% end %>
-    <% if whatsapp_url_for(profile).present? %>
-      <%= link_to whatsapp_url_for(profile), target: "_blank", rel: "noopener", class: action_button_classes(:success, size: :xs) do %>
+    <% if whatsapp_url_for(profile, message: message).present? %>
+      <%= link_to whatsapp_url_for(profile, message: message), target: "_blank", rel: "noopener", class: action_button_classes(:success, size: :xs) do %>
         <%= icon_svg(:chat, classes: "h-3.5 w-3.5") %>
         <span>WhatsApp</span>
       <% end %>

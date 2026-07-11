@@ -1,6 +1,6 @@
 module Admin
   class MembershipPaymentsController < ApplicationController
-    before_action :set_membership_payment, only: [ :show, :edit, :update, :destroy, :approve, :reject ]
+    before_action :set_membership_payment, only: [ :show, :edit, :update, :destroy, :approve, :reject, :mark_receipt_sent ]
     before_action :set_form_collections, only: [ :new, :create, :edit, :update ]
     rescue_from ActiveRecord::RecordNotUnique, with: :handle_duplicate_payment_record
 
@@ -133,6 +133,17 @@ module Admin
       PaymentMailer.with(payment: @membership_payment).payment_rejected.deliver_later
 
       redirect_back fallback_location: admin_membership_payment_path(@membership_payment), notice: "Membership payment was rejected."
+    end
+
+    def mark_receipt_sent
+      authorize @membership_payment, :mark_receipt_sent?
+
+      if @membership_payment.receipt_sendable?
+        @membership_payment.mark_receipt_sent!(current_user)
+        redirect_back fallback_location: admin_membership_payment_path(@membership_payment), notice: "Receipt was marked as sent."
+      else
+        redirect_back fallback_location: admin_membership_payment_path(@membership_payment), alert: "Receipt can be marked sent only after payment is paid and WhatsApp is available."
+      end
     end
 
     private

@@ -11,10 +11,12 @@ class MizoAiAssistant
     "Yuucho bank atangin transfer engtin nge ka tih ang?",
     "Bank dang atangin transfer engtin nge ka tih ang?",
     "Transfer zawh hnuah eng nge ka submit ang?",
-    "Profile complete dan min hrilh rawh.",
-    "Japan mobile number eng format nge ka hmang ang?",
+    "Payment receipt WhatsApp-ah ka dawn dan eng nge?",
+    "Payment approved a nih ka hriat dan eng nge?",
     "Welfare support dil dan eng nge?",
+    "Welfare request hi private a ni em?",
     "Event RSVP engtin nge ka tih ang?",
+    "Announcements/updates khawi atanga ka en ang?",
     "Password ka theihnghilh chuan engtin nge ka tih ang?"
   ].freeze
 
@@ -297,7 +299,7 @@ class MizoAiAssistant
       role_access_answer
     elsif includes_any?(normalized, "dashboard", "stat", "summary", "overview")
       dashboard_answer
-    elsif includes_any?(normalized, "screenshot", "reference name", "transfer date", "submit transfer", "amount due", "current payment", "payment history")
+    elsif includes_any?(normalized, "screenshot", "reference name", "transfer date", "submit transfer", "amount due", "current payment", "payment history", "receipt", "approved", "paid")
       payment_answer
     elsif includes_any?(normalized, "approve", "verify", "verification", "treasurer", "reject", "review")
       payment_review_answer
@@ -386,6 +388,8 @@ class MizoAiAssistant
       4. Portal-a total amount lo lang kha i bank app/ATM-ah transfer rawh.
       5. Transfer i zawh hnuah portal-ah transfer date, amount, leh reference name submit rawh.
       6. Treasurer/Finance team-in bank record nen verify hnuah Paid-ah a inthlak ang.
+      7. Paid a nih chuan notification-ah i hmu thei ang.
+      8. Finance team-in WhatsApp receipt an thawn thei, mahse receipt chu bank verification zawh hnuah chauh official a ni.
 
       Screenshot chu optional a ni, mahse transfer verify a awlsam zawk nan upload theih a ni.
 

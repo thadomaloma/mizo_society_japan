@@ -6,6 +6,7 @@ class MembershipPayment < ApplicationRecord
   belongs_to :user
   belongs_to :membership_plan
   belongs_to :approved_by, class_name: "User", optional: true
+  belongs_to :receipt_sent_by, class_name: "User", optional: true
   belongs_to :payment_batch, optional: true
 
   has_one_attached :transfer_screenshot
@@ -84,6 +85,18 @@ class MembershipPayment < ApplicationRecord
 
   def finance_reference_number
     "membership-payment-#{id || 'new'}"
+  end
+
+  def receipt_sendable?
+    paid? && user&.member_profile&.whatsapp_url.present?
+  end
+
+  def receipt_sent?
+    receipt_sent_at.present?
+  end
+
+  def mark_receipt_sent!(sender)
+    update!(receipt_sent_by: sender, receipt_sent_at: Time.current)
   end
 
   def period_label

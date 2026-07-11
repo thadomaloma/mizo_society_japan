@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_10_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_11_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -339,6 +339,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_120000) do
     t.integer "payment_method", default: 1, null: false
     t.integer "payment_month"
     t.integer "payment_year", null: false
+    t.datetime "receipt_sent_at"
+    t.bigint "receipt_sent_by_id"
     t.string "reference_number"
     t.integer "status", default: 0, null: false
     t.decimal "transfer_amount", precision: 10, scale: 2
@@ -351,6 +353,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_120000) do
     t.index ["membership_plan_id"], name: "index_membership_payments_on_membership_plan_id"
     t.index ["payment_batch_id"], name: "index_membership_payments_on_payment_batch_id"
     t.index ["payment_year"], name: "index_membership_payments_on_payment_year"
+    t.index ["receipt_sent_by_id"], name: "index_membership_payments_on_receipt_sent_by_id"
     t.index ["reference_number"], name: "index_membership_payments_on_reference_number"
     t.index ["status", "created_at"], name: "index_membership_payments_on_status_and_created_at"
     t.index ["transfer_reference_name"], name: "index_membership_payments_on_transfer_reference_name"
@@ -553,6 +556,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_120000) do
   add_foreign_key "membership_payments", "payment_batches"
   add_foreign_key "membership_payments", "users"
   add_foreign_key "membership_payments", "users", column: "approved_by_id"
+  add_foreign_key "membership_payments", "users", column: "receipt_sent_by_id"
   add_foreign_key "membership_plans", "membership_plan_types"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"

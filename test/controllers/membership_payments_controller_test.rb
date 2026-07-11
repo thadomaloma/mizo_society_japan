@@ -340,6 +340,53 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "option[value='#{@donation_plan.id}']", text: /Emergency Relief Donation/
   end
 
+  test "admin payment show uses WhatsApp receipt message without call button" do
+    @payment.update!(
+      status: :paid,
+      paid_on: Time.current,
+      approved_by: @president,
+      reference_number: "BANK-REF-123"
+    )
+    sign_in @president
+
+    get admin_membership_payment_path(@payment)
+
+    assert_response :success
+    assert_no_match(/>Call</, response.body)
+    assert_includes response.body, "WhatsApp"
+    assert_includes response.body, "Receipt ready"
+    assert_includes response.body, "I sent this receipt"
+    assert_includes response.body, "MSJ+Payment+Receipt"
+    assert_includes response.body, URI.encode_www_form_component(@plan.name)
+    assert_includes response.body, "Confirmed+by"
+  end
+
+  test "admin payment records show receipt state and can mark receipt sent" do
+    @payment.update!(
+      status: :paid,
+      paid_on: Time.current,
+      approved_by: @president
+    )
+    sign_in @president
+
+    get admin_membership_payments_path(status: "paid")
+
+    assert_response :success
+    assert_includes response.body, "Receipt ready"
+    assert_includes response.body, mark_receipt_sent_admin_membership_payment_path(@payment)
+
+    patch mark_receipt_sent_admin_membership_payment_path(@payment), headers: { "HTTP_REFERER" => admin_membership_payments_url(status: "paid") }
+
+    assert_redirected_to admin_membership_payments_path(status: "paid")
+    assert @payment.reload.receipt_sent?
+    assert_equal @president, @payment.receipt_sent_by
+
+    get admin_membership_payments_path(status: "paid")
+
+    assert_response :success
+    assert_includes response.body, "Receipt sent"
+  end
+
   test "admin payment records hide prepared combined payments until transfer is submitted" do
     plan = MembershipPlan.create!(
       name: "Prepared Batch Fund",

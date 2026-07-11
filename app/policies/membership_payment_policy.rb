@@ -35,6 +35,10 @@ class MembershipPaymentPolicy < ApplicationPolicy
     finance_approver? && record.pending_verification?
   end
 
+  def mark_receipt_sent?
+    finance_user? && record.receipt_sendable?
+  end
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       return scope.all if user&.finance_viewer?
