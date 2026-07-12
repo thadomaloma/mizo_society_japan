@@ -14,10 +14,18 @@
     </div>
 
     <div class="flex shrink-0 items-center gap-1 sm:gap-3">
-      <button type="button" data-action="theme#toggle" class="grid h-9 w-9 place-items-center rounded-xl border border-[#E2E8F0] bg-white text-slate-700 transition hover:border-red-200 hover:text-red-700 active:scale-95 dark:border-[#334155] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:text-red-400 sm:h-10 sm:w-10" title="Toggle dark mode" aria-label="Toggle dark mode">
-        <span data-theme-target="moonIcon"><%= icon_svg(:moon, classes: "h-5 w-5") %></span>
-        <span data-theme-target="sunIcon" class="hidden"><%= icon_svg(:sun, classes: "h-5 w-5") %></span>
-      </button>
+      <% if defined?(::RubyUI::Tooltip) %>
+        <%= render ::RubyUI::Tooltip.new(placement: "bottom") do %>
+          <%= render ::RubyUI::TooltipTrigger.new do %>
+            <%= render "shared/theme_toggle_button" %>
+          <% end %>
+          <%= render ::RubyUI::TooltipContent.new(class: "invisible pointer-events-none absolute left-0 top-0 z-50 w-max max-w-[calc(100vw-2rem)] rounded-md border border-[#334155] bg-[#0F172A] px-2.5 py-1.5 text-xs font-bold text-white shadow-lg data-[state=open]:visible dark:border-[#475569] dark:bg-[#F8FAFC] dark:text-[#0F172A]") do %>
+            Toggle dark mode
+          <% end %>
+        <% end %>
+      <% else %>
+        <%= render "shared/theme_toggle_button" %>
+      <% end %>
 
       <%= render "shared/quick_actions" unless current_user.member? %>
 

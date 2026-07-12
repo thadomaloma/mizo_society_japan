@@ -28,6 +28,18 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'href="/welfare_cases"'
   end
 
+  test "authenticated layout renders the RubyUI tooltip integration" do
+    sign_in @member
+
+    get root_path
+
+    assert_response :success
+    assert_select "[data-controller='ruby-ui--tooltip']", count: 1
+    assert_select "[data-ruby-ui--tooltip-target='trigger']", count: 1
+    assert_select "template[data-ruby-ui--tooltip-target='content']", count: 1
+    assert_select "button[data-action='theme#toggle'][aria-label]", count: 1
+  end
+
   test "member dashboard keeps documents low priority even when a visible document exists" do
     create_visible_document!
     sign_in @member

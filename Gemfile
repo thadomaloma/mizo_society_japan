@@ -23,6 +23,8 @@ gem "kamal", require: false
 gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 gem "aws-sdk-s3", require: false
+gem "phlex-rails", "~> 2.4"
+gem "tailwind_merge", "~> 1.5"
 
 group :development, :test do
   gem "dotenv-rails"
@@ -34,6 +36,7 @@ end
 
 group :development do
   gem "web-console"
+  gem "ruby_ui", "~> 1.4", require: false
 end
 
 group :test do
