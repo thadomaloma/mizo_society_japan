@@ -1,15 +1,17 @@
 <% content_for :page_title, "My Profile" %>
 
 <% completion = @member_profile.profile_completion_percentage %>
-<% detail_card_classes = "rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]" %>
-<% detail_item_classes = "rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]" %>
+<% detail_card_classes = "overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]" %>
+<% detail_item_classes = "min-w-0 border-b border-[#E2E8F0] py-3 last:border-b-0 dark:border-[#334155]" %>
+<% detail_label_classes = "text-[10px] font-extrabold uppercase tracking-[0.06em] text-[#64748B] dark:text-[#CBD5E1]" %>
+<% detail_value_classes = "mt-1 break-words text-sm font-bold leading-5 text-[#0F172A] dark:text-[#F8FAFC]" %>
 
 <div class="mx-auto max-w-6xl space-y-5">
-  <section class="overflow-hidden rounded-3xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
-    <div class="bg-gradient-to-r from-red-700 via-red-600 to-[#0F172A] px-4 py-5 text-white sm:px-6 sm:py-6">
+  <section class="overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <div class="border-t-4 border-red-600 bg-[#172033] px-4 py-5 text-white dark:border-red-500 dark:bg-[#020617] sm:px-6 sm:py-6">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex min-w-0 items-center gap-4">
-          <div class="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/15 text-2xl font-black text-white ring-2 ring-white/25 sm:h-24 sm:w-24">
+          <div class="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-lg bg-white/10 text-2xl font-black text-white ring-2 ring-white/20 sm:h-24 sm:w-24">
             <% if @member_profile.avatar.attached? %>
               <%= image_tag image_variant_or_original(@member_profile.avatar, resize_to_fill: [ 320, 320 ], saver: { quality: 84 }), class: "h-full w-full object-cover", alt: @member_profile.full_name, loading: "lazy", decoding: "async" %>
             <% else %>
@@ -19,14 +21,14 @@
 
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
-              <h1 class="truncate text-2xl font-black leading-tight tracking-tight sm:text-3xl"><%= @member_profile.full_name %></h1>
+              <h1 class="truncate text-2xl font-black leading-tight sm:text-3xl"><%= @member_profile.full_name %></h1>
               <%= render "shared/status_badge", status: @member_profile.status, compact: true %>
             </div>
-            <p class="mt-1 text-sm font-semibold text-white/80"><%= @member_profile.membership_number %> · <%= role_label(current_user.role) %></p>
-            <div class="mt-3 flex flex-wrap gap-2 text-xs font-black">
-              <span class="rounded-full bg-white/15 px-3 py-1 ring-1 ring-white/20"><%= @member_profile.family_status&.humanize || "Family status not set" %></span>
-              <span class="rounded-full bg-white/15 px-3 py-1 ring-1 ring-white/20"><%= @member_profile.city.presence || "City not set" %></span>
-              <span class="rounded-full bg-white/15 px-3 py-1 ring-1 ring-white/20">Joined <%= @member_profile.joined_on&.strftime("%Y") || "Not set" %></span>
+            <p class="mt-1 text-sm font-semibold text-slate-300"><%= @member_profile.membership_number %> · <%= role_label(current_user.role) %></p>
+            <div class="mt-3 flex flex-wrap gap-2 text-[11px] font-extrabold">
+              <span class="rounded-md bg-white/[0.07] px-2.5 py-1 text-slate-200 ring-1 ring-white/10"><%= @member_profile.family_status&.humanize || "Family status not set" %></span>
+              <span class="rounded-md bg-white/[0.07] px-2.5 py-1 text-slate-200 ring-1 ring-white/10"><%= @member_profile.city.presence || "City not set" %></span>
+              <span class="rounded-md bg-white/[0.07] px-2.5 py-1 text-slate-200 ring-1 ring-white/10">Joined <%= @member_profile.joined_on&.strftime("%Y") || "Not set" %></span>
             </div>
           </div>
         </div>
@@ -38,23 +40,23 @@
       </div>
     </div>
 
-    <div class="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_20rem]">
-      <div>
-        <p class="text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]">Member profile</p>
-        <p class="mt-1 text-sm font-semibold leading-6 text-[#64748B] dark:text-[#CBD5E1]">
+    <div class="grid gap-4 border-t border-[#E2E8F0] p-4 dark:border-[#334155] sm:p-5 lg:grid-cols-[1fr_22rem] lg:items-center">
+      <div class="min-w-0">
+        <p class="text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]">Member record</p>
+        <p class="mt-1 max-w-2xl text-sm font-medium leading-6 text-[#64748B] dark:text-[#CBD5E1]">
           Keep your personal, family, and address information updated for MSJ records.
         </p>
       </div>
 
-      <aside class="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 dark:border-[#334155] dark:bg-[#0F172A]">
+      <aside>
         <div class="flex items-center justify-between gap-3">
           <div>
-            <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-400">Completion</p>
-            <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= @member_profile.complete? ? "Profile is ready." : "Some details are missing." %></p>
+            <p class="msj-kicker">Profile completion</p>
+            <p class="mt-0.5 text-xs font-medium text-[#64748B] dark:text-[#CBD5E1]"><%= @member_profile.complete? ? "All required details are complete." : "Some required details are missing." %></p>
           </div>
-          <p class="text-2xl font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= completion %>%</p>
+          <p class="text-xl font-black tabular-nums text-[#0F172A] dark:text-[#F8FAFC]"><%= completion %>%</p>
         </div>
-        <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-[#334155]">
+        <div class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-[#334155]">
           <div class="h-full rounded-full bg-red-600" style="width: <%= completion %>%"></div>
         </div>
         <% unless @member_profile.complete? %>
@@ -70,53 +72,53 @@
   <section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
     <div class="space-y-5">
       <section class="<%= detail_card_classes %>">
-        <div class="mb-4 flex items-center gap-3">
-          <span class="grid h-10 w-10 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:members, classes: "h-5 w-5") %></span>
+        <div class="flex items-center gap-3 border-b border-[#E2E8F0] p-4 dark:border-[#334155]">
+          <span class="grid h-9 w-9 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:members, classes: "h-5 w-5") %></span>
           <div>
             <h2 class="text-base font-black text-[#0F172A] dark:text-[#F8FAFC]">Personal Details</h2>
             <p class="text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Basic contact and identity information.</p>
           </div>
         </div>
 
-        <dl class="grid gap-3 sm:grid-cols-2">
+        <dl class="grid px-4 sm:grid-cols-2">
           <% [
             [ "Mobile Number", @member_profile.mobile_number ],
             [ "Gender", @member_profile.gender&.humanize || "Not set" ],
             [ "Date of Birth", @member_profile.date_of_birth&.strftime("%b %d, %Y") || "Not set" ],
             [ "Joined On", @member_profile.joined_on&.strftime("%b %d, %Y") || "Not set" ]
           ].each do |label, value| %>
-            <div class="<%= detail_item_classes %>">
-              <dt class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></dt>
-              <dd class="mt-1 break-words text-sm font-black leading-6 text-[#0F172A] dark:text-[#F8FAFC]"><%= value %></dd>
+            <div class="<%= detail_item_classes %> sm:odd:pr-4 sm:even:border-l sm:even:pl-4">
+              <dt class="<%= detail_label_classes %>"><%= label %></dt>
+              <dd class="<%= detail_value_classes %>"><%= value %></dd>
             </div>
           <% end %>
         </dl>
       </section>
 
       <section class="<%= detail_card_classes %>">
-        <div class="mb-4 flex items-center gap-3">
-          <span class="grid h-10 w-10 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:home, classes: "h-5 w-5") %></span>
+        <div class="flex items-center gap-3 border-b border-[#E2E8F0] p-4 dark:border-[#334155]">
+          <span class="grid h-9 w-9 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:home, classes: "h-5 w-5") %></span>
           <div>
             <h2 class="text-base font-black text-[#0F172A] dark:text-[#F8FAFC]">Address</h2>
             <p class="text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Registered Japan address for MSJ records.</p>
           </div>
         </div>
 
-        <dl class="grid gap-3 sm:grid-cols-2">
+        <dl class="grid px-4 sm:grid-cols-2">
           <% [
             [ "Postal Code", @member_profile.postal_code ],
             [ "Prefecture", @member_profile.prefecture ],
             [ "City", @member_profile.city ],
             [ "Address Line 1", @member_profile.address_line1 ]
           ].each do |label, value| %>
-            <div class="<%= detail_item_classes %>">
-              <dt class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></dt>
-              <dd class="mt-1 break-words text-sm font-black leading-6 text-[#0F172A] dark:text-[#F8FAFC]"><%= value.presence || "Not set" %></dd>
+            <div class="<%= detail_item_classes %> sm:odd:pr-4 sm:even:border-l sm:even:pl-4">
+              <dt class="<%= detail_label_classes %>"><%= label %></dt>
+              <dd class="<%= detail_value_classes %>"><%= value.presence || "Not set" %></dd>
             </div>
           <% end %>
           <div class="<%= detail_item_classes %> sm:col-span-2">
-            <dt class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Address Line 2</dt>
-            <dd class="mt-1 break-words text-sm font-black leading-6 text-[#0F172A] dark:text-[#F8FAFC]"><%= @member_profile.address_line2.presence || "Not set" %></dd>
+            <dt class="<%= detail_label_classes %>">Address Line 2</dt>
+            <dd class="<%= detail_value_classes %>"><%= @member_profile.address_line2.presence || "Not set" %></dd>
           </div>
         </dl>
       </section>
@@ -124,15 +126,15 @@
 
     <aside class="space-y-5">
       <section class="<%= detail_card_classes %>">
-        <div class="mb-4 flex items-center gap-3">
-          <span class="grid h-10 w-10 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:members, classes: "h-5 w-5") %></span>
+        <div class="flex items-center gap-3 border-b border-[#E2E8F0] p-4 dark:border-[#334155]">
+          <span class="grid h-9 w-9 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= icon_svg(:members, classes: "h-5 w-5") %></span>
           <div>
             <h2 class="text-base font-black text-[#0F172A] dark:text-[#F8FAFC]">Family</h2>
             <p class="text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Household record.</p>
           </div>
         </div>
 
-        <dl class="space-y-3">
+        <dl class="px-4">
           <% [
             [ "Father's Name", @member_profile.father_name.presence || "Not set" ],
             [ "Mother's Name", @member_profile.mother_name.presence || "Not set" ],
@@ -140,8 +142,8 @@
             [ "Spouse Name", @member_profile.family? ? (@member_profile.spouse_name.presence || "Not set") : "Not applicable" ]
           ].each do |label, value| %>
             <div class="<%= detail_item_classes %>">
-              <dt class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= label %></dt>
-              <dd class="mt-1 break-words text-sm font-black leading-6 text-[#0F172A] dark:text-[#F8FAFC]"><%= value %></dd>
+              <dt class="<%= detail_label_classes %>"><%= label %></dt>
+              <dd class="<%= detail_value_classes %>"><%= value %></dd>
             </div>
           <% end %>
         </dl>
@@ -149,25 +151,25 @@
 
       <% if @member_profile.family? %>
         <section class="<%= detail_card_classes %>">
-          <div class="mb-4 flex items-center justify-between gap-3">
+          <div class="flex items-center justify-between gap-3 border-b border-[#E2E8F0] p-4 dark:border-[#334155]">
             <div>
               <h2 class="text-base font-black text-[#0F172A] dark:text-[#F8FAFC]">Children</h2>
               <p class="text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Family members listed on your profile.</p>
             </div>
-            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-black text-[#64748B] dark:bg-[#0F172A] dark:text-[#CBD5E1]"><%= @member_profile.child_family_members.size %></span>
+            <span class="rounded-md bg-slate-100 px-2 py-1 text-xs font-black text-[#64748B] dark:bg-[#0F172A] dark:text-[#CBD5E1]"><%= @member_profile.child_family_members.size %></span>
           </div>
 
           <% if @member_profile.child_family_members.any? %>
-            <div class="space-y-2">
+            <div class="divide-y divide-[#E2E8F0] px-4 dark:divide-[#334155]">
               <% @member_profile.child_family_members.each_with_index do |child, index| %>
-                <div class="flex items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 dark:border-[#334155] dark:bg-[#0F172A]">
-                  <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-red-600 text-xs font-black text-white"><%= index + 1 %></span>
+                <div class="flex items-center gap-3 py-3">
+                  <span class="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-red-50 text-[11px] font-black text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= index + 1 %></span>
                   <p class="min-w-0 truncate text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= child.name %></p>
                 </div>
               <% end %>
             </div>
           <% else %>
-            <p class="rounded-xl border border-dashed border-[#CBD5E1] p-4 text-sm font-semibold text-[#64748B] dark:border-[#334155] dark:text-[#CBD5E1]">No children added.</p>
+            <p class="p-4 text-sm font-medium text-[#64748B] dark:text-[#CBD5E1]">No children added.</p>
           <% end %>
         </section>
       <% end %>
