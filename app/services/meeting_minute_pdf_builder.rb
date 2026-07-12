@@ -7,6 +7,10 @@ class MeetingMinutePdfBuilder
   PAGE_HEIGHT = 841.89
   MARGIN = 56
   LINE_HEIGHT = 16
+  SIGNATURE_MIN_WIDTH = 72.0
+  SIGNATURE_MAX_WIDTH = 150.0
+  SIGNATURE_MAX_HEIGHT = 34.0
+  SIGNATURE_NAME_WIDTH_RATIO = 1.05
 
   def self.call(meeting_minute)
     new(meeting_minute).call
@@ -248,9 +252,9 @@ class MeetingMinutePdfBuilder
   def signature_block(x, name, title, attachment:)
     signature_drawn = draw_signature_image(attachment, x, @cursor_y, name)
     draw_text("Sd/-", x, @cursor_y + 20, size: 11, align: :center) unless signature_drawn
-    draw_text(name.to_s.upcase, x, @cursor_y - 34, size: 10.5, bold: true, align: :center)
-    draw_text(title, x, @cursor_y - 50, size: 10.5, align: :center)
-    draw_text("Mizo Society of Japan", x, @cursor_y - 66, size: 10.5, align: :center)
+    draw_text(name.to_s.upcase, x, @cursor_y - 24, size: 10.5, bold: true, align: :center)
+    draw_text(title, x, @cursor_y - 40, size: 10.5, align: :center)
+    draw_text("Mizo Society of Japan", x, @cursor_y - 56, size: 10.5, align: :center)
   end
 
   def draw_signature_image(attachment, center_x, baseline_y, display_name)
@@ -260,12 +264,11 @@ class MeetingMinutePdfBuilder
     return false if image.blank?
 
     max_width = signature_image_width_for(display_name)
-    max_height = 56.0
-    scale = [ max_width / image[:width], max_height / image[:height], 1.0 ].min
+    scale = [ max_width / image[:width], SIGNATURE_MAX_HEIGHT / image[:height], 1.0 ].min
     width = image[:width] * scale
     height = image[:height] * scale
     x = center_x - (width / 2)
-    y = baseline_y - 2
+    y = baseline_y + 2
 
     image_name = register_image(image)
     @current_content << "q #{format('%.2f', width)} 0 0 #{format('%.2f', height)} #{format('%.2f', x)} #{format('%.2f', y)} cm /#{image_name} Do Q\n"
@@ -276,7 +279,7 @@ class MeetingMinutePdfBuilder
 
   def signature_image_width_for(display_name)
     name_width = approximate_text_width(display_name.to_s.upcase, 10.5)
-    [ [ name_width * 1.4, 120.0 ].max, 210.0 ].min
+    [ [ name_width * SIGNATURE_NAME_WIDTH_RATIO, SIGNATURE_MIN_WIDTH ].max, SIGNATURE_MAX_WIDTH ].min
   end
 
   def draw_text(text, x, y, size:, bold: false, align: :left)

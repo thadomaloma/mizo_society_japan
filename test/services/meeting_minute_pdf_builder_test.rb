@@ -30,4 +30,29 @@ class MeetingMinutePdfBuilderTest < ActiveSupport::TestCase
       [ { text: "1) Pastor Tawnluia", bold: false } ]
     ], lines
   end
+
+  test "signature image width stays close to the displayed name" do
+    builder = MeetingMinutePdfBuilder.allocate
+
+    short_name_width = builder.send(:signature_image_width_for, "Secretary")
+    long_name_width = builder.send(:signature_image_width_for, "Dr. Lalramzaua Chhangte")
+
+    assert_equal MeetingMinutePdfBuilder::SIGNATURE_MIN_WIDTH, short_name_width
+    assert_operator long_name_width, :>, short_name_width
+    assert_operator long_name_width, :<=, MeetingMinutePdfBuilder::SIGNATURE_MAX_WIDTH
+  end
+
+  test "signature name is positioned close below the image" do
+    builder = MeetingMinutePdfBuilder.allocate
+    builder.instance_variable_set(:@current_content, +"")
+    builder.instance_variable_set(:@cursor_y, 200.0)
+    builder.define_singleton_method(:draw_signature_image) { |*, **| true }
+
+    builder.send(:signature_block, 160.0, "Chairman Name", "President", attachment: nil)
+    content = builder.instance_variable_get(:@current_content)
+
+    assert_includes content, "176.00 Td (CHAIRMAN NAME)"
+    assert_includes content, "160.00 Td (President)"
+    assert_includes content, "144.00 Td (Mizo Society of Japan)"
+  end
 end
