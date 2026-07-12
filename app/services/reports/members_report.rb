@@ -1,13 +1,15 @@
 module Reports
   class MembersReport
     def summary
-      profiles = MemberProfile.includes(:user)
-
-      {
+      @summary ||= {
         total_members: User.member.count,
+        total_profiles: profiles.count,
         active_members: profiles.active.count,
         inactive_members: profiles.where.not(status: :active).count,
         new_members_this_month: profiles.where(joined_on: Date.current.all_month).count,
+        gender: gender_summary,
+        registered_children: registered_children_count,
+        under_18_members: profiles.where("date_of_birth > ?", 18.years.ago.to_date).count,
         by_prefecture: profiles.group(:prefecture).count,
         by_city: profiles.group(:city).count,
         family_status: family_status_summary(profiles),
@@ -18,6 +20,20 @@ module Reports
 
     def to_csv
       ReportCsvExporter.call(
+        summary_rows: [
+          [ "MSJ Member Report" ],
+          [ "Generated On", Date.current.iso8601 ],
+          [ "Total Member Profiles", summary[:total_profiles] ],
+          [ "Active Members", summary[:active_members] ],
+          [ "Inactive or Suspended", summary[:inactive_members] ],
+          [ "Male", summary.dig(:gender, :male) ],
+          [ "Female", summary.dig(:gender, :female) ],
+          [ "Gender Not Recorded", summary.dig(:gender, :not_recorded) ],
+          [ "Single", summary.dig(:family_status, :single) ],
+          [ "Family", summary.dig(:family_status, :family) ],
+          [ "Registered Children", summary[:registered_children] ],
+          [ "Member Profiles Under 18", summary[:under_18_members] ]
+        ],
         headers: [
           "Membership Number",
           "Full Name",
@@ -32,11 +48,6 @@ module Reports
           "Spouse Name",
           "Children",
           "Status",
-          "Postal Code",
-          "Prefecture",
-          "City",
-          "Address Line 1",
-          "Address Line 2",
           "Full Address",
           "Joined On"
         ],
@@ -55,11 +66,6 @@ module Reports
             profile.spouse_name,
             child_names(profile),
             profile.status,
-            profile.postal_code,
-            profile.prefecture,
-            profile.city,
-            profile.address_line1,
-            profile.address_line2,
             profile.full_address,
             profile.joined_on
           ]
@@ -78,6 +84,27 @@ module Reports
       [ "60+", 60.. ],
       [ "Unknown", nil ]
     ].freeze
+
+    def profiles
+      @profiles ||= MemberProfile.includes(:user)
+    end
+
+    def gender_summary
+      counts = profiles.group(:gender).count
+
+      {
+        male: counts.fetch("male", counts.fetch(MemberProfile.genders[:male], 0)).to_i,
+        female: counts.fetch("female", counts.fetch(MemberProfile.genders[:female], 0)).to_i,
+        not_recorded: counts.fetch(nil, 0).to_i
+      }
+    end
+
+    def registered_children_count
+      FamilyMember
+        .where(member_profile_id: profiles.select(:id))
+        .where("LOWER(relationship) = ?", "child")
+        .count
+    end
 
     def family_status_summary(profiles)
       counts = profiles.group(:family_status).count

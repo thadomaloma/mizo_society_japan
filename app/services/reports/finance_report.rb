@@ -6,7 +6,7 @@ module Reports
     end
 
     def summary
-      {
+      @summary ||= {
         total_income: transactions.income.sum(:amount),
         total_expense: transactions.expense.sum(:amount),
         current_balance: FinanceTransaction.approved_income_total - FinanceTransaction.approved_expense_total,
@@ -19,6 +19,13 @@ module Reports
 
     def to_csv
       ReportCsvExporter.call(
+        summary_rows: [
+          [ "MSJ Finance Report" ],
+          [ "Period", start_date.iso8601, end_date.iso8601 ],
+          [ "Total Income", summary[:total_income] ],
+          [ "Total Expense", summary[:total_expense] ],
+          [ "Current Balance", summary[:current_balance] ]
+        ],
         headers: [ "Date", "Type", "Category", "Amount", "Status", "Reference", "Description" ],
         rows: transactions.includes(:finance_category).latest.map do |transaction|
           [

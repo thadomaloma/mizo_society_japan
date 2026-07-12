@@ -1,4 +1,5 @@
 require "test_helper"
+require "csv"
 
 module Admin
   class ReportsControllerTest < ActionDispatch::IntegrationTest
@@ -70,13 +71,70 @@ module Admin
 
       assert_response :success
       assert_includes response.media_type, "text/csv"
-      assert_includes response.body, "Postal Code"
-      assert_includes response.body, "Address Line 1"
       assert_includes response.body, "Full Address"
+      assert_not_includes response.body, "Postal Code"
+      assert_not_includes response.body, "Address Line 1"
+      assert_not_includes response.body, "Address Line 2"
+      assert_not_includes response.body, "Prefecture"
+      assert_not_includes response.body, "City"
       assert_includes response.body, "Father Report"
       assert_includes response.body, "Mother Report"
       assert_includes response.body, "Spouse Report"
       assert_includes response.body, "Child Report"
+
+      rows = CSV.parse(response.body)
+      assert_equal [ "MSJ Member Report" ], rows[0]
+      assert_equal "Total Member Profiles", rows[2][0]
+      assert_equal MemberProfile.count.to_s, rows[2][1]
+      assert_equal "Male", rows[5][0]
+      assert_equal "Female", rows[6][0]
+      assert_equal "Registered Children", rows[10][0]
+      assert_equal FamilyMember.where("LOWER(relationship) = ?", "child").count.to_s, rows[10][1]
+      assert_empty rows[12]
+      assert_equal [
+        "Membership Number", "Full Name", "Email", "Mobile Number", "Gender", "Date of Birth", "Age",
+        "Father's Name", "Mother's Name", "Family Status", "Spouse Name", "Children", "Status", "Full Address", "Joined On"
+      ], rows[13]
+    end
+
+    test "finance csv starts with summary totals before transaction rows" do
+      income_category = FinanceCategory.create!(name: "CSV Income", category_type: :income, active: true)
+      expense_category = FinanceCategory.create!(name: "CSV Expense", category_type: :expense, active: true)
+      FinanceTransaction.create!(
+        finance_category: income_category,
+        recorded_by: @president,
+        approved_by: @president,
+        transaction_type: :income,
+        amount: 12_500,
+        transaction_date: Date.current,
+        description: "Finance CSV income",
+        status: :approved
+      )
+      FinanceTransaction.create!(
+        finance_category: expense_category,
+        recorded_by: @president,
+        approved_by: @president,
+        transaction_type: :expense,
+        amount: 3_200,
+        transaction_date: Date.current,
+        description: "Finance CSV expense",
+        status: :approved
+      )
+      sign_in @president
+
+      get finance_admin_reports_path(format: :csv)
+
+      assert_response :success
+      rows = CSV.parse(response.body)
+      assert_equal [ "MSJ Finance Report" ], rows[0]
+      assert_equal [ "Period", Date.current.beginning_of_year.iso8601, Date.current.iso8601 ], rows[1]
+      assert_equal "Total Income", rows[2][0]
+      assert_equal "12500.0", rows[2][1]
+      assert_equal "Total Expense", rows[3][0]
+      assert_equal "3200.0", rows[3][1]
+      assert_equal "Current Balance", rows[4][0]
+      assert_empty rows[5]
+      assert_equal [ "Date", "Type", "Category", "Amount", "Status", "Reference", "Description" ], rows[6]
     end
 
     private
