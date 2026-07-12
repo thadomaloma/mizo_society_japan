@@ -8,17 +8,18 @@ module Admin
       @status = params[:status]
       @transaction_type = params[:transaction_type]
       @query = params[:query]
-      @finance_transactions = policy_scope(FinanceTransaction)
+      filtered_transactions = policy_scope(FinanceTransaction)
         .includes(:finance_category, :recorded_by, :approved_by)
         .search(@query)
         .by_status(@status)
         .by_type(@transaction_type)
         .latest
       @finance_summary = {
-        income: @finance_transactions.select(&:income?).sum(&:amount),
-        expense: @finance_transactions.select(&:expense?).sum(&:amount),
-        pending: @finance_transactions.count(&:pending?)
+        income: filtered_transactions.income.sum(:amount),
+        expense: filtered_transactions.expense.sum(:amount),
+        pending: filtered_transactions.pending.count
       }
+      @finance_transactions = paginate_relation(filtered_transactions)
     end
 
     def show

@@ -10,7 +10,7 @@ module Admin
       @year = params[:year]
       @plan_type_id = params[:plan_type_id]
       @query = params[:query]
-      @membership_payments = policy_scope(MembershipPayment)
+      filtered_payments = policy_scope(MembershipPayment)
         .includes({ membership_plan: :membership_plan_type }, user: :member_profile)
         .merge(visible_payment_records)
         .search(@query)
@@ -18,13 +18,13 @@ module Admin
         .by_plan_type(@plan_type_id)
         .latest
       if @status == "pending_verification"
-        @membership_payments = @membership_payments.by_status(@status).where(payment_batch_id: nil)
+        filtered_payments = filtered_payments.by_status(@status).where(payment_batch_id: nil)
       elsif @status == "all"
-        @membership_payments = @membership_payments.where.not(status: :pending_verification).or(
-          @membership_payments.pending_verification.where(payment_batch_id: nil)
+        filtered_payments = filtered_payments.where.not(status: :pending_verification).or(
+          filtered_payments.pending_verification.where(payment_batch_id: nil)
         )
       else
-        @membership_payments = @membership_payments.by_status(@status)
+        filtered_payments = filtered_payments.by_status(@status)
       end
       @payment_batches = policy_scope(PaymentBatch)
         .includes(:user, membership_payments: { membership_plan: :membership_plan_type })
@@ -32,11 +32,12 @@ module Admin
         .latest
       @payment_batches = PaymentBatch.none unless @status.in?([ "all", "pending_verification" ])
       @payment_summary = {
-        total: @membership_payments.count,
-        pending: @membership_payments.pending_verification.count + @payment_batches.count,
-        paid: @membership_payments.paid.count,
-        amount: @membership_payments.sum(&:amount) + @payment_batches.sum(&:total_amount)
+        total: filtered_payments.count,
+        pending: filtered_payments.pending_verification.count + @payment_batches.count,
+        paid: filtered_payments.paid.count,
+        amount: filtered_payments.sum(:amount) + @payment_batches.sum(:total_amount)
       }
+      @membership_payments = paginate_relation(filtered_payments)
       @years = MembershipPayment.distinct.order(payment_year: :desc).pluck(:payment_year)
       @plan_type_options = MembershipPlanType.active.latest
     end

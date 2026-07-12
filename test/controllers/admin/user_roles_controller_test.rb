@@ -18,6 +18,16 @@ class Admin::UserRolesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, @member.email
   end
 
+  test "user roles clamp invalid pagination values" do
+    sign_in @president
+
+    get admin_user_roles_path, params: { page: 999, per_page: 7 }
+
+    assert_response :success
+    assert_select "select[name=per_page] option[selected][value='25']"
+    assert_match(/\d+ \/ \d+/, response.body)
+  end
+
   test "member cannot view user roles" do
     sign_in @member
 

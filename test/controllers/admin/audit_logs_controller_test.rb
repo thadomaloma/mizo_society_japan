@@ -34,4 +34,18 @@ class Admin::AuditLogsControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name=action_name]", count: 0
     assert_select "select[name=user_id]", count: 0
   end
+
+  test "audit logs paginate while preserving filters" do
+    26.times { |index| AuditLog.create!(user: @admin, action: "pagination_action_#{index}") }
+    sign_in @admin
+
+    get admin_audit_logs_path, params: { action_query: "pagination_action", per_page: 25, page: 2 }
+
+    assert_response :success
+    assert_select "tbody tr", count: 1
+    assert_includes response.body, "Showing"
+    assert_includes response.body, "26-26"
+    assert_select "input[name=action_query][value='pagination_action']"
+    assert_select "select[name=per_page] option[selected][value='25']"
+  end
 end

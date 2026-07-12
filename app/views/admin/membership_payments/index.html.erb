@@ -25,7 +25,7 @@
 
   <%= render "shared/mobile_stats_panel", stats: payment_record_stats, title: "Payment Records", subtitle: "Review summary" %>
 
-  <%= form_with url: admin_membership_payments_path, method: :get, class: "grid grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] xl:grid-cols-[1fr_11rem_11rem_10rem_auto] xl:p-4" do |form| %>
+  <%= form_with url: admin_membership_payments_path, method: :get, class: "grid grid-cols-2 gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] xl:grid-cols-[minmax(16rem,1fr)_11rem_11rem_11rem_auto]" do |form| %>
     <%= form.search_field :query, value: @query, placeholder: "Search member, email, reference...", class: "col-span-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white dark:placeholder:text-slate-400 md:col-span-1 md:rounded-lg md:py-2" %>
     <% status_options = [
       [ "All records", "all" ],
@@ -38,10 +38,17 @@
     <%= form.select :status, options_for_select(status_options, @status), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
     <% if @years.many? %><%= form.select :year, options_for_select([ [ "All years", "" ] ] + @years.map { |year| [ year, year ] }, @year), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %><% end %>
     <% if @plan_type_options.many? %><%= form.select :plan_type_id, options_for_select([ [ "All plan types", "" ] ] + @plan_type_options.map { |type| [ type.name, type.id ] }, @plan_type_id), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %><% end %>
-    <%= form.button type: :submit, class: action_button_classes(:dark, full_width: true, extra: "col-span-2 px-3 xl:col-span-1 xl:w-auto") do %>
+    <div class="col-span-2 flex justify-end gap-2 xl:col-span-1">
+      <% if @query.present? || @status != "all" || @year.present? || @plan_type_id.present? %>
+        <%= link_to admin_membership_payments_path, class: action_button_classes(:secondary, size: :sm) do %>
+          <%= icon_svg(:x_mark, classes: "h-4 w-4") %><span>Reset</span>
+        <% end %>
+      <% end %>
+    <%= form.button type: :submit, class: action_button_classes(:dark, extra: "px-3") do %>
       <%= icon_svg(:filter, classes: "h-4 w-4") %>
       <span class="sm:inline">Filter</span>
     <% end %>
+    </div>
   <% end %>
 
   <% if @payment_batches.any? %>
@@ -61,7 +68,7 @@
   <% end %>
 
   <% if @membership_payments.any? %>
-    <div class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B] lg:block">
+    <div class="hidden overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B] lg:block">
       <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-[#334155]">
         <thead class="bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500 dark:bg-[#0F172A] dark:text-slate-300">
           <tr>
@@ -78,10 +85,14 @@
           <%= render partial: "payment_row", collection: @membership_payments, as: :payment %>
         </tbody>
       </table>
+      <%= render "shared/data_table_footer", pagination: @pagination, label: "payment records" %>
     </div>
 
     <div class="grid gap-2 lg:hidden">
       <%= render partial: "payment_card", collection: @membership_payments, as: :payment %>
+      <div class="mt-1 overflow-hidden rounded-lg border border-[#E2E8F0] dark:border-[#334155]">
+        <%= render "shared/data_table_footer", pagination: @pagination, label: "payment records" %>
+      </div>
     </div>
   <% else %>
     <%= render "shared/empty_state", title: "No payments found", message: "Try changing the filters or record a new payment." %>

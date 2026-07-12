@@ -1,0 +1,62 @@
+<% pagination = local_assigns.fetch(:pagination) %>
+<% label = local_assigns.fetch(:label, "records") %>
+<% query_parameters = request.query_parameters.except("page", "per_page") %>
+
+<footer class="flex flex-col gap-3 border-t border-[#E2E8F0] bg-[#F8FAFC] px-3 py-3 dark:border-[#334155] dark:bg-[#0F172A] sm:flex-row sm:items-center sm:justify-between sm:px-4">
+  <p class="text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">
+    <% if pagination[:total_count].zero? %>
+      No <%= label %>
+    <% else %>
+      Showing <span class="font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= pagination[:from] %>-<%= pagination[:to] %></span>
+      of <span class="font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= pagination[:total_count] %></span> <%= label %>
+    <% end %>
+  </p>
+
+  <div class="flex items-center justify-between gap-3 sm:justify-end">
+    <%= form_with url: request.path, method: :get, data: { controller: "auto-submit" }, class: "flex items-center gap-2" do |form| %>
+      <% query_parameters.each do |key, value| %>
+        <% Array(value).each do |entry| %>
+          <%= hidden_field_tag key, entry %>
+        <% end %>
+      <% end %>
+      <%= form.label :per_page, "Rows", class: "text-xs font-bold text-[#64748B] dark:text-[#CBD5E1]" %>
+      <%= form.select :per_page,
+        options_for_select(PaginatesRelations::ALLOWED_PAGE_SIZES, pagination[:per_page]),
+        {},
+        data: { action: "change->auto-submit#submit" },
+        class: "h-8 rounded-md border border-[#CBD5E1] bg-white px-2 text-xs font-bold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#1E293B] dark:text-[#F8FAFC]" %>
+    <% end %>
+
+    <nav class="flex items-center gap-1" aria-label="Table pagination">
+      <% previous_page = pagination[:page] - 1 %>
+      <% next_page = pagination[:page] + 1 %>
+      <% pager_classes = "inline-flex h-8 items-center justify-center gap-1 rounded-md border px-2.5 text-xs font-extrabold transition" %>
+
+      <% if pagination[:page] > 1 %>
+        <%= link_to url_for(query_parameters.merge(page: previous_page, per_page: pagination[:per_page])), class: "#{pager_classes} border-[#CBD5E1] bg-white text-[#0F172A] hover:border-slate-400 hover:bg-slate-50 dark:border-[#475569] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:bg-[#334155]", aria: { label: "Previous page" } do %>
+          <%= icon_svg(:arrow_left, classes: "h-3.5 w-3.5") %>
+          <span class="hidden sm:inline">Previous</span>
+        <% end %>
+      <% else %>
+        <span class="<%= pager_classes %> cursor-not-allowed border-[#E2E8F0] bg-slate-100 text-slate-400 dark:border-[#334155] dark:bg-[#1E293B] dark:text-slate-500" aria-disabled="true">
+          <%= icon_svg(:arrow_left, classes: "h-3.5 w-3.5") %>
+          <span class="hidden sm:inline">Previous</span>
+        </span>
+      <% end %>
+
+      <span class="min-w-14 text-center text-xs font-black tabular-nums text-[#0F172A] dark:text-[#F8FAFC]"><%= pagination[:page] %> / <%= pagination[:total_pages] %></span>
+
+      <% if pagination[:page] < pagination[:total_pages] %>
+        <%= link_to url_for(query_parameters.merge(page: next_page, per_page: pagination[:per_page])), class: "#{pager_classes} border-[#CBD5E1] bg-white text-[#0F172A] hover:border-slate-400 hover:bg-slate-50 dark:border-[#475569] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:bg-[#334155]", aria: { label: "Next page" } do %>
+          <span class="hidden sm:inline">Next</span>
+          <%= icon_svg(:arrow_right, classes: "h-3.5 w-3.5") %>
+        <% end %>
+      <% else %>
+        <span class="<%= pager_classes %> cursor-not-allowed border-[#E2E8F0] bg-slate-100 text-slate-400 dark:border-[#334155] dark:bg-[#1E293B] dark:text-slate-500" aria-disabled="true">
+          <span class="hidden sm:inline">Next</span>
+          <%= icon_svg(:arrow_right, classes: "h-3.5 w-3.5") %>
+        </span>
+      <% end %>
+    </nav>
+  </div>
+</footer>

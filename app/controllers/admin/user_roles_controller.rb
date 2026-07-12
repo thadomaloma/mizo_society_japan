@@ -6,7 +6,7 @@ module Admin
       authorize :user_role
       @query = params[:query].to_s.strip
       @role = params[:role].to_s
-      @users = filtered_users
+      @users = paginate_relation(filtered_users)
       @role_options = role_options
     end
 
