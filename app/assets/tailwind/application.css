@@ -392,9 +392,15 @@ body {
   }
 
   .finance-report-page {
+    width: 194mm !important;
+    min-width: 194mm !important;
+    max-width: 194mm !important;
+    margin: 0 !important;
     background: #FFFFFF !important;
     color: #0F172A !important;
     color-scheme: light !important;
+    text-size-adjust: 100% !important;
+    -webkit-text-size-adjust: 100% !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -412,21 +418,27 @@ body {
   .finance-report-page > div,
   .finance-report-page > div > div {
     display: block !important;
+    width: 194mm !important;
+    min-width: 194mm !important;
+    max-width: 194mm !important;
     min-height: 0 !important;
     padding-left: 0 !important;
   }
 
   .finance-report-page main {
-    width: 100% !important;
-    max-width: none !important;
+    width: 194mm !important;
+    min-width: 194mm !important;
+    max-width: 194mm !important;
     padding: 0 !important;
     overflow: visible !important;
   }
 
   .finance-report,
   .finance-report-sheet {
-    width: 100% !important;
-    max-width: none !important;
+    box-sizing: border-box !important;
+    width: 194mm !important;
+    min-width: 194mm !important;
+    max-width: 194mm !important;
     margin: 0 !important;
     border: 0 !important;
     border-radius: 0 !important;
@@ -491,6 +503,16 @@ body {
 
   .finance-report-chart {
     padding: 2.5mm !important;
+  }
+
+  .finance-report-chart > div {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .finance-report-chart > div > div:last-child {
+    flex-wrap: nowrap !important;
   }
 
   .finance-report-details {
