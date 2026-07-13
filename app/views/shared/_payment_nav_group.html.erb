@@ -1,0 +1,42 @@
+<% group_active = items.any? { |item| payment_nav_active?(item) } %>
+<% row_height = mobile ? "min-h-11 py-2.5 text-sm" : "min-h-10 py-2 text-[13px]" %>
+
+<details class="group/payment-nav" <%= "open" if group_active %>>
+  <summary class="flex cursor-pointer list-none items-center gap-3 rounded-lg px-3 <%= row_height %> font-extrabold transition [&::-webkit-details-marker]:hidden <%= group_active ? "bg-red-600 text-white shadow-sm shadow-red-950/20" : "text-slate-300 hover:bg-white/[0.07] hover:text-white" %>">
+    <span class="<%= group_active ? "text-white" : "text-slate-300 group-hover/payment-nav:text-white" %>">
+      <%= icon_svg(:credit_card, classes: mobile ? "h-[18px] w-[18px]" : "h-5 w-5") %>
+    </span>
+    <span class="min-w-0 flex-1">Payments</span>
+    <%= icon_svg(:chevron_down, classes: "h-4 w-4 shrink-0 transition-transform duration-200 group-open/payment-nav:rotate-180") %>
+  </summary>
+
+  <div class="ml-5 mt-1 space-y-0.5 border-l border-white/[0.09] pl-3">
+    <% items.each do |item| %>
+      <% accessible = nav_item_visible?(item) %>
+      <% active = payment_nav_active?(item) %>
+      <% display_label = item[:label] == "Payments" ? "My Payments" : item[:label] %>
+      <% display_icon = item[:label] == "Payments" ? :banknotes : (item[:label] == "Payment Records" ? :documents : item[:icon]) %>
+
+      <% if accessible %>
+        <%= link_to item[:path],
+          aria: { current: ("page" if active) },
+          data: (mobile ? { action: "click->mobile-menu#close" } : {}),
+          class: "group/payment-link flex items-center gap-2.5 rounded-lg px-2.5 #{mobile ? "min-h-10 py-2 text-[13px]" : "min-h-9 py-1.5 text-xs"} font-bold transition #{active ? "bg-white/[0.10] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}" do %>
+          <span class="<%= active ? "text-red-300" : "text-slate-500 group-hover/payment-link:text-slate-300" %>">
+            <%= icon_svg(display_icon, classes: "h-4 w-4") %>
+          </span>
+          <span class="min-w-0 flex-1 truncate"><%= display_label %></span>
+          <% if active %>
+            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-red-400" aria-hidden="true"></span>
+          <% end %>
+        <% end %>
+      <% else %>
+        <span class="flex items-center gap-2.5 rounded-lg px-2.5 <%= mobile ? "min-h-10 py-2 text-[13px]" : "min-h-9 py-1.5 text-xs" %> font-bold text-slate-600" title="Not available for <%= role_label(current_user.role) %>">
+          <%= icon_svg(display_icon, classes: "h-4 w-4") %>
+          <span class="min-w-0 flex-1 truncate"><%= display_label %></span>
+          <%= icon_svg(:lock, classes: "h-3.5 w-3.5") %>
+        </span>
+      <% end %>
+    <% end %>
+  </div>
+</details>

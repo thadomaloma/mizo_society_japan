@@ -181,6 +181,19 @@ module ApplicationHelper
     false
   end
 
+  def payment_nav_active?(item)
+    case item[:label]
+    when "Payments"
+      controller_path.in?(%w[membership_payments payment_batches])
+    when "Payment Records"
+      controller_path.in?(%w[admin/membership_payments admin/payment_batches])
+    when "Payment Plans"
+      controller_path == "admin/membership_plans"
+    else
+      nav_active?(item)
+    end
+  end
+
   def visible_documents_available?(user = current_user)
     user.present? && Document.visible_to(user).exists?
   end

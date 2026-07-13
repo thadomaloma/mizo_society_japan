@@ -3,12 +3,16 @@ require "json"
 
 class MizoAiAssistant
   OPENAI_ENDPOINT = URI("https://api.openai.com/v1/chat/completions")
+  BANK_TRANSFER_QUESTIONS = [
+    { key: :yuucho_transfer, text: "Yuucho bank atangin transfer engtin nge ka tih ang?", answer: :yuucho_transfer_answer },
+    { key: :other_bank_transfer, text: "Bank dang atangin transfer engtin nge ka tih ang?", answer: :other_bank_transfer_answer }
+  ].map(&:freeze).freeze
+
   ROLE_QUESTION_CATALOG = {
     member: [
       { key: :member_access, text: "Member account hian eng nge ka tih theih?", answer: :member_general_answer },
       { key: :pay_together, text: "Fee leh fund te vawi khat bank transfer-in engtin nge ka pek ang?", answer: :payment_answer },
-      { key: :yuucho_transfer, text: "Yuucho bank atangin transfer engtin nge ka tih ang?", answer: :yuucho_transfer_answer },
-      { key: :other_bank_transfer, text: "Bank dang atangin transfer engtin nge ka tih ang?", answer: :other_bank_transfer_answer },
+      *BANK_TRANSFER_QUESTIONS,
       { key: :submit_and_track, text: "Transfer zawh hnuah eng nge ka submit a, status engtin nge ka check ang?", answer: :payment_submission_status_answer },
       { key: :family_fee, text: "Kum 14+ child membership fee hi engtin nge ka pek ang?", answer: :family_fee_answer },
       { key: :welfare_request, text: "Welfare support private taka engtin nge ka dil ang?", answer: :welfare_answer },
@@ -27,7 +31,8 @@ class MizoAiAssistant
       { key: :manage_letters, text: "Official letter siam leh download dan min hrilh rawh.", answer: :letters_answer },
       { key: :manage_roles, text: "User role assign, change leh deactivate dan min hrilh rawh.", answer: :role_management_answer },
       { key: :governance, text: "Settings, Permissions leh Audit Logs hman dan eng nge?", answer: :settings_answer },
-      { key: :admin_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer }
+      { key: :admin_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer },
+      *BANK_TRANSFER_QUESTIONS
     ],
     finance_admin: [
       { key: :finance_access, text: "Finance Admin daily workflow leh access chin min hrilh rawh.", answer: :finance_admin_general_answer },
@@ -37,7 +42,8 @@ class MizoAiAssistant
       { key: :family_fee_setup, text: "Kum 14+ child membership fee engtin nge ka setup ang?", answer: :family_fee_answer },
       { key: :transactions, text: "Income leh expense transaction record dan min hrilh rawh.", answer: :finance_transactions_answer },
       { key: :finance_reports, text: "Finance report leh CSV export engtin nge ka hman ang?", answer: :reports_answer },
-      { key: :finance_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer }
+      { key: :finance_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer },
+      *BANK_TRANSFER_QUESTIONS
     ],
     assistant_secretary: [
       { key: :assistant_access, text: "Assistant Secretary daily workflow leh access chin min hrilh rawh.", answer: :assistant_secretary_general_answer },
@@ -45,7 +51,8 @@ class MizoAiAssistant
       { key: :manage_minutes, text: "Meeting minutes siam leh publish dan min hrilh rawh.", answer: :minutes_answer },
       { key: :manage_updates, text: "Events leh announcements manage dan eng nge?", answer: :event_announcement_management_answer },
       { key: :manage_letters, text: "Official letter siam leh download dan min hrilh rawh.", answer: :letters_answer },
-      { key: :assistant_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer }
+      { key: :assistant_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer },
+      *BANK_TRANSFER_QUESTIONS
     ],
     office_bearer_viewer: [
       { key: :observer_access, text: "Vice President/Journal Secretary access leh responsibility eng nge?", answer: :observer_general_answer },
@@ -54,7 +61,8 @@ class MizoAiAssistant
       { key: :view_welfare, text: "Welfare records view-only anga en dan eng nge?", answer: :welfare_answer },
       { key: :view_reports, text: "Reports ka hmuh leh export theih chin eng nge?", answer: :reports_answer },
       { key: :observer_updates, text: "Events leh announcements engtin nge ka en ang?", answer: :member_events_updates_answer },
-      { key: :observer_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer }
+      { key: :observer_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer },
+      *BANK_TRANSFER_QUESTIONS
     ],
     executive: [
       { key: :executive_access, text: "Executive Committee member access leh responsibility eng nge?", answer: :executive_general_answer },
@@ -62,7 +70,8 @@ class MizoAiAssistant
       { key: :executive_minutes, text: "Minutes ka en/download theih chin eng nge?", answer: :minutes_answer },
       { key: :executive_welfare, text: "Welfare records view-only anga en dan eng nge?", answer: :welfare_answer },
       { key: :executive_reports, text: "Reports ka hmuh leh export theih chin eng nge?", answer: :reports_answer },
-      { key: :executive_updates, text: "Events leh announcements engtin nge ka en ang?", answer: :member_events_updates_answer }
+      { key: :executive_updates, text: "Events leh announcements engtin nge ka en ang?", answer: :member_events_updates_answer },
+      *BANK_TRANSFER_QUESTIONS
     ]
   }.transform_values { |questions| questions.map(&:freeze).freeze }.freeze
 

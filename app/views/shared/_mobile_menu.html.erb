@@ -17,7 +17,14 @@
 
     <% mobile_menu_items = admin_portal_user? ? admin_nav_items + portal_nav_items.select { |item| item[:label] == "Profile" } : portal_nav_items %>
     <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Mobile menu">
+      <% payment_labels = [ "Payments", "Payment Records", "Payment Plans" ] %>
+      <% payment_items = mobile_menu_items.select { |item| item[:label].in?(payment_labels) } %>
       <% mobile_menu_items.each do |item| %>
+        <% if admin_portal_user? && item[:label] == "Payments" %>
+          <%= render "shared/payment_nav_group", items: payment_items, mobile: true %>
+          <% next %>
+        <% end %>
+        <% next if admin_portal_user? && item[:label].in?(payment_labels) %>
         <% next if item[:label] == "Settings" && !current_user.super_admin? %>
         <% accessible = !admin_portal_user? || item[:label] == "Profile" || nav_item_visible?(item) %>
         <% active = nav_active?(item) || (item[:label] == "Settings" && settings_section_active?) %>

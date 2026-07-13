@@ -11,7 +11,14 @@
 
   <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Primary navigation">
     <% if admin_portal_user? %>
+      <% payment_labels = [ "Payments", "Payment Records", "Payment Plans" ] %>
+      <% payment_items = admin_nav_items.select { |item| item[:label].in?(payment_labels) } %>
       <% admin_nav_items.each do |item| %>
+        <% if item[:label] == "Payments" %>
+          <%= render "shared/payment_nav_group", items: payment_items, mobile: false %>
+          <% next %>
+        <% end %>
+        <% next if item[:label].in?(payment_labels) %>
         <% next if item[:label] == "Settings" && !current_user.super_admin? %>
         <% accessible = nav_item_visible?(item) %>
         <% active = nav_active?(item) || (item[:label] == "Settings" && settings_section_active?) %>

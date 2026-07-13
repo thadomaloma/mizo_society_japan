@@ -39,6 +39,8 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Super Admin daily checklist"
     assert_includes response.body, "User role assign, change leh deactivate"
     assert_includes response.body, "Settings, Permissions leh Audit Logs"
+    assert_includes response.body, "Yuucho bank atangin transfer engtin nge ka tih ang?"
+    assert_includes response.body, "Bank dang atangin transfer engtin nge ka tih ang?"
     assert_no_match(/Member account hian eng nge/, response.body)
   end
 
@@ -51,6 +53,8 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Finance Admin daily workflow"
     assert_includes response.body, "Combined transfer verify, approve leh reject"
+    assert_includes response.body, "Yuucho bank atangin transfer engtin nge ka tih ang?"
+    assert_includes response.body, "Bank dang atangin transfer engtin nge ka tih ang?"
     assert_no_match(/User role assign/, response.body)
     assert_no_match(/Audit Logs hman dan/, response.body)
   end
@@ -65,6 +69,8 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Vice President/Journal Secretary"
+    assert_includes response.body, "Yuucho bank atangin transfer engtin nge ka tih ang?"
+    assert_includes response.body, "Bank dang atangin transfer engtin nge ka tih ang?"
     assert_includes response.body, "view-only"
     assert_includes response.body, "Own Payments"
   end
@@ -79,6 +85,8 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Executive Committee member"
+    assert_includes response.body, "Yuucho bank atangin transfer engtin nge ka tih ang?"
+    assert_includes response.body, "Bank dang atangin transfer engtin nge ka tih ang?"
     assert_includes response.body, "view-only"
     assert_includes response.body, "CSV export"
   end
