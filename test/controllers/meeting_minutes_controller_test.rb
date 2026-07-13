@@ -72,7 +72,7 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
   test "invalid minute with pending signatures rerenders without generating signed ids" do
     sign_in @president
     signature = Rack::Test::UploadedFile.new(
-      Rails.root.join("public/icons/msj-portal-512x512-20260709.png"),
+      Rails.root.join("public/icons/msj-portal-512x512-20260713.png"),
       "image/png"
     )
 
@@ -169,7 +169,7 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
 
   test "authorised minutes viewers can export the record as an A4 PDF" do
     minute = create_minute(status: :published)
-    signature_file = Rails.root.join("public/icons/msj-portal-512x512-20260709.png")
+    signature_file = Rails.root.join("public/icons/msj-portal-512x512-20260713.png")
     minute.chairman_signature.attach(
       io: File.open(signature_file),
       filename: "chairman-signature.png",

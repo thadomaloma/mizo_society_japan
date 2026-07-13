@@ -23,7 +23,7 @@ class MeetingMinuteTest < ActiveSupport::TestCase
 
   test "clear PNG signature uploads are accepted" do
     minute = signature_test_minute
-    signature_file = Rails.root.join("public/icons/msj-portal-512x512-20260709.png")
+    signature_file = Rails.root.join("public/icons/msj-portal-512x512-20260713.png")
     minute.chairman_signature.attach(
       io: File.open(signature_file),
       filename: "signature.png",
