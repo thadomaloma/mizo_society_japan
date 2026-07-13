@@ -20,6 +20,7 @@ module Admin
       get finance_admin_reports_path
       assert_response :success
       assert_not_includes response.body, "Export CSV"
+      assert_not_includes response.body, "Print A4"
 
       get finance_admin_reports_path(format: :csv)
       assert_redirected_to root_path
@@ -125,16 +126,44 @@ module Admin
       get finance_admin_reports_path(format: :csv)
 
       assert_response :success
-      rows = CSV.parse(response.body)
+      assert_equal "text/csv", response.media_type
+      assert response.body.start_with?("\uFEFF")
+      rows = CSV.parse(response.body.delete_prefix("\uFEFF"))
       assert_equal [ "MSJ Finance Report" ], rows[0]
-      assert_equal [ "Period", Date.current.beginning_of_year.iso8601, Date.current.iso8601 ], rows[1]
-      assert_equal "Total Income", rows[2][0]
-      assert_equal "12500.0", rows[2][1]
-      assert_equal "Total Expense", rows[3][0]
-      assert_equal "3200.0", rows[3][1]
-      assert_equal "Current Balance", rows[4][0]
-      assert_empty rows[5]
-      assert_equal [ "Date", "Type", "Category", "Amount", "Status", "Reference", "Description" ], rows[6]
+      assert_equal [ "Reporting Period", Date.current.beginning_of_year.iso8601, Date.current.iso8601 ], rows[1]
+      assert_equal "Generated At", rows[2][0]
+      assert_equal [ "Currency", "JPY" ], rows[3]
+      assert_equal [ "Basis", "Approved transactions only" ], rows[4]
+      assert_equal [ "Transaction Count", "2" ], rows[5]
+      assert_equal [ "Period Income", "12500" ], rows[6]
+      assert_equal [ "Period Expense", "3200" ], rows[7]
+      assert_equal [ "Period Net", "9300" ], rows[8]
+      assert_equal "Current Balance (All Time)", rows[9][0]
+      assert_empty rows[10]
+      assert_equal [
+        "Date", "Type", "Category", "Amount (JPY)", "Status", "Reference",
+        "Description", "Recorded By", "Approved By"
+      ], rows[11]
+    end
+
+    test "finance report renders professional summary chart and A4 print control" do
+      sign_in @president
+
+      get finance_admin_reports_path
+
+      assert_response :success
+      assert_select "body.finance-report-page"
+      assert_select "[data-controller='report-print']"
+      assert_select "button[data-action='click->report-print#open']", text: /Print A4/
+      assert_select ".app-mobile-nav"
+      assert_select ".finance-report-chart.overflow-hidden"
+      assert_select ".finance-report-chart > .flex-col"
+      assert_select "svg[aria-label='Monthly income and expense chart']"
+      assert_includes response.body, "Period Income"
+      assert_includes response.body, "Period Expense"
+      assert_includes response.body, "Period Net"
+      assert_includes response.body, "All-time Balance"
+      assert_includes response.body, "Approved Transactions"
     end
 
     private

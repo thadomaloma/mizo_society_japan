@@ -22,7 +22,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="min-h-screen bg-[#F8FAFC] text-[#0F172A] antialiased transition-colors duration-200 dark:bg-[#0F172A] dark:text-[#F8FAFC]">
+  <body class="min-h-screen bg-[#F8FAFC] text-[#0F172A] antialiased transition-colors duration-200 dark:bg-[#0F172A] dark:text-[#F8FAFC] <%= content_for(:body_class) %>">
     <% if user_signed_in? %>
       <div class="min-h-screen lg:flex" data-controller="global-search mobile-menu">
         <%= render "shared/sidebar" %>

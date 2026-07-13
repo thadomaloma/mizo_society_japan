@@ -3,17 +3,19 @@
 module RubyUI
   class Button < Base
     BASE_CLASSES = [
-      "whitespace-nowrap inline-flex items-center justify-center rounded-md font-medium transition-colors",
+      "inline-flex shrink-0 items-center justify-center whitespace-nowrap font-extrabold transition duration-150",
+      "focus:outline-none focus:ring-2 focus:ring-offset-2 active:translate-y-px",
       "disabled:pointer-events-none disabled:opacity-50",
-      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-      "aria-disabled:pointer-events-none aria-disabled:opacity-50 aria-disabled:cursor-not-allowed"
+      "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
+      "dark:focus:ring-offset-[#0F172A]"
     ].freeze
 
-    def initialize(type: :button, variant: :primary, size: :md, icon: false, **attrs)
+    def initialize(type: :button, variant: :primary, size: :sm, icon: false, full_width: false, **attrs)
       @type = type
       @variant = variant.to_sym
       @size = size.to_sym
       @icon = icon
+      @full_width = full_width
       super(**attrs)
     end
 
@@ -26,88 +28,39 @@ module RubyUI
     def size_classes
       if @icon
         case @size
-        when :sm then "h-6 w-6"
-        when :md then "h-9 w-9"
-        when :lg then "h-10 w-10"
-        when :xl then "h-12 w-12"
+        when :xs then "h-8 w-8 rounded-md"
+        when :sm then "h-9 w-9 rounded-lg"
+        else "h-10 w-10 rounded-lg"
         end
       else
         case @size
-        when :sm then "px-3 py-1.5 h-8 text-xs"
-        when :md then "px-4 py-2 h-9 text-sm"
-        when :lg then "px-4 py-2 h-10 text-base"
-        when :xl then "px-6 py-3 h-12 text-base"
+        when :xs then "min-h-8 gap-1.5 rounded-md px-2.5 py-1.5 text-xs"
+        when :sm then "min-h-9 gap-1.5 rounded-lg px-3 py-2 text-xs sm:text-[13px]"
+        else "min-h-10 gap-2 rounded-lg px-3.5 py-2.5 text-sm"
         end
       end
     end
 
-    def primary_classes
-      [
-        BASE_CLASSES,
-        size_classes,
-        "bg-primary text-primary-foreground shadow",
-        "hover:bg-primary/90"
-      ]
-    end
-
-    def link_classes
-      [
-        BASE_CLASSES,
-        size_classes,
-        "text-primary underline-offset-4",
-        "hover:underline"
-      ]
-    end
-
-    def secondary_classes
-      [
-        BASE_CLASSES,
-        size_classes,
-        "bg-secondary text-secondary-foreground",
-        "hover:bg-opacity-80"
-      ]
-    end
-
-    def destructive_classes
-      [
-        BASE_CLASSES,
-        size_classes,
-        "bg-destructive text-white shadow-sm",
-        "[a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20",
-        "dark:focus-visible:ring-destructive/40 dark:bg-destructive/60"
-      ]
-    end
-
-    def outline_classes
-      [
-        BASE_CLASSES,
-        size_classes,
-        "border border-input bg-background shadow-sm",
-        "hover:bg-accent hover:text-accent-foreground"
-      ]
-    end
-
-    def ghost_classes
-      [
-        BASE_CLASSES,
-        size_classes,
-        "hover:bg-accent hover:text-accent-foreground"
-      ]
-    end
-
-    def default_classes
-      case @variant
-      when :primary then primary_classes
-      when :link then link_classes
-      when :secondary then secondary_classes
-      when :destructive then destructive_classes
-      when :outline then outline_classes
-      when :ghost then ghost_classes
-      end
+    def variant_classes
+      {
+        primary: "bg-red-600 text-white shadow-sm shadow-red-950/10 hover:bg-red-700 focus:ring-red-600 dark:bg-red-600 dark:hover:bg-red-500",
+        secondary: "border border-[#CBD5E1] bg-white text-[#0F172A] shadow-sm hover:border-slate-400 hover:bg-slate-50 focus:ring-red-600 dark:border-[#475569] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:bg-[#334155]",
+        outline: "border border-[#CBD5E1] bg-white text-[#0F172A] shadow-sm hover:border-slate-400 hover:bg-slate-50 focus:ring-red-600 dark:border-[#475569] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:bg-[#334155]",
+        dark: "bg-[#172033] text-white shadow-sm hover:bg-[#263247] focus:ring-slate-600 dark:bg-[#334155] dark:hover:bg-[#475569]",
+        success: "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus:ring-emerald-600",
+        danger: "bg-red-700 text-white shadow-sm hover:bg-red-800 focus:ring-red-600 dark:bg-red-600 dark:hover:bg-red-500",
+        destructive: "bg-red-700 text-white shadow-sm hover:bg-red-800 focus:ring-red-600 dark:bg-red-600 dark:hover:bg-red-500",
+        ghost: "text-red-700 hover:bg-red-50 focus:ring-red-600 dark:text-red-400 dark:hover:bg-red-500/10",
+        link: "text-red-700 hover:bg-red-50 focus:ring-red-600 dark:text-red-400 dark:hover:bg-red-500/10",
+        outline_danger: "border border-red-200 bg-white text-red-700 hover:bg-red-50 focus:ring-red-600 dark:border-red-500/40 dark:bg-[#1E293B] dark:text-red-400 dark:hover:bg-red-500/10"
+      }.fetch(@variant, "bg-red-600 text-white shadow-sm hover:bg-red-700 focus:ring-red-600")
     end
 
     def default_attrs
-      {type: @type, class: default_classes}
+      {
+        type: @type,
+        class: [ BASE_CLASSES, size_classes, variant_classes, ("w-full" if @full_width) ]
+      }
     end
   end
 end

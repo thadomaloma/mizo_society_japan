@@ -14,17 +14,13 @@
     </div>
 
     <div class="flex shrink-0 items-center gap-1 sm:gap-3">
-      <% if defined?(::RubyUI::Tooltip) %>
-        <%= render ::RubyUI::Tooltip.new(placement: "bottom") do %>
-          <%= render ::RubyUI::TooltipTrigger.new do %>
-            <%= render "shared/theme_toggle_button" %>
-          <% end %>
-          <%= render ::RubyUI::TooltipContent.new(class: "invisible pointer-events-none absolute left-0 top-0 z-50 w-max max-w-[calc(100vw-2rem)] rounded-md border border-[#334155] bg-[#0F172A] px-2.5 py-1.5 text-xs font-bold text-white shadow-lg data-[state=open]:visible dark:border-[#475569] dark:bg-[#F8FAFC] dark:text-[#0F172A]") do %>
-            Toggle dark mode
-          <% end %>
+      <%= render ::RubyUI::Tooltip.new(placement: "bottom") do %>
+        <%= render ::RubyUI::TooltipTrigger.new do %>
+          <%= render "shared/theme_toggle_button" %>
         <% end %>
-      <% else %>
-        <%= render "shared/theme_toggle_button" %>
+        <%= render ::RubyUI::TooltipContent.new(class: "invisible pointer-events-none absolute left-0 top-0 z-50 w-max max-w-[calc(100vw-2rem)] rounded-md border border-[#334155] bg-[#0F172A] px-2.5 py-1.5 text-xs font-bold text-white shadow-lg data-[state=open]:visible dark:border-[#475569] dark:bg-[#F8FAFC] dark:text-[#0F172A]") do %>
+          Toggle dark mode
+        <% end %>
       <% end %>
 
       <%= render "shared/quick_actions" unless current_user.member? %>

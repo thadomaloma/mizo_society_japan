@@ -1,41 +1,65 @@
 module Reports
   class FinanceReport
+    attr_reader :start_date, :end_date
+
     def initialize(start_date: nil, end_date: nil)
-      @start_date = parse_date(start_date) || Date.current.beginning_of_year
-      @end_date = parse_date(end_date) || Date.current
+      requested_start = parse_date(start_date) || Date.current.beginning_of_year
+      requested_end = parse_date(end_date) || Date.current
+      @start_date, @end_date = [ requested_start, requested_end ].minmax
     end
 
     def summary
+      return @summary if defined?(@summary)
+
+      total_income = transactions.income.sum(:amount)
+      total_expense = transactions.expense.sum(:amount)
+
       @summary ||= {
-        total_income: transactions.income.sum(:amount),
-        total_expense: transactions.expense.sum(:amount),
+        total_income: total_income,
+        total_expense: total_expense,
+        period_net: total_income - total_expense,
         current_balance: FinanceTransaction.approved_income_total - FinanceTransaction.approved_expense_total,
-        monthly_income: FinanceTransaction.approved.this_month.income.sum(:amount),
-        monthly_expense: FinanceTransaction.approved.this_month.expense.sum(:amount),
+        transaction_count: transactions.count,
+        trend: trend,
         category_breakdown: category_breakdown,
         recent_transactions: transactions.includes(:finance_category, :recorded_by).latest.limit(10)
       }
     end
 
+    def transactions
+      @transactions ||= FinanceTransaction.approved.where(transaction_date: start_date..end_date)
+    end
+
     def to_csv
       ReportCsvExporter.call(
+        bom: true,
         summary_rows: [
           [ "MSJ Finance Report" ],
-          [ "Period", start_date.iso8601, end_date.iso8601 ],
-          [ "Total Income", summary[:total_income] ],
-          [ "Total Expense", summary[:total_expense] ],
-          [ "Current Balance", summary[:current_balance] ]
+          [ "Reporting Period", start_date.iso8601, end_date.iso8601 ],
+          [ "Generated At", Time.current.iso8601 ],
+          [ "Currency", "JPY" ],
+          [ "Basis", "Approved transactions only" ],
+          [ "Transaction Count", summary[:transaction_count] ],
+          [ "Period Income", whole_yen(summary[:total_income]) ],
+          [ "Period Expense", whole_yen(summary[:total_expense]) ],
+          [ "Period Net", whole_yen(summary[:period_net]) ],
+          [ "Current Balance (All Time)", whole_yen(summary[:current_balance]) ]
         ],
-        headers: [ "Date", "Type", "Category", "Amount", "Status", "Reference", "Description" ],
-        rows: transactions.includes(:finance_category).latest.map do |transaction|
+        headers: [
+          "Date", "Type", "Category", "Amount (JPY)", "Status", "Reference",
+          "Description", "Recorded By", "Approved By"
+        ],
+        rows: transactions.includes(:finance_category, :recorded_by, :approved_by).latest.map do |transaction|
           [
-            transaction.transaction_date,
-            transaction.transaction_type,
+            transaction.transaction_date.iso8601,
+            transaction.transaction_type.humanize,
             transaction.finance_category.name,
-            transaction.amount,
-            transaction.status,
+            whole_yen(transaction.amount),
+            transaction.status.humanize,
             transaction.reference_number,
-            transaction.description
+            transaction.description,
+            transaction.recorded_by.display_name,
+            transaction.approved_by&.display_name
           ]
         end
       )
@@ -43,10 +67,32 @@ module Reports
 
     private
 
-    attr_reader :start_date, :end_date
+    def trend
+      month_starts = []
+      cursor = start_date.beginning_of_month
+      while cursor <= end_date.beginning_of_month
+        month_starts << cursor
+        cursor = cursor.next_month
+      end
+      month_starts = month_starts.last(12)
 
-    def transactions
-      @transactions ||= FinanceTransaction.approved.where(transaction_date: start_date..end_date)
+      income = monthly_totals(transactions.income)
+      expense = monthly_totals(transactions.expense)
+
+      month_starts.map do |month|
+        {
+          label: month.strftime(month_starts.size > 9 ? "%b" : "%b %Y"),
+          income: whole_yen(income.fetch(month, 0)),
+          expense: whole_yen(expense.fetch(month, 0))
+        }
+      end
+    end
+
+    def monthly_totals(scope)
+      scope
+        .group("DATE_TRUNC('month', transaction_date)")
+        .sum(:amount)
+        .transform_keys { |month| month.to_date.beginning_of_month }
     end
 
     def category_breakdown
@@ -54,6 +100,15 @@ module Reports
         .joins(:finance_category)
         .group("finance_categories.name", :transaction_type)
         .sum(:amount)
+        .map do |(name, transaction_type), amount|
+          type = transaction_type.is_a?(Integer) ? FinanceTransaction.transaction_types.key(transaction_type) : transaction_type.to_s
+          {
+            name: name,
+            type: type,
+            amount: whole_yen(amount)
+          }
+        end
+        .sort_by { |item| [ item[:type], -item[:amount] ] }
     end
 
     def parse_date(value)
@@ -62,6 +117,10 @@ module Reports
       Date.parse(value.to_s)
     rescue Date::Error
       nil
+    end
+
+    def whole_yen(amount)
+      BigDecimal(amount.to_s).to_i
     end
   end
 end

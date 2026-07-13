@@ -8,12 +8,15 @@ module Admin
       authorize :report, :finance?
       @report = Reports::FinanceReport.new(start_date: params[:start_date], end_date: params[:end_date])
       @summary = @report.summary
+      @transactions = @report.transactions.includes(:finance_category, :recorded_by, :approved_by).latest
 
       respond_to do |format|
         format.html
         format.csv do
           authorize :report, :export?
-          send_data @report.to_csv, filename: "msj-finance-report-#{Date.current}.csv"
+          send_data @report.to_csv,
+            filename: "msj-finance-report-#{@report.start_date}-to-#{@report.end_date}.csv",
+            type: "text/csv; charset=utf-8"
         end
       end
     end

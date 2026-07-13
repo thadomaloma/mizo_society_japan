@@ -59,6 +59,7 @@ module ApplicationHelper
     announcements: "M4 10v4h3l7 4V6l-7 4H4Zm13-3.5a6 6 0 0 1 0 11l-.8-1.8a4 4 0 0 0 0-7.4l.8-1.8Z",
     documents: "M6 2h8l5 5v15H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Zm7 1.5V8h4.5L13 3.5ZM8 12h8v2H8v-2Zm0 4h8v2H8v-2Z",
     reports: "M4 21V4h16v17H4Zm3-3h2v-6H7v6Zm4 0h2V8h-2v10Zm4 0h2v-4h-2v4Z",
+    printer: "M7 3h10v4H7V3Zm10 14v4H7v-4h10Zm2-8a3 3 0 0 1 3 3v5h-3v-2H5v2H2v-5a3 3 0 0 1 3-3h14Zm0 3a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z",
     tag: "M12.6 2.6a2 2 0 0 0-2.8 0l-6.4 6.4a2 2 0 0 0 0 2.8l8.8 8.8a2 2 0 0 0 2.8 0l6.4-6.4a2 2 0 0 0 0-2.8l-8.8-8.8ZM14 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z",
     settings: "M19.4 13.5a7.8 7.8 0 0 0 0-3l2-1.5-2-3.5-2.4 1a8 8 0 0 0-2.6-1.5L14 2h-4l-.4 3a8 8 0 0 0-2.6 1.5l-2.4-1-2 3.5 2 1.5a7.8 7.8 0 0 0 0 3l-2 1.5 2 3.5 2.4-1a8 8 0 0 0 2.6 1.5l.4 3h4l.4-3a8 8 0 0 0 2.6-1.5l2.4 1 2-3.5-2-1.5ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z",
     notifications: "M18 16v-5a6 6 0 1 0-12 0v5l-2 2v1h16v-1l-2-2ZM9.5 21h5a2.5 2.5 0 0 1-5 0Z",
@@ -214,29 +215,12 @@ module ApplicationHelper
   end
 
   def action_button_classes(variant = :primary, size: :sm, full_width: false, extra: nil)
-    size_classes = {
-      xs: "min-h-8 gap-1.5 rounded-md px-2.5 py-1.5 text-xs",
-      sm: "min-h-9 gap-1.5 rounded-lg px-3 py-2 text-xs sm:text-[13px]",
-      md: "min-h-10 gap-2 rounded-lg px-3.5 py-2.5 text-sm"
-    }.fetch(size.to_sym, "min-h-9 gap-1.5 rounded-lg px-3 py-2 text-xs sm:text-[13px]")
-
-    variant_classes = {
-      primary: "bg-red-600 text-white shadow-sm shadow-red-950/10 hover:bg-red-700 focus:ring-red-600 dark:bg-red-600 dark:hover:bg-red-500",
-      secondary: "border border-[#CBD5E1] bg-white text-[#0F172A] shadow-sm hover:border-slate-400 hover:bg-slate-50 focus:ring-red-600 dark:border-[#475569] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:hover:bg-[#334155]",
-      dark: "bg-[#172033] text-white shadow-sm hover:bg-[#263247] focus:ring-slate-600 dark:bg-[#334155] dark:hover:bg-[#475569]",
-      success: "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus:ring-emerald-600",
-      danger: "bg-red-700 text-white shadow-sm hover:bg-red-800 focus:ring-red-600 dark:bg-red-600 dark:hover:bg-red-500",
-      ghost: "text-red-700 hover:bg-red-50 focus:ring-red-600 dark:text-red-400 dark:hover:bg-red-500/10",
-      outline_danger: "border border-red-200 bg-white text-red-700 hover:bg-red-50 focus:ring-red-600 dark:border-red-500/40 dark:bg-[#1E293B] dark:text-red-400 dark:hover:bg-red-500/10"
-    }.fetch(variant.to_sym, "bg-red-700 text-white shadow-sm hover:bg-red-800 focus:ring-red-600")
-
-    [
-      "inline-flex shrink-0 items-center justify-center whitespace-nowrap font-extrabold transition duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 dark:focus:ring-offset-[#0F172A]",
-      size_classes,
-      variant_classes,
-      ("w-full" if full_width),
-      extra
-    ].compact.join(" ")
+    ::RubyUI::Button.new(
+      variant: variant,
+      size: size,
+      full_width: full_width,
+      class: extra
+    ).attrs[:class]
   end
 
   def action_link(label, path, icon: :arrow_right, variant: :ghost, size: :xs, **options)

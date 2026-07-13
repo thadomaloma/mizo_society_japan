@@ -1,72 +1,209 @@
 <% content_for :page_title, "Finance Report" %>
+<% content_for :body_class, "finance-report-page" %>
 
-<div class="space-y-6">
-  <% can_export_reports = policy(:report).export? %>
-  <% export_action = can_export_reports ? link_to(safe_join([ icon_svg(:download, classes: "h-4 w-4"), tag.span("Export CSV") ]), finance_admin_reports_path(format: :csv, start_date: params[:start_date], end_date: params[:end_date]), class: action_button_classes(:primary)) : nil %>
-  <%= render "shared/page_header",
-    eyebrow: "Reports",
-    title: "Finance Report",
-    subtitle: can_export_reports ? "Approved finance transactions with CSV export." : "View approved finance transactions and summary totals.",
-    actions: export_action %>
+<% can_export_reports = policy(:report).export? %>
+<% report_actions = [] %>
+<% if can_export_reports %>
+  <% report_actions << link_to(
+    safe_join([ icon_svg(:download, classes: "h-4 w-4"), tag.span("Export CSV") ]),
+    finance_admin_reports_path(format: :csv, start_date: @report.start_date, end_date: @report.end_date),
+    class: action_button_classes(:primary)
+  ) %>
+  <% report_actions << button_tag(
+    type: :button,
+    class: action_button_classes(:secondary),
+    data: { action: "click->report-print#open" }
+  ) { safe_join([ icon_svg(:printer, classes: "h-4 w-4"), tag.span("Print A4") ]) } %>
+<% end %>
 
-  <%= form_with url: finance_admin_reports_path, method: :get, class: "grid gap-3 rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-sm md:grid-cols-[1fr_1fr_auto] dark:border-[#334155] dark:bg-[#1E293B]" do |form| %>
-    <%= form.date_field :start_date, value: params[:start_date], class: "rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" %>
-    <%= form.date_field :end_date, value: params[:end_date], class: "rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" %>
-    <%= form.button type: :submit, class: action_button_classes(:dark) do %>
+<div class="finance-report space-y-5" data-controller="report-print">
+  <div class="finance-report-screen-only">
+    <%= render "shared/page_header",
+      eyebrow: "Reports",
+      title: "Finance Report",
+      subtitle: can_export_reports ? "Approved transactions, financial trends, and audit-ready exports." : "Approved transactions and financial trends for the selected period.",
+      actions: safe_join(report_actions) %>
+  </div>
+
+  <%= form_with url: finance_admin_reports_path, method: :get, class: "finance-report-screen-only grid gap-3 rounded-lg border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:grid-cols-[1fr_1fr_auto]" do |form| %>
+    <div class="min-w-0">
+      <%= form.label :start_date, "From", class: "mb-1.5 block text-xs font-black text-[#0F172A] dark:text-[#F8FAFC]" %>
+      <%= form.date_field :start_date, value: @report.start_date, class: "h-10 w-full rounded-lg border border-[#CBD5E1] bg-white px-3 text-sm font-semibold text-[#0F172A] focus:border-red-600 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+    </div>
+    <div class="min-w-0">
+      <%= form.label :end_date, "To", class: "mb-1.5 block text-xs font-black text-[#0F172A] dark:text-[#F8FAFC]" %>
+      <%= form.date_field :end_date, value: @report.end_date, class: "h-10 w-full rounded-lg border border-[#CBD5E1] bg-white px-3 text-sm font-semibold text-[#0F172A] focus:border-red-600 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-[#F8FAFC]" %>
+    </div>
+    <%= form.button type: :submit, class: action_button_classes(:dark, extra: "self-end") do %>
       <%= icon_svg(:filter, classes: "h-4 w-4") %>
-      <span>Filter</span>
+      <span>Apply Period</span>
     <% end %>
   <% end %>
 
-  <section class="overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:hidden">
-    <div class="flex items-center justify-between gap-3 border-b border-[#E2E8F0] px-3 py-3 dark:border-[#334155]">
-      <div class="min-w-0">
-        <h3 class="truncate text-base font-black text-[#0F172A] dark:text-white">Financial Summary</h3>
-        <p class="mt-0.5 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Approved transaction totals</p>
+  <article class="finance-report-sheet overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]">
+    <header class="border-b border-[#E2E8F0] px-4 py-5 dark:border-[#334155] sm:px-6">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <p class="text-[10px] font-black uppercase tracking-[0.12em] text-red-700 dark:text-red-300">Mizo Society of Japan</p>
+          <h1 class="mt-1 text-2xl font-black text-[#0F172A] dark:text-[#F8FAFC]">Finance Report</h1>
+          <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">
+            <%= @report.start_date.strftime("%d %b %Y") %> - <%= @report.end_date.strftime("%d %b %Y") %>
+          </p>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] font-black uppercase tracking-[0.08em] text-[#64748B] dark:text-[#CBD5E1]">Prepared</p>
+          <p class="mt-1 text-xs font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= Date.current.strftime("%d %b %Y") %></p>
+          <p class="mt-0.5 text-[10px] font-semibold text-[#64748B] dark:text-[#CBD5E1]">Approved transactions only</p>
+        </div>
       </div>
-      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
-        <%= icon_svg(:finance, classes: "h-4 w-4") %>
-      </span>
-    </div>
+    </header>
 
-    <div class="grid grid-cols-2 gap-2 p-3">
-      <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-3 dark:border-emerald-500/20 dark:bg-emerald-500/10">
-        <p class="text-[11px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Income</p>
-        <p class="mt-1 truncate text-xl font-black text-[#0F172A] dark:text-white"><%= yen(@summary[:total_income]) %></p>
-      </div>
-      <div class="rounded-xl border border-red-100 bg-red-50 p-3 dark:border-red-500/20 dark:bg-red-500/10">
-        <p class="text-[11px] font-black uppercase tracking-wide text-red-700 dark:text-red-300">Expense</p>
-        <p class="mt-1 truncate text-xl font-black text-[#0F172A] dark:text-white"><%= yen(@summary[:total_expense]) %></p>
-      </div>
-      <div class="col-span-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 dark:border-[#334155] dark:bg-[#0F172A]">
-        <div class="flex items-end justify-between gap-3">
+    <div class="space-y-5 p-4 sm:p-6">
+      <section aria-label="Financial summary" class="finance-report-summary grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        <div class="rounded-lg border border-emerald-100 bg-emerald-50/70 p-3 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+          <p class="text-[10px] font-black uppercase tracking-[0.08em] text-emerald-700 dark:text-emerald-300">Period Income</p>
+          <p class="mt-1 truncate text-lg font-black tabular-nums text-[#0F172A] dark:text-white"><%= yen(@summary[:total_income]) %></p>
+        </div>
+        <div class="rounded-lg border border-red-100 bg-red-50/70 p-3 dark:border-red-500/20 dark:bg-red-500/10">
+          <p class="text-[10px] font-black uppercase tracking-[0.08em] text-red-700 dark:text-red-300">Period Expense</p>
+          <p class="mt-1 truncate text-lg font-black tabular-nums text-[#0F172A] dark:text-white"><%= yen(@summary[:total_expense]) %></p>
+        </div>
+        <div class="rounded-lg border border-sky-100 bg-sky-50/70 p-3 dark:border-sky-500/20 dark:bg-sky-500/10">
+          <p class="text-[10px] font-black uppercase tracking-[0.08em] text-sky-700 dark:text-sky-300">Period Net</p>
+          <p class="mt-1 truncate text-lg font-black tabular-nums <%= @summary[:period_net].negative? ? "text-red-700 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300" %>"><%= yen(@summary[:period_net]) %></p>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-[#475569] dark:bg-[#0F172A]">
+          <p class="text-[10px] font-black uppercase tracking-[0.08em] text-[#64748B] dark:text-[#CBD5E1]">All-time Balance</p>
+          <p class="mt-1 truncate text-lg font-black tabular-nums text-[#0F172A] dark:text-white"><%= yen(@summary[:current_balance]) %></p>
+        </div>
+      </section>
+
+      <% chart_data = @summary[:trend] %>
+      <% max_value = [ chart_data.flat_map { |point| [ point[:income], point[:expense] ] }.max.to_i, 1 ].max %>
+      <% chart_left = 52 %>
+      <% chart_right = 694 %>
+      <% chart_top = 20 %>
+      <% chart_bottom = 174 %>
+      <% chart_width = chart_right - chart_left %>
+      <% chart_height = chart_bottom - chart_top %>
+      <% point_gap = chart_width.to_f / [ chart_data.size - 1, 1 ].max %>
+      <% chart_point = ->(point, index, key) { x = chart_left + (index * point_gap); y = chart_bottom - ((point[key].to_f / max_value) * chart_height); [ x.round(2), y.round(2) ] } %>
+      <% income_coords = chart_data.each_with_index.map { |point, index| chart_point.call(point, index, :income) } %>
+      <% expense_coords = chart_data.each_with_index.map { |point, index| chart_point.call(point, index, :expense) } %>
+
+      <section class="finance-report-chart finance-report-block min-w-0 overflow-hidden rounded-lg border border-[#E2E8F0] p-3 dark:border-[#334155]">
+        <div class="flex min-w-0 flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div class="min-w-0">
-            <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Current Balance</p>
-            <p class="mt-1 truncate text-2xl font-black text-emerald-700 dark:text-emerald-300"><%= yen(@summary[:current_balance]) %></p>
+            <h2 class="text-sm font-black text-[#0F172A] dark:text-white">Monthly Cash Flow</h2>
+            <p class="mt-0.5 text-[11px] font-semibold text-[#64748B] dark:text-[#CBD5E1]">Latest 12 months within the selected period</p>
           </div>
-          <span class="rounded-full bg-white px-2.5 py-1 text-xs font-black text-[#64748B] shadow-sm dark:bg-[#1E293B] dark:text-[#CBD5E1]">Net</span>
+          <div class="flex max-w-full flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-black">
+            <span class="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300"><span class="h-2 w-2 rounded-full bg-emerald-600"></span>Income</span>
+            <span class="inline-flex items-center gap-1.5 text-red-700 dark:text-red-300"><span class="h-2 w-2 rounded-full bg-red-600"></span>Expense</span>
+          </div>
         </div>
-      </div>
-    </div>
-  </section>
 
-  <section class="hidden gap-4 sm:grid md:grid-cols-3">
-    <%= render "shared/stat_card", label: "Total Income", value: yen(@summary[:total_income]), tone: "red", icon: :finance %>
-    <%= render "shared/stat_card", label: "Total Expense", value: yen(@summary[:total_expense]), tone: "dark", icon: :finance %>
-    <%= render "shared/stat_card", label: "Current Balance", value: yen(@summary[:current_balance]), tone: "green", icon: :finance %>
-  </section>
+        <svg viewBox="0 0 746 210" class="mt-2 h-auto w-full" role="img" aria-label="Monthly income and expense chart">
+          <% 5.times do |line| %>
+            <% y = chart_top + (line * (chart_height / 4.0)) %>
+            <% value = max_value - ((max_value / 4.0) * line) %>
+            <line x1="<%= chart_left %>" x2="<%= chart_right %>" y1="<%= y %>" y2="<%= y %>" stroke="#E2E8F0" stroke-dasharray="4 6" />
+            <text x="2" y="<%= y + 4 %>" fill="#64748B" class="text-[10px] font-bold"><%= number_to_human(value, precision: 1, units: { thousand: "K", million: "M" }) %></text>
+          <% end %>
+          <polyline points="<%= income_coords.map { |x, y| "#{x},#{y}" }.join(" ") %>" fill="none" stroke="#059669" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+          <polyline points="<%= expense_coords.map { |x, y| "#{x},#{y}" }.join(" ") %>" fill="none" stroke="#DC2626" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+          <% income_coords.each do |x, y| %><circle cx="<%= x %>" cy="<%= y %>" r="3.5" fill="#FFFFFF" stroke="#059669" stroke-width="2.5" /><% end %>
+          <% expense_coords.each do |x, y| %><circle cx="<%= x %>" cy="<%= y %>" r="3.5" fill="#FFFFFF" stroke="#DC2626" stroke-width="2.5" /><% end %>
+          <% chart_data.each_with_index do |point, index| %>
+            <text x="<%= chart_left + (index * point_gap) %>" y="202" text-anchor="middle" fill="#64748B" class="text-[9px] font-bold"><%= point[:label] %></text>
+          <% end %>
+        </svg>
+      </section>
 
-  <%= render "shared/section_card", title: "Recent Approved Transactions", body_class: "p-0" do %>
-    <div class="divide-y divide-[#E2E8F0] dark:divide-[#334155]">
-      <% @summary[:recent_transactions].each do |transaction| %>
-        <div class="flex items-center justify-between gap-4 p-4">
+      <section class="finance-report-details finance-report-block grid gap-3 lg:grid-cols-[0.8fr_1.2fr]">
+        <div class="rounded-lg border border-[#E2E8F0] p-4 dark:border-[#334155]">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-sm font-black text-[#0F172A] dark:text-white">Category Breakdown</h2>
+            <span class="text-[10px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">JPY</span>
+          </div>
+          <div class="mt-3 space-y-2.5">
+            <% @summary[:category_breakdown].each do |item| %>
+              <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-2 last:border-0 last:pb-0 dark:border-[#334155]">
+                <div class="min-w-0">
+                  <p class="truncate text-xs font-black text-[#0F172A] dark:text-white"><%= item[:name] %></p>
+                  <p class="text-[10px] font-bold uppercase <%= item[:type] == "income" ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300" %>"><%= item[:type].humanize %></p>
+                </div>
+                <p class="shrink-0 text-xs font-black tabular-nums text-[#0F172A] dark:text-white"><%= yen(item[:amount]) %></p>
+              </div>
+            <% end %>
+            <% if @summary[:category_breakdown].empty? %>
+              <p class="text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">No approved category totals for this period.</p>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-[#E2E8F0] p-4 dark:border-[#334155]">
+          <h2 class="text-sm font-black text-[#0F172A] dark:text-white">Report Notes</h2>
+          <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+            <div><dt class="font-bold text-[#64748B] dark:text-[#CBD5E1]">Transactions</dt><dd class="mt-0.5 font-black text-[#0F172A] dark:text-white"><%= @summary[:transaction_count] %></dd></div>
+            <div><dt class="font-bold text-[#64748B] dark:text-[#CBD5E1]">Currency</dt><dd class="mt-0.5 font-black text-[#0F172A] dark:text-white">Japanese Yen (JPY)</dd></div>
+            <div><dt class="font-bold text-[#64748B] dark:text-[#CBD5E1]">Scope</dt><dd class="mt-0.5 font-black text-[#0F172A] dark:text-white">Selected period</dd></div>
+            <div><dt class="font-bold text-[#64748B] dark:text-[#CBD5E1]">Accounting Basis</dt><dd class="mt-0.5 font-black text-[#0F172A] dark:text-white">Approved records</dd></div>
+          </dl>
+          <p class="mt-4 border-t border-[#E2E8F0] pt-3 text-[10px] font-semibold leading-4 text-[#64748B] dark:border-[#334155] dark:text-[#CBD5E1]">Period Net equals period income less period expense. All-time Balance includes every approved finance transaction recorded in the portal.</p>
+        </div>
+      </section>
+
+      <section class="finance-report-transactions finance-report-block overflow-hidden rounded-lg border border-[#E2E8F0] dark:border-[#334155]">
+        <div class="flex items-center justify-between gap-3 border-b border-[#E2E8F0] px-4 py-3 dark:border-[#334155]">
           <div>
-            <p class="font-black text-gray-950 dark:text-white"><%= transaction.finance_category.name %></p>
-            <p class="text-sm font-semibold text-gray-500"><%= transaction.transaction_date.strftime("%b %d, %Y") %></p>
+            <h2 class="text-sm font-black text-[#0F172A] dark:text-white">Approved Transactions</h2>
+            <p class="mt-0.5 text-[11px] font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= pluralize(@summary[:transaction_count], "record") %> in this report</p>
           </div>
-          <p class="font-black <%= transaction.income? ? "text-emerald-700" : "text-red-700" %>"><%= yen(transaction.amount) %></p>
+          <span class="text-[10px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Newest first</span>
         </div>
-      <% end %>
+
+        <div class="hidden overflow-x-auto sm:block">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-[#F8FAFC] text-[10px] font-black uppercase tracking-[0.06em] text-[#64748B] dark:bg-[#0F172A] dark:text-[#CBD5E1]">
+              <tr>
+                <th class="px-3 py-2.5">Date</th>
+                <th class="px-3 py-2.5">Category</th>
+                <th class="px-3 py-2.5">Description</th>
+                <th class="px-3 py-2.5">Reference</th>
+                <th class="px-3 py-2.5 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#E2E8F0] dark:divide-[#334155]">
+              <% @transactions.each do |transaction| %>
+                <tr class="finance-report-transaction-row">
+                  <td class="whitespace-nowrap px-3 py-2.5 font-bold text-[#64748B] dark:text-[#CBD5E1]"><%= transaction.transaction_date.strftime("%d %b %Y") %></td>
+                  <td class="px-3 py-2.5"><p class="font-black text-[#0F172A] dark:text-white"><%= transaction.finance_category.name %></p><p class="mt-0.5 text-[9px] font-black uppercase <%= transaction.income? ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300" %>"><%= transaction.transaction_type %></p></td>
+                  <td class="max-w-56 px-3 py-2.5 font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= transaction.description.presence || "-" %></td>
+                  <td class="whitespace-nowrap px-3 py-2.5 font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= transaction.reference_number.presence || "-" %></td>
+                  <td class="whitespace-nowrap px-3 py-2.5 text-right font-black tabular-nums <%= transaction.income? ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300" %>"><%= transaction.income? ? "+" : "-" %><%= yen(transaction.amount) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="divide-y divide-[#E2E8F0] dark:divide-[#334155] sm:hidden">
+          <% @transactions.each do |transaction| %>
+            <article class="p-3">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0"><p class="truncate text-sm font-black text-[#0F172A] dark:text-white"><%= transaction.finance_category.name %></p><p class="mt-0.5 text-[11px] font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= transaction.transaction_date.strftime("%d %b %Y") %></p></div>
+                <p class="shrink-0 text-sm font-black tabular-nums <%= transaction.income? ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300" %>"><%= transaction.income? ? "+" : "-" %><%= yen(transaction.amount) %></p>
+              </div>
+              <% if transaction.description.present? %><p class="mt-2 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= transaction.description %></p><% end %>
+            </article>
+          <% end %>
+        </div>
+
+        <% if @transactions.empty? %>
+          <div class="p-8 text-center"><p class="text-sm font-black text-[#0F172A] dark:text-white">No approved transactions found.</p><p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Choose another reporting period.</p></div>
+        <% end %>
+      </section>
     </div>
-  <% end %>
+  </article>
 </div>
