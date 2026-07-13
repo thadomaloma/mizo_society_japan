@@ -91,11 +91,20 @@
         <%= form.label :family_status, class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" do %>
           Family Status <span class="text-red-600 dark:text-red-400">*</span>
         <% end %>
-        <div class="mt-2 grid gap-2 sm:grid-cols-2">
+        <div class="mt-2 grid grid-cols-2 gap-1.5 rounded-xl border border-[#E2E8F0] bg-slate-100 p-1.5 dark:border-[#334155] dark:bg-[#0F172A]">
           <% MemberProfile.family_statuses.keys.each do |status| %>
-            <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5 transition has-[:checked]:border-red-300 has-[:checked]:bg-red-50 dark:border-[#334155] dark:bg-[#0F172A] dark:has-[:checked]:border-red-500/50 dark:has-[:checked]:bg-red-500/10">
-              <%= form.radio_button :family_status, status, required: true, data: { family_details_target: "status", action: "family-details#toggle" }, class: "h-4 w-4 border-slate-300 text-red-700 focus:ring-red-600" %>
-              <span class="text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= status.humanize %></span>
+            <% description = status == "single" ? "Individual" : "With family" %>
+            <label class="group relative min-w-0 cursor-pointer">
+              <%= form.radio_button :family_status, status, required: true, data: { family_details_target: "status", action: "family-details#toggle" }, class: "peer sr-only" %>
+              <span class="flex min-h-12 min-w-0 items-center justify-between gap-2 rounded-lg px-3 py-2 text-slate-600 transition hover:bg-white/70 peer-checked:bg-white peer-checked:text-[#0F172A] peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-red-500 peer-focus-visible:ring-offset-2 dark:text-[#CBD5E1] dark:hover:bg-[#1E293B]/70 dark:peer-checked:bg-[#334155] dark:peer-checked:text-[#F8FAFC] dark:peer-focus-visible:ring-offset-[#0F172A]">
+                <span class="min-w-0">
+                  <span class="block truncate text-sm font-extrabold"><%= status.humanize %></span>
+                  <span class="mt-0.5 block truncate text-[11px] font-semibold text-slate-500 dark:text-slate-400"><%= description %></span>
+                </span>
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-red-600 text-white opacity-0 transition group-has-[:checked]:opacity-100 dark:bg-red-500" aria-hidden="true">
+                  <%= icon_svg(:check, classes: "h-3 w-3") %>
+                </span>
+              </span>
             </label>
           <% end %>
         </div>
