@@ -1,0 +1,16 @@
+<div class="col-span-12 mt-2 min-w-0 sm:col-span-6">
+  <%= child_form.label :date_of_birth, "Date of Birth", class: "mb-2 block text-sm font-bold leading-5 text-[#334155] dark:text-[#CBD5E1]" %>
+  <div class="grid grid-cols-3 gap-2">
+    <%= child_form.date_select :date_of_birth,
+      {
+        order: [ :year, :month, :day ],
+        start_year: Date.current.year,
+        end_year: Date.current.year - 100,
+        prompt: { year: "Year", month: "Month", day: "Day" },
+        date_separator: ""
+      },
+      {
+        class: "h-11 min-w-0 w-full rounded-lg border border-[#CBD5E1] bg-white px-2.5 text-sm font-semibold text-[#0F172A] shadow-sm shadow-slate-950/[0.03] outline-none transition hover:border-slate-400 focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#1E293B] dark:text-[#F8FAFC] dark:shadow-none dark:hover:border-slate-500 dark:focus:border-red-500 dark:focus:ring-red-500/20"
+      } %>
+  </div>
+</div>

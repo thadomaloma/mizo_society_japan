@@ -6,10 +6,10 @@ class PaymentBatchesController < ApplicationController
     authorize PaymentBatch
 
     payments = current_user.membership_payments
-      .includes(membership_plan: :membership_plan_type)
+      .includes(:family_member, membership_plan: :membership_plan_type)
       .where(id: selected_payment_ids)
       .select(&:bank_transfer_submittable?)
-      .reject { |payment| settled_payment_plan_ids.include?(payment.membership_plan_id) }
+      .reject { |payment| settled_payment_keys.include?(payment.settlement_key) }
 
     if payments.empty?
       redirect_to membership_payments_path, alert: "Select at least one unpaid payment."
@@ -80,7 +80,7 @@ class PaymentBatchesController < ApplicationController
   private
 
   def set_payment_batch
-    @payment_batch = current_user.payment_batches.includes(membership_payments: { membership_plan: :membership_plan_type }).find(params[:id])
+    @payment_batch = current_user.payment_batches.includes(membership_payments: [ :family_member, { membership_plan: :membership_plan_type } ]).find(params[:id])
   end
 
   def selected_payment_ids
@@ -111,12 +111,11 @@ class PaymentBatchesController < ApplicationController
     @bank_transfer_details = BankTransferDetails.call
   end
 
-  def settled_payment_plan_ids
-    @settled_payment_plan_ids ||= current_user.membership_payments
-      .includes(:membership_plan, :payment_batch)
+  def settled_payment_keys
+    @settled_payment_keys ||= current_user.membership_payments
+      .includes(:family_member, :membership_plan, :payment_batch)
       .select { |payment| payment.paid? || payment.payment_batch&.paid? }
-      .select { |payment| payment.one_time_payment? || payment.payment_year == Date.current.year }
-      .map(&:membership_plan_id)
+      .map(&:settlement_key)
       .uniq
   end
 end

@@ -112,7 +112,38 @@ class Admin::MembershipPlansControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_entity
-    assert_includes response.body, "Amount must be an integer"
+    assert_includes response.body, "Amount must be a whole yen amount"
+  end
+
+  test "membership plan can provision a separate fee for each eligible child" do
+    @member.member_profile.update!(family_status: :family)
+    eligible_child = @member.member_profile.family_members.create!(
+      name: "Plan Test Child",
+      relationship: "Child",
+      date_of_birth: 14.years.ago.to_date
+    )
+    sign_in @president
+
+    assert_difference -> { @member.membership_payments.count }, 2 do
+      post admin_membership_plans_path, params: {
+        membership_plan: {
+          name: "Family Child Membership Fee",
+          amount: 5000,
+          child_fee_enabled: "1",
+          child_amount: 2000,
+          membership_plan_type_id: plan_type("membership").id,
+          billing_cycle: "yearly",
+          active: "1",
+          required_for_members: "1"
+        }
+      }
+    end
+
+    plan = MembershipPlan.find_by!(name: "Family Child Membership Fee")
+    child_payment = @member.membership_payments.find_by!(membership_plan: plan, family_member: eligible_child)
+    assert_redirected_to admin_membership_plan_path(plan)
+    assert_equal 2000, child_payment.amount
+    assert_equal eligible_child.membership_number, child_payment.beneficiary_membership_number
   end
 
   test "required payment plan is provisioned for member current payments" do

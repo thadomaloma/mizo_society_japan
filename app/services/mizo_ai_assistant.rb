@@ -10,6 +10,7 @@ class MizoAiAssistant
       { key: :yuucho_transfer, text: "Yuucho bank atangin transfer engtin nge ka tih ang?", answer: :yuucho_transfer_answer },
       { key: :other_bank_transfer, text: "Bank dang atangin transfer engtin nge ka tih ang?", answer: :other_bank_transfer_answer },
       { key: :submit_and_track, text: "Transfer zawh hnuah eng nge ka submit a, status engtin nge ka check ang?", answer: :payment_submission_status_answer },
+      { key: :family_fee, text: "Kum 14+ child membership fee hi engtin nge ka pek ang?", answer: :family_fee_answer },
       { key: :welfare_request, text: "Welfare support private taka engtin nge ka dil ang?", answer: :welfare_answer },
       { key: :events_and_updates, text: "Events, RSVP leh announcements engtin nge ka hman ang?", answer: :member_events_updates_answer },
       { key: :account_help, text: "Password ka theihnghilh emaw sign in harsatna ka neih chuan engtin nge ka tih ang?", answer: :account_answer }
@@ -18,6 +19,7 @@ class MizoAiAssistant
       { key: :admin_access, text: "Super Admin daily checklist leh portal control dan min hrilh rawh.", answer: :super_admin_general_answer },
       { key: :review_transfers, text: "Submitted payment batch approve/reject dan min hrilh rawh.", answer: :payment_review_answer },
       { key: :plans_and_duplicates, text: "Payment plans manage leh duplicate payment ven dan eng nge?", answer: :payment_plan_answer },
+      { key: :family_fee_setup, text: "Kum 14+ child membership fee engtin nge ka setup ang?", answer: :family_fee_answer },
       { key: :finance_operations, text: "Transactions leh yearly finance report check dan min hrilh rawh.", answer: :finance_operations_answer },
       { key: :manage_welfare, text: "Welfare case assign/resolve dan eng nge?", answer: :welfare_answer },
       { key: :manage_minutes, text: "Meeting minutes siam leh publish dan min hrilh rawh.", answer: :minutes_answer },
@@ -32,6 +34,7 @@ class MizoAiAssistant
       { key: :review_transfers, text: "Combined transfer verify, approve leh reject dan eng nge?", answer: :payment_review_answer },
       { key: :manual_payment, text: "Manual payment record duplicate lovin engtin nge ka siam ang?", answer: :manual_payment_answer },
       { key: :manage_plans, text: "Payment plans engtin nge ka manage ang?", answer: :payment_plan_answer },
+      { key: :family_fee_setup, text: "Kum 14+ child membership fee engtin nge ka setup ang?", answer: :family_fee_answer },
       { key: :transactions, text: "Income leh expense transaction record dan min hrilh rawh.", answer: :finance_transactions_answer },
       { key: :finance_reports, text: "Finance report leh CSV export engtin nge ka hman ang?", answer: :reports_answer },
       { key: :finance_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer }
@@ -249,7 +252,7 @@ class MizoAiAssistant
     pending_count = user.membership_payments.pending.count
     pending_verification_count = user.payment_batches.pending_verification.count + user.membership_payments.pending_verification.where(payment_batch_id: nil).count
 
-    "Payments: Members should use Payments page to select unpaid fees/funds, pay together by one bank transfer, then submit transfer date, amount, and reference name. Screenshot is optional unless Office Bearers request it. Paid/approved items should not remain in current unpaid payments. Bank transfer is the main method. Yuucho-to-Yuucho transfer uses 記号 (kigou / symbol) and 番号 (bangou / number). Transfers from other banks use 店名 (tenmei / store name) and 口座番号 (kouza bangou / account number). Current user has #{pending_count} waiting transfer and #{pending_verification_count} pending verification."
+    "Payments: Members should use Payments page to select unpaid fees/funds, including separate eligible child fees shown under a parent account, pay together by one bank transfer, then submit transfer date, amount, and reference name. Screenshot is optional unless Office Bearers request it. Paid/approved items should not remain in current unpaid payments. Bank transfer is the main method. Yuucho-to-Yuucho transfer uses 記号 (kigou / symbol) and 番号 (bangou / number). Transfers from other banks use 店名 (tenmei / store name) and 口座番号 (kouza bangou / account number). Current user has #{pending_count} waiting transfer and #{pending_verification_count} pending verification."
   end
 
   def profile_context
@@ -419,6 +422,37 @@ class MizoAiAssistant
 
       Pending Verification la nih chhung chuan payment nawn leh suh. Reject a nih chuan reason en la, transfer details dik takin submit leh rawh.
     ANSWER
+  end
+
+  def family_fee_answer
+    if user.super_admin? || user.finance_admin?
+      <<~ANSWER.strip
+        Kum 14+ child membership fee setup dan:
+
+        1. Payment Plans page-ah membership fee plan open la Edit Plan click rawh.
+        2. Required for all members tih enable rawh.
+        3. Charge eligible children aged 14 or older tih enable rawh.
+        4. Fee per eligible child amount chu whole yen-in dah rawh.
+        5. Save hnuah family profile-a date of birth recorded, kum 14 tling tawh child-te parent/guardian account Payments page-ah record hranin an lo lang ang.
+        6. Parent fee leh child fee te checkbox-in select kawp a, bank transfer vawi khat chauh tih theih a ni.
+        7. Payment Records review-ah For child name leh child membership number check la, bank transfer verify hnuah approve rawh.
+
+        Child tan login account hran siam a ngai lo. Date of birth awm lo child chu automatic charge a nei lo ang.
+      ANSWER
+    else
+      <<~ANSWER.strip
+        Kum 14+ child membership fee pek dan:
+
+        1. Profile page-ah Family Status chu Family thlang la, child name leh date of birth dah rawh.
+        2. MSJ-in child fee plan enable a, child kum 14 a tlin chuan parent/guardian Payments page-ah For child name tih nen fee hran a lo lang ang.
+        3. Parent fee leh child fee te checkbox-in select kawp rawh.
+        4. Pay Together click la, total amount chu bank transfer vawi khat chauh ti rawh.
+        5. Transfer date, total amount leh reference name submit rawh.
+        6. Treasurer/Finance team-in verify hnuah child fee record chu Paid-ah a inthlak ang.
+
+        Child tan email/password account hran siam a ngai lo.
+      ANSWER
+    end
   end
 
   def member_events_updates_answer

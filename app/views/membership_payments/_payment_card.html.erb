@@ -24,6 +24,7 @@ end %>
       <div class="min-w-0">
         <p class="truncate text-[10px] font-black uppercase tracking-wide text-red-700 dark:text-red-300 sm:text-[11px]"><%= payment.plan_type_label %></p>
         <h3 class="mt-0.5 line-clamp-2 text-sm font-black leading-5 text-[#0F172A] dark:text-white sm:text-base"><%= payment.membership_plan.name %></h3>
+        <p class="mt-0.5 truncate text-[11px] font-bold text-[#64748B] dark:text-[#CBD5E1]"><%= payment.payment_for_label %></p>
       </div>
     </div>
     <%= render "shared/status_badge", status: payment.status, compact: true %>

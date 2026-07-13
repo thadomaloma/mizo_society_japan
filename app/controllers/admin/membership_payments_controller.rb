@@ -11,7 +11,7 @@ module Admin
       @plan_type_id = params[:plan_type_id]
       @query = params[:query]
       filtered_payments = policy_scope(MembershipPayment)
-        .includes({ membership_plan: :membership_plan_type }, user: :member_profile)
+        .includes(:family_member, { membership_plan: :membership_plan_type }, user: :member_profile)
         .merge(visible_payment_records)
         .search(@query)
         .by_year(@year)
@@ -27,7 +27,7 @@ module Admin
         filtered_payments = filtered_payments.by_status(@status)
       end
       @payment_batches = policy_scope(PaymentBatch)
-        .includes(:user, membership_payments: { membership_plan: :membership_plan_type })
+        .includes(:user, membership_payments: [ :family_member, { membership_plan: :membership_plan_type } ])
         .reviewable
         .latest
       @payment_batches = PaymentBatch.none unless @status.in?([ "all", "pending_verification" ])
@@ -150,7 +150,7 @@ module Admin
     private
 
     def set_membership_payment
-      @membership_payment = MembershipPayment.find(params[:id])
+      @membership_payment = MembershipPayment.includes(:family_member).find(params[:id])
     end
 
     def visible_payment_records

@@ -107,6 +107,31 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/Payment History.*#{paid_payment.membership_plan.name}/m, response.body)
   end
 
+  test "paid guardian fee does not hide an unpaid child fee for the same plan" do
+    child = @member.member_profile.family_members.create!(
+      name: "Family Fee Child",
+      relationship: "Child",
+      date_of_birth: 14.years.ago.to_date
+    )
+    @payment.update!(status: :paid, paid_on: Time.current)
+    child_payment = MembershipPayment.create!(
+      user: @member,
+      family_member: child,
+      membership_plan: @plan,
+      amount: 2000,
+      payment_year: Date.current.year,
+      payment_method: :bank_transfer,
+      status: :pending
+    )
+
+    sign_in @member
+    get membership_payments_path
+
+    assert_response :success
+    assert_includes response.body, "value=\"#{child_payment.id}\""
+    assert_includes response.body, "For Family Fee Child"
+  end
+
   test "settled optional plan hides stale unpaid duplicate from current payments" do
     paid_payment = MembershipPayment.create!(
       user: @member,
@@ -181,6 +206,31 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "pending", batch.status
     assert_equal @payment.amount + donation_payment.amount, batch.total_amount
     assert_equal [ @payment.id, donation_payment.id ].sort, batch.membership_payment_ids.sort
+  end
+
+  test "member can combine guardian and child fees in one bank transfer" do
+    @plan.update!(membership_plan_type: membership_plan_types(:membership))
+    child = @member.member_profile.family_members.create!(
+      name: "Combined Fee Child",
+      relationship: "Child",
+      date_of_birth: 14.years.ago.to_date
+    )
+    child_payment = MembershipPayment.create!(
+      user: @member,
+      family_member: child,
+      membership_plan: @plan,
+      amount: 2000,
+      payment_year: Date.current.year,
+      status: :pending
+    )
+    sign_in @member
+
+    post payment_batches_path, params: { membership_payment_ids: [ @payment.id, child_payment.id ] }
+
+    batch = @member.payment_batches.order(:id).last
+    assert_redirected_to payment_batch_path(batch)
+    assert_equal 7000, batch.total_amount
+    assert_equal [ @payment.id, child_payment.id ].sort, batch.membership_payment_ids.sort
   end
 
   test "member can review pending combined payment before submitting transfer" do

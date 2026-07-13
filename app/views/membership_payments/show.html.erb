@@ -11,6 +11,7 @@
   <%= render "shared/page_header",
     eyebrow: @membership_payment.plan_type_label,
     title: @membership_payment.membership_plan.name,
+    subtitle: @membership_payment.payment_for_label,
     actions: payment_actions %>
 
   <section class="grid gap-5">

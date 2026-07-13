@@ -164,7 +164,10 @@
               <% @member_profile.child_family_members.each_with_index do |child, index| %>
                 <div class="flex items-center gap-3 py-3">
                   <span class="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-red-50 text-[11px] font-black text-red-700 dark:bg-red-500/10 dark:text-red-300"><%= index + 1 %></span>
-                  <p class="min-w-0 truncate text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= child.name %></p>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-black text-[#0F172A] dark:text-[#F8FAFC]"><%= child.name %></p>
+                    <p class="mt-0.5 truncate text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= [ child.membership_number, ("Age #{child.age}" if child.age.present?) ].compact.join(" · ").presence || "Date of birth not recorded" %></p>
+                  </div>
                 </div>
               <% end %>
             </div>

@@ -44,6 +44,7 @@ class MemberProfile < ApplicationRecord
   validates :status, presence: true
   validate :address_line1_includes_street_number
   validate :mobile_number_is_not_placeholder
+  validate :family_status_preserves_payment_history
   validates :mobile_number, format: {
     with: JAPAN_MOBILE_NUMBER_REGEX,
     message: "must be a valid Japan mobile number starting with 070, 080, or 090"
@@ -93,6 +94,10 @@ class MemberProfile < ApplicationRecord
 
   def child_family_members
     family_members.where(relationship: "Child")
+  end
+
+  def membership_fee_eligible_children(on: Date.current)
+    child_family_members.select { |child| child.membership_fee_eligible?(on: on) }
   end
 
   def complete?
@@ -170,6 +175,13 @@ class MemberProfile < ApplicationRecord
       sequential_digits?(local_part)
 
     errors.add(:mobile_number, "cannot be an example or placeholder number")
+  end
+
+  def family_status_preserves_payment_history
+    return unless will_save_change_to_family_status? && single?
+    return unless family_members.joins(:membership_payments).exists?
+
+    errors.add(:family_status, "cannot be changed to single while a child has payment history")
   end
 
   def repeated_digits?(value)

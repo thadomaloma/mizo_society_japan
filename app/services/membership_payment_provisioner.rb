@@ -42,7 +42,7 @@ class MembershipPaymentProvisioner
   end
 
   def current_year_payment_exists?
-    user.membership_payments.membership_dues.where(payment_year: year).exists?
+    user.membership_payments.membership_dues.where(payment_year: year, family_member_id: nil).exists?
   end
 
   def default_plan

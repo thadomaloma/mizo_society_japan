@@ -545,6 +545,7 @@ module ApplicationHelper
       "",
       "MSJ Payment Receipt",
       "Payment/Fund: #{payment.membership_plan.name}",
+      "Payment for: #{payment.beneficiary_label}",
       "Type: #{payment.plan_type_label}",
       "Period: #{payment.period_label}",
       "Amount: #{yen(payment.amount)}",

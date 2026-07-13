@@ -9,6 +9,7 @@
   <td class="px-5 py-4">
     <p class="font-black text-gray-950 dark:text-white"><%= user_label(payment.user) %></p>
     <p class="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-300"><%= payment.user.email %></p>
+    <% if payment.for_family_member? %><p class="mt-1 text-xs font-black text-red-700 dark:text-red-300"><%= payment.payment_for_label %></p><% end %>
   </td>
   <td class="px-5 py-4 text-gray-700 dark:text-gray-200"><p class="font-bold"><%= payment.membership_plan.name %></p><p class="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-300"><%= payment.plan_type_label %></p></td>
   <td class="px-5 py-4 font-semibold text-gray-700 dark:text-gray-200"><%= payment.period_label %></td>

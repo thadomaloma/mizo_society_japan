@@ -8,6 +8,7 @@
     <div class="min-w-0">
       <h3 class="truncate text-[15px] font-black leading-5 text-gray-950 dark:text-white sm:text-base"><%= user_label(payment.user) %></h3>
       <p class="mt-0.5 line-clamp-1 text-xs font-semibold leading-5 text-gray-500 dark:text-gray-300 sm:mt-1 sm:text-sm"><%= payment.membership_plan.name %> · <%= payment.period_label %></p>
+      <% if payment.for_family_member? %><p class="mt-0.5 truncate text-[11px] font-black text-red-700 dark:text-red-300"><%= payment.payment_for_label %></p><% end %>
       <div class="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 sm:mt-1">
         <p class="truncate text-[11px] font-black text-red-700 dark:text-red-300 sm:text-xs"><%= payment.plan_type_label %></p>
         <span class="sm:hidden"><%= render "admin/membership_payments/review_badge", payment: payment %></span>

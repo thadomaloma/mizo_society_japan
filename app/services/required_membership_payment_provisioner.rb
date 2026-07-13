@@ -25,7 +25,7 @@ class RequiredMembershipPaymentProvisioner
   attr_reader :user, :membership_plan, :year, :month
 
   def target_users
-    scope = User.active
+    scope = User.active.includes(member_profile: :family_members)
     user.present? ? scope.where(id: user.id) : scope
   end
 
@@ -35,17 +35,31 @@ class RequiredMembershipPaymentProvisioner
   end
 
   def provision(member, plan)
-    payment = existing_payment(member, plan)
+    provision_payment(member, plan)
+    provision_child_payments(member, plan) if plan.provisions_child_fees?
+  end
+
+  def provision_payment(member, plan, family_member: nil)
+    payment = existing_payment(member, plan, family_member: family_member)
 
     if payment.present?
-      sync_pending_amount(payment, plan)
+      sync_pending_amount(payment, payment_amount(plan, family_member))
     else
-      create_payment(member, plan)
+      create_payment(member, plan, family_member: family_member)
     end
   end
 
-  def existing_payment(member, plan)
-    scope = member.membership_payments.where(membership_plan: plan)
+  def provision_child_payments(member, plan)
+    profile = member.member_profile
+    return unless profile&.family?
+
+    profile.membership_fee_eligible_children.each do |child|
+      provision_payment(member, plan, family_member: child)
+    end
+  end
+
+  def existing_payment(member, plan, family_member:)
+    scope = member.membership_payments.where(membership_plan: plan, family_member: family_member)
 
     case plan.billing_cycle
     when "monthly"
@@ -57,23 +71,28 @@ class RequiredMembershipPaymentProvisioner
     end
   end
 
-  def create_payment(member, plan)
+  def create_payment(member, plan, family_member: nil)
     MembershipPayment.create!(
       user: member,
       membership_plan: plan,
-      amount: plan.amount,
+      family_member: family_member,
+      amount: payment_amount(plan, family_member),
       payment_year: year,
       payment_month: (month if plan.monthly?),
       payment_method: :bank_transfer,
       status: :pending,
-      notes: "Automatically generated from a required payment plan."
+      notes: family_member.present? ? "Automatically generated for an eligible family member aged 14 or older." : "Automatically generated from a required payment plan."
     )
   end
 
-  def sync_pending_amount(payment, plan)
+  def sync_pending_amount(payment, expected_amount)
     return unless payment.status.in?(SYNCABLE_STATUSES)
-    return if payment.amount == plan.amount
+    return if payment.amount == expected_amount
 
-    payment.update!(amount: plan.amount)
+    payment.update!(amount: expected_amount)
+  end
+
+  def payment_amount(plan, family_member)
+    family_member.present? ? plan.child_fee_amount : plan.amount
   end
 end

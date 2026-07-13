@@ -52,8 +52,8 @@ class DashboardController < ApplicationController
   def index
     authorize :dashboard, :show?
 
-    @latest_payments = current_user.membership_payments.where(payment_batch_id: nil).includes(:membership_plan).latest.limit(3)
-    @latest_payment_batches = current_user.payment_batches.where.not(status: :pending).includes(membership_payments: :membership_plan).latest.limit(2)
+    @latest_payments = current_user.membership_payments.where(payment_batch_id: nil).includes(:family_member, :membership_plan).latest.limit(3)
+    @latest_payment_batches = current_user.payment_batches.where.not(status: :pending).includes(membership_payments: [ :family_member, :membership_plan ]).latest.limit(2)
     @pending_payment_count = current_user.membership_payments.pending.count + current_user.payment_batches.pending_verification.count
     @visible_announcement_count = Announcement.visible_to_members.count
     @latest_announcements = Announcement.visible_to_members.limit(3)

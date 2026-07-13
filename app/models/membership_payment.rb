@@ -8,6 +8,7 @@ class MembershipPayment < ApplicationRecord
   belongs_to :approved_by, class_name: "User", optional: true
   belongs_to :receipt_sent_by, class_name: "User", optional: true
   belongs_to :payment_batch, optional: true
+  belongs_to :family_member, optional: true
 
   has_one_attached :transfer_screenshot
   has_many :notifications, as: :notifiable, dependent: :destroy
@@ -30,9 +31,12 @@ class MembershipPayment < ApplicationRecord
   validates :payment_method, :status, presence: true
   validate :amounts_are_whole_yen
   validate :no_duplicate_active_payment_for_plan
+  validate :family_member_belongs_to_guardian
+  validate :family_member_is_used_only_for_membership_fee
 
   before_validation :copy_plan_amount, if: -> { amount.blank? && membership_plan.present? }
   before_validation :assign_payment_year, if: -> { payment_year.blank? }
+  before_validation :copy_beneficiary_details, if: -> { family_member.present? }
 
   scope :latest, -> { order(created_at: :desc) }
   scope :unpaid, -> { where(status: [ :pending, :pending_verification, :failed, :expired, :cancelled ]) }
@@ -49,8 +53,9 @@ class MembershipPayment < ApplicationRecord
 
     pattern = "%#{sanitize_sql_like(normalized_query)}%"
     left_joins(user: :member_profile)
+      .left_joins(:family_member)
       .where(
-        "membership_payments.reference_number ILIKE :query OR users.email ILIKE :query OR users.name ILIKE :query OR member_profiles.full_name ILIKE :query OR member_profiles.membership_number ILIKE :query",
+        "membership_payments.reference_number ILIKE :query OR users.email ILIKE :query OR users.name ILIKE :query OR member_profiles.full_name ILIKE :query OR member_profiles.membership_number ILIKE :query OR family_members.name ILIKE :query OR family_members.membership_number ILIKE :query OR membership_payments.beneficiary_name ILIKE :query OR membership_payments.beneficiary_membership_number ILIKE :query",
         query: pattern
       )
   }
@@ -87,6 +92,26 @@ class MembershipPayment < ApplicationRecord
     "membership-payment-#{id || 'new'}"
   end
 
+  def for_family_member?
+    family_member_id.present? || beneficiary_membership_number.present?
+  end
+
+  def beneficiary_label
+    family_member&.name.presence || beneficiary_name.presence || user&.display_name || "Member"
+  end
+
+  def beneficiary_number
+    family_member&.membership_number.presence || beneficiary_membership_number.presence || user&.member_profile&.membership_number
+  end
+
+  def payment_for_label
+    for_family_member? ? "For #{beneficiary_label}" : "For account holder"
+  end
+
+  def settlement_key
+    [ family_member_id, membership_plan_id, (payment_year unless one_time_payment?), (payment_month if membership_plan&.monthly?) ]
+  end
+
   def receipt_sendable?
     paid? && user&.member_profile&.whatsapp_url.present?
   end
@@ -120,7 +145,7 @@ class MembershipPayment < ApplicationRecord
   private
 
   def copy_plan_amount
-    self.amount = membership_plan.amount
+    self.amount = family_member.present? ? membership_plan.child_fee_amount : membership_plan.amount
   end
 
   def assign_payment_year
@@ -156,9 +181,12 @@ class MembershipPayment < ApplicationRecord
   end
 
   def matching_member_identity_scope
+    return self.class.where(family_member_id: family_member_id) if family_member_id.present?
+
     scope = self.class.left_joins(user: :member_profile)
     membership_number = member_registration_number
 
+    scope = scope.where(family_member_id: nil)
     return scope.where(user_id: user_id) if membership_number.blank?
 
     scope.where(
@@ -178,12 +206,30 @@ class MembershipPayment < ApplicationRecord
   def duplicate_payment_error_message
     plan_name = membership_plan&.name || "this payment plan"
     period = membership_plan&.one_time? ? "one-time payment" : period_label
-    member_reference = member_registration_number.presence || "this member"
+    member_reference = beneficiary_number.presence || "this member"
 
     "#{member_reference} already has an active or paid #{plan_name} record for #{period}. Use the existing record instead of creating another one."
   end
 
   def member_registration_number
     user&.member_profile&.membership_number
+  end
+
+  def copy_beneficiary_details
+    self.beneficiary_name = family_member.name
+    self.beneficiary_membership_number = family_member.membership_number
+  end
+
+  def family_member_belongs_to_guardian
+    return if family_member.blank? || user.blank?
+    return if family_member.member_profile_id == user.member_profile&.id
+
+    errors.add(:family_member, "must belong to the selected member account")
+  end
+
+  def family_member_is_used_only_for_membership_fee
+    return if family_member.blank? || membership_plan.blank? || membership_plan.membership?
+
+    errors.add(:family_member, "can be charged only for a membership fee plan")
   end
 end

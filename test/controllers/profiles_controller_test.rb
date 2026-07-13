@@ -24,6 +24,10 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_select "select#member_profile_date_of_birth_2i[required]"
     assert_select "select#member_profile_date_of_birth_3i[required]"
     assert_select "input#member_profile_date_of_birth[type=date]", count: 0
+    assert_select "template select[id$='_date_of_birth_1i']", count: 1
+    assert_select "template select[id$='_date_of_birth_2i']", count: 1
+    assert_select "template select[id$='_date_of_birth_3i']", count: 1
+    assert_select "template input[id$='_date_of_birth']", count: 0
   end
 
   test "member can complete profile setup" do
@@ -64,8 +68,8 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
         family_status: "family",
         spouse_name: "Spouse Name",
         family_members_attributes: {
-          "0" => { name: "Child One", relationship: "Child" },
-          "1" => { name: "Child Two", relationship: "Child" }
+          "0" => { name: "Child One", date_of_birth: "2010-05-01", relationship: "Child" },
+          "1" => { name: "Child Two", date_of_birth: "2015-08-02", relationship: "Child" }
         }
       }
     }
@@ -77,6 +81,8 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "family", profile.family_status
     assert_equal "Spouse Name", profile.spouse_name
     assert_equal [ "Child One", "Child Two" ], profile.child_family_members.order(:name).pluck(:name)
+    assert_equal [ Date.new(2010, 5, 1), Date.new(2015, 8, 2) ], profile.child_family_members.order(:name).pluck(:date_of_birth)
+    assert profile.child_family_members.all? { |child| child.membership_number.start_with?("#{profile.membership_number}-C") }
   end
 
   test "profile update ignores stale family member ids" do

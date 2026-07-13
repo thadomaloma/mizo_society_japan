@@ -1,6 +1,6 @@
 <h1>Payment pending verification</h1>
 
-<p><%= @payment.user.display_name %> submitted a bank transfer for <%= @payment.membership_plan.name %>.</p>
+<p><%= @payment.user.display_name %> submitted a bank transfer for <%= @payment.membership_plan.name %> (<%= @payment.beneficiary_label %>).</p>
 
 <p>
   Amount: <%= number_to_currency(@payment.transfer_amount || @payment.amount, unit: "¥", precision: 0) %><br>

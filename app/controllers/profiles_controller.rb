@@ -80,7 +80,7 @@ class ProfilesController < ApplicationController
       :mother_name,
       :family_status,
       :spouse_name,
-      family_members_attributes: [ :id, :name, :relationship, :_destroy ]
+      family_members_attributes: [ :id, :name, :date_of_birth, :relationship, :_destroy ]
     )
     sanitize_family_member_ids(permitted)
   end

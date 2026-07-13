@@ -70,7 +70,17 @@ module Admin
     end
 
     def membership_plan_params
-      params.require(:membership_plan).permit(:name, :amount, :billing_cycle, :membership_plan_type_id, :active, :required_for_members, :description)
+      params.require(:membership_plan).permit(
+        :name,
+        :amount,
+        :billing_cycle,
+        :membership_plan_type_id,
+        :active,
+        :required_for_members,
+        :child_fee_enabled,
+        :child_amount,
+        :description
+      )
     end
 
     def provision_required_member_payments

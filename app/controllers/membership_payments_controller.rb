@@ -9,7 +9,7 @@ class MembershipPaymentsController < ApplicationController
     @status = params[:status]
     @year = params[:year]
     payment_scope = current_user.membership_payments
-      .includes(membership_plan: :membership_plan_type)
+      .includes(:family_member, membership_plan: :membership_plan_type)
       .by_year(@year)
 
     @current_payments = payment_scope
@@ -17,9 +17,9 @@ class MembershipPaymentsController < ApplicationController
       .where(payment_batch_id: nil)
       .latest
       .to_a
-    @current_payments.reject! { |payment| settled_payment_plan?(payment) }
+    @current_payments.reject! { |payment| settled_payment?(payment) }
     @current_payment_batches = current_user.payment_batches
-      .includes(membership_payments: { membership_plan: :membership_plan_type })
+      .includes(membership_payments: [ :family_member, { membership_plan: :membership_plan_type } ])
       .current_for_member
       .latest
       .to_a
@@ -90,7 +90,7 @@ class MembershipPaymentsController < ApplicationController
   private
 
   def set_membership_payment
-    @membership_payment = current_user.membership_payments.includes(membership_plan: :membership_plan_type).find(params[:id])
+    @membership_payment = current_user.membership_payments.includes(:family_member, membership_plan: :membership_plan_type).find(params[:id])
   end
 
   def set_bank_transfer_details
@@ -106,19 +106,25 @@ class MembershipPaymentsController < ApplicationController
     )
   end
 
-  def settled_payment_plan?(payment)
-    settled_payment_plan_ids.include?(payment.membership_plan_id)
+  def settled_payment?(payment)
+    settled_payment_keys.include?(payment.settlement_key)
   end
 
   def settled_payment_plan_ids
-    @settled_payment_plan_ids ||= begin
-      settled_payments = current_user.membership_payments
-        .includes(:membership_plan, :payment_batch)
-        .select { |payment| payment.paid? || payment.payment_batch&.paid? }
-
-      settled_payments.select do |payment|
-        payment.one_time_payment? || payment.payment_year == Date.current.year
-      end.map(&:membership_plan_id).uniq
-    end
+    settled_payments
+      .reject(&:for_family_member?)
+      .map(&:membership_plan_id)
+      .uniq
   end
+
+  def settled_payment_keys
+    @settled_payment_keys ||= settled_payments.map(&:settlement_key).uniq
+  end
+
+  def settled_payments
+    @settled_payments ||= current_user.membership_payments
+      .includes(:family_member, :membership_plan, :payment_batch)
+      .select { |payment| payment.paid? || payment.payment_batch&.paid? }
+  end
+
 end

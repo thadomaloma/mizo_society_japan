@@ -1,6 +1,6 @@
 Payment pending verification
 
-<%= @payment.user.display_name %> submitted a bank transfer for <%= @payment.membership_plan.name %>.
+<%= @payment.user.display_name %> submitted a bank transfer for <%= @payment.membership_plan.name %> (<%= @payment.beneficiary_label %>).
 
 Amount: <%= number_to_currency(@payment.transfer_amount || @payment.amount, unit: "¥", precision: 0) %>
 Transfer date: <%= @payment.transferred_on&.strftime("%B %d, %Y") %>

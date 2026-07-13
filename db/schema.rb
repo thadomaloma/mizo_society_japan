@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_11_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -211,12 +211,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_100000) do
     t.datetime "created_at", null: false
     t.date "date_of_birth"
     t.bigint "member_profile_id", null: false
+    t.string "membership_number"
     t.string "name", null: false
     t.text "notes"
     t.string "phone"
     t.string "relationship", null: false
     t.datetime "updated_at", null: false
     t.index ["member_profile_id"], name: "index_family_members_on_member_profile_id"
+    t.index ["membership_number"], name: "index_family_members_on_membership_number", unique: true, where: "(membership_number IS NOT NULL)"
   end
 
   create_table "finance_categories", force: :cascade do |t|
@@ -331,7 +333,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_100000) do
   create_table "membership_payments", force: :cascade do |t|
     t.decimal "amount", precision: 10, scale: 2, null: false
     t.bigint "approved_by_id"
+    t.string "beneficiary_membership_number"
+    t.string "beneficiary_name"
     t.datetime "created_at", null: false
+    t.bigint "family_member_id"
     t.bigint "membership_plan_id", null: false
     t.text "notes"
     t.datetime "paid_on"
@@ -348,8 +353,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_100000) do
     t.date "transferred_on"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index "user_id, membership_plan_id, payment_year, COALESCE(payment_month, 0)", name: "idx_unique_active_membership_payment_period", unique: true, where: "(status = ANY (ARRAY[0, 3, 4, 5, 8]))"
+    t.index "family_member_id, membership_plan_id, payment_year, COALESCE(payment_month, 0)", name: "idx_unique_family_member_payment_period", unique: true, where: "((family_member_id IS NOT NULL) AND (status = ANY (ARRAY[0, 3, 4, 5, 8])))"
+    t.index "user_id, membership_plan_id, payment_year, COALESCE(payment_month, 0)", name: "idx_unique_guardian_payment_period", unique: true, where: "((family_member_id IS NULL) AND (status = ANY (ARRAY[0, 3, 4, 5, 8])))"
     t.index ["approved_by_id"], name: "index_membership_payments_on_approved_by_id"
+    t.index ["family_member_id"], name: "index_membership_payments_on_family_member_id"
     t.index ["membership_plan_id"], name: "index_membership_payments_on_membership_plan_id"
     t.index ["payment_batch_id"], name: "index_membership_payments_on_payment_batch_id"
     t.index ["payment_year"], name: "index_membership_payments_on_payment_year"
@@ -378,6 +385,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_100000) do
     t.boolean "active", default: true, null: false
     t.decimal "amount", precision: 10, scale: 2, null: false
     t.integer "billing_cycle", default: 1, null: false
+    t.decimal "child_amount", precision: 10, scale: 2
+    t.boolean "child_fee_enabled", default: false, null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.bigint "membership_plan_type_id", null: false
@@ -552,6 +561,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_11_100000) do
   add_foreign_key "meeting_minute_attendances", "users"
   add_foreign_key "meeting_minutes", "users", column: "uploaded_by_id"
   add_foreign_key "member_profiles", "users"
+  add_foreign_key "membership_payments", "family_members"
   add_foreign_key "membership_payments", "membership_plans"
   add_foreign_key "membership_payments", "payment_batches"
   add_foreign_key "membership_payments", "users"

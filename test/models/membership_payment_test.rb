@@ -69,6 +69,37 @@ class MembershipPaymentTest < ActiveSupport::TestCase
     assert_includes duplicate.errors[:base].join, "already has an active or paid Monthly Test Fee record"
   end
 
+  test "guardian and family members can each have the same yearly membership plan" do
+    @yearly_plan.update_column(:membership_plan_type_id, membership_plan_types(:membership).id)
+    child = @user.member_profile.family_members.create!(
+      name: "Payment Child",
+      relationship: "Child",
+      date_of_birth: 14.years.ago.to_date
+    )
+    create_payment(@yearly_plan, payment_year: 2026, status: :paid)
+    child_payment = build_payment(@yearly_plan, payment_year: 2026, status: :pending)
+    child_payment.family_member = child
+
+    assert child_payment.valid?
+  end
+
+  test "blocks duplicate payment for the same family member and period" do
+    @yearly_plan.update_column(:membership_plan_type_id, membership_plan_types(:membership).id)
+    child = @user.member_profile.family_members.create!(
+      name: "Duplicate Child",
+      relationship: "Child",
+      date_of_birth: 14.years.ago.to_date
+    )
+    first_payment = build_payment(@yearly_plan, payment_year: 2026, status: :paid)
+    first_payment.family_member = child
+    first_payment.save!
+    duplicate = build_payment(@yearly_plan, payment_year: 2026, status: :pending)
+    duplicate.family_member = child
+
+    assert_not duplicate.valid?
+    assert_includes duplicate.errors[:base].join, child.membership_number
+  end
+
   private
 
   def ensure_profile_for(user)

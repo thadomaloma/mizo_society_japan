@@ -50,7 +50,7 @@ class NotificationCreator
       notifiable: payment,
       action: :payment_submitted,
       title: "Payment pending verification",
-      body: "#{payment.user.display_name} submitted #{payment.membership_plan.name} for #{payment.transfer_amount || payment.amount}."
+      body: "#{payment.user.display_name} submitted #{payment.membership_plan.name} for #{payment.beneficiary_label}, amount #{payment.transfer_amount || payment.amount}."
     ).call
   end
 
@@ -61,7 +61,7 @@ class NotificationCreator
       notifiable: payment,
       action: :payment_approved,
       title: "Payment approved",
-      body: "#{payment.membership_plan.name} has been verified and marked paid."
+      body: "#{payment.membership_plan.name} for #{payment.beneficiary_label} has been verified and marked paid."
     ).call
   end
 

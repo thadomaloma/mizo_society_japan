@@ -16,6 +16,7 @@ class AiAssistantControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Transfer zawh hnuah eng nge ka submit a, status engtin nge ka check ang?"
     assert_includes response.body, "Welfare support private taka engtin nge ka dil ang?"
     assert_includes response.body, "Events, RSVP leh announcements engtin nge ka hman ang?"
+    assert_includes response.body, "Kum 14+ child membership fee hi engtin nge ka pek ang?"
     assert_no_match(/Profile complete dan/, response.body)
     assert_no_match(/Japan mobile number eng format/, response.body)
   end

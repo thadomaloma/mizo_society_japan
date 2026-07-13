@@ -63,6 +63,12 @@
       </div>
     </div>
     <div class="mt-6 border-t border-[#E2E8F0] pt-6 dark:border-[#334155]">
+      <p class="text-sm font-bold text-[#64748B] dark:text-[#CBD5E1]">Family member billing</p>
+      <p class="mt-2 text-sm font-black text-[#0F172A] dark:text-white">
+        <%= @membership_plan.child_fee_enabled? ? "Age 14+ · #{yen(@membership_plan.child_fee_amount)} per eligible child" : "Not enabled" %>
+      </p>
+    </div>
+    <div class="mt-6 border-t border-[#E2E8F0] pt-6 dark:border-[#334155]">
       <p class="text-sm font-bold text-[#64748B] dark:text-[#CBD5E1]">Description</p>
       <p class="mt-2 text-sm leading-6 text-[#64748B] dark:text-[#CBD5E1]"><%= @membership_plan.description.presence || "No description provided." %></p>
     </div>

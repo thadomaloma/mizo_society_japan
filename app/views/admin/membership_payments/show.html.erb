@@ -26,6 +26,7 @@
               <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300"><%= @membership_payment.plan_type_label %></p>
               <h2 class="mt-1 truncate text-xl font-black text-slate-950 dark:text-white"><%= @membership_payment.membership_plan.name %></h2>
               <p class="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400"><%= @membership_payment.period_label %></p>
+              <% if @membership_payment.for_family_member? %><p class="mt-1 text-sm font-black text-red-700 dark:text-red-300"><%= @membership_payment.payment_for_label %> · <%= @membership_payment.beneficiary_number %></p><% end %>
             </div>
             <div class="flex shrink-0 items-center gap-2">
               <%= render "admin/membership_payments/review_badge", payment: @membership_payment %>

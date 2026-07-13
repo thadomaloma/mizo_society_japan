@@ -35,7 +35,7 @@ class MembershipPaymentFinanceRecorder
       status: :approved,
       amount: payment.amount,
       transaction_date: payment.paid_on&.to_date || Date.current,
-      description: "#{payment.plan_type_label} payment: #{payment.membership_plan.name} #{payment.period_label}",
+      description: "#{payment.plan_type_label} payment: #{payment.membership_plan.name} #{payment.period_label} (#{payment.beneficiary_label})",
       reference_number: payment.finance_reference_number
     }
   end

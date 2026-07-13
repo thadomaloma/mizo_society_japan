@@ -43,7 +43,7 @@ module Admin
       @upcoming_events = Event.published.upcoming.limit(3)
       @pending_verification_payments = if @finance_dashboard_enabled
         MembershipPayment.pending_verification.where(payment_batch_id: nil)
-          .includes({ membership_plan: :membership_plan_type }, user: :member_profile)
+          .includes(:family_member, { membership_plan: :membership_plan_type }, user: :member_profile)
           .latest
           .limit(4)
       else
@@ -51,7 +51,7 @@ module Admin
       end
       @pending_verification_batches = if @finance_dashboard_enabled
         PaymentBatch.pending_verification
-          .includes(:user, membership_payments: { membership_plan: :membership_plan_type })
+          .includes(:user, membership_payments: [ :family_member, { membership_plan: :membership_plan_type } ])
           .latest
           .limit(3)
       else
