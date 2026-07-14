@@ -5,7 +5,10 @@
     eyebrow: "Finance review",
     title: user_label(@payment_batch.user),
     subtitle: "Combined payment · #{pluralize(@payment_batch.membership_payments.count, 'item')}",
-    actions: link_to(admin_membership_payments_path, class: action_button_classes(:secondary)) { safe_join([ icon_svg(:arrow_left, classes: "h-4 w-4"), tag.span("Payments") ]) } %>
+    actions: safe_join([
+      link_to(admin_membership_payments_path, class: action_button_classes(:secondary)) { safe_join([ icon_svg(:arrow_left, classes: "h-4 w-4"), tag.span("Payments") ]) },
+      (link_to(receipt_payment_batch_path(@payment_batch), class: action_button_classes(:primary), target: "_blank", rel: "noopener") { safe_join([ icon_svg(:printer, classes: "h-4 w-4"), tag.span("Print Receipt") ]) } if policy(@payment_batch).receipt?)
+    ].compact, " ") %>
 
   <% screenshot_attached = @payment_batch.transfer_screenshot.attached? %>
   <% screenshot_is_image = screenshot_attached && @payment_batch.transfer_screenshot.blob.content_type.to_s.start_with?("image/") %>

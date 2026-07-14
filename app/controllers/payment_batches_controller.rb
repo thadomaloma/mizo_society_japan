@@ -1,5 +1,6 @@
 class PaymentBatchesController < ApplicationController
   before_action :set_payment_batch, only: [ :show, :submit_transfer, :cancel ]
+  before_action :set_receipt_batch, only: :receipt
   before_action :set_bank_transfer_details, only: [ :show, :submit_transfer ]
 
   def create
@@ -26,6 +27,13 @@ class PaymentBatchesController < ApplicationController
 
   def show
     authorize @payment_batch
+  end
+
+  def receipt
+    authorize @payment_batch, :receipt?
+    @receipt_record = @payment_batch
+    @back_path = current_user.finance_viewer? ? admin_payment_batch_path(@payment_batch) : payment_batch_path(@payment_batch)
+    render "payment_receipts/show", layout: "receipt"
   end
 
   def submit_transfer
@@ -81,6 +89,12 @@ class PaymentBatchesController < ApplicationController
 
   def set_payment_batch
     @payment_batch = current_user.payment_batches.includes(membership_payments: [ :family_member, { membership_plan: :membership_plan_type } ]).find(params[:id])
+  end
+
+  def set_receipt_batch
+    @payment_batch = policy_scope(PaymentBatch)
+      .includes(:approved_by, user: :member_profile, membership_payments: [ :family_member, { membership_plan: :membership_plan_type } ])
+      .find(params[:id])
   end
 
   def selected_payment_ids

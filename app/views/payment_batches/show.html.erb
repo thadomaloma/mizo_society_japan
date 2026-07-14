@@ -7,6 +7,7 @@
       title: "Combined Payment",
       actions: safe_join([
         link_to(membership_payments_path, class: action_button_classes(:secondary)) { safe_join([ icon_svg(:arrow_left, classes: "h-4 w-4"), tag.span("Payments") ]) },
+        (link_to(receipt_payment_batch_path(@payment_batch), class: action_button_classes(:dark), target: "_blank", rel: "noopener") { safe_join([ icon_svg(:printer, classes: "h-4 w-4"), tag.span("Receipt") ]) } if policy(@payment_batch).receipt?),
         (button_to(cancel_payment_batch_path(@payment_batch), method: :patch, class: action_button_classes(:secondary), data: { turbo_confirm: "Cancel this combined payment and select again?" }) { safe_join([ icon_svg(:arrow_path, classes: "h-4 w-4"), tag.span("Change Selection") ]) } if policy(@payment_batch).cancel?)
       ].compact) %>
   </div>
@@ -21,6 +22,11 @@
         <%= button_to cancel_payment_batch_path(@payment_batch), method: :patch, class: action_button_classes(:secondary, size: :xs), data: { turbo_confirm: "Cancel this combined payment and select again?" } do %>
           <%= icon_svg(:arrow_path, classes: "h-3.5 w-3.5") %>
           <span>Change</span>
+        <% end %>
+      <% elsif policy(@payment_batch).receipt? %>
+        <%= link_to receipt_payment_batch_path(@payment_batch), class: action_button_classes(:dark, size: :xs), target: "_blank", rel: "noopener" do %>
+          <%= icon_svg(:printer, classes: "h-3.5 w-3.5") %>
+          <span>Receipt</span>
         <% end %>
       <% end %>
     </div>

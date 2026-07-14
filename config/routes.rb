@@ -28,11 +28,13 @@ Rails.application.routes.draw do
     end
 
     member do
+      get :receipt
       patch :submit_transfer
     end
   end
   resources :payment_batches, path: "combined_payments", only: [ :show, :create ] do
     member do
+      get :receipt
       patch :submit_transfer
       patch :cancel
     end

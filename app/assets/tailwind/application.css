@@ -741,3 +741,46 @@ body {
     display: block !important;
   }
 }
+
+.thermal-receipt {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.receipt-rule {
+  border-top: 1px dashed #0f172a;
+}
+
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  html,
+  body.payment-receipt-body {
+    width: 80mm !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .receipt-page {
+    width: 80mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .receipt-screen-actions {
+    display: none !important;
+  }
+
+  .thermal-receipt {
+    width: 80mm !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    box-shadow: none !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

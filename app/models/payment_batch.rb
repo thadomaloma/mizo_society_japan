@@ -83,6 +83,30 @@ class PaymentBatch < ApplicationRecord
     membership_payments.size
   end
 
+  def receipt_number
+    "MSJ-B-#{id.to_s.rjust(6, '0')}"
+  end
+
+  def receipt_date
+    approved_at&.to_date || updated_at.to_date
+  end
+
+  def receipt_total
+    total_amount
+  end
+
+  def receipt_reference
+    transfer_reference_name.presence || "-"
+  end
+
+  def receipt_payment_method
+    "Bank transfer"
+  end
+
+  def receipt_payments
+    membership_payments
+  end
+
   private
 
   def copy_total_amount

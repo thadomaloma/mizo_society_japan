@@ -6,6 +6,12 @@
       <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
       <span>Back</span>
     <% end %>
+    <% if policy(@membership_payment).receipt? %>
+      <%= link_to printable_payment_receipt_path(@membership_payment), class: action_button_classes(:dark), target: "_blank", rel: "noopener" do %>
+        <%= icon_svg(:printer, classes: "h-4 w-4") %>
+        <span>Receipt</span>
+      <% end %>
+    <% end %>
   <% end %>
 
   <%= render "shared/page_header",

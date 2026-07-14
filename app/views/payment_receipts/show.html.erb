@@ -1,0 +1,73 @@
+<% content_for :title, "#{@receipt_record.receipt_number} | MSJ Receipt" %>
+<% payments = @receipt_record.receipt_payments.to_a %>
+<% member = @receipt_record.user %>
+<% profile = member.member_profile %>
+
+<main class="receipt-page mx-auto w-full px-3 py-5 sm:px-6 sm:py-8" data-controller="report-print">
+  <div class="receipt-screen-actions mx-auto mb-4 flex max-w-[80mm] items-center justify-between gap-2">
+    <%= link_to @back_path, class: "inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50" do %>
+      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
+      <span>Back</span>
+    <% end %>
+    <button type="button" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-red-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-red-800" data-action="report-print#open">
+      <%= icon_svg(:printer, classes: "h-4 w-4") %>
+      <span>Print Receipt</span>
+    </button>
+  </div>
+
+  <article class="thermal-receipt mx-auto w-full max-w-[80mm] bg-white px-[5mm] py-[6mm] shadow-xl">
+    <header class="text-center">
+      <img src="/icons/msj-portal-192x192-20260713.png" alt="MSJ" class="mx-auto h-14 w-14 rounded-full object-cover">
+      <p class="mt-2 text-[15px] font-black uppercase leading-tight">Mizo Society of Japan</p>
+      <p class="mt-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Official Payment Receipt</p>
+    </header>
+
+    <div class="receipt-rule my-4"></div>
+
+    <dl class="space-y-1.5 text-[11px] leading-4">
+      <div class="flex justify-between gap-4"><dt class="font-bold text-slate-500">Receipt No.</dt><dd class="text-right font-black"><%= @receipt_record.receipt_number %></dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-bold text-slate-500">Date</dt><dd class="text-right font-black"><%= @receipt_record.receipt_date.strftime("%d %b %Y") %></dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-bold text-slate-500">Member</dt><dd class="max-w-[48mm] text-right font-black"><%= member.display_name %></dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-bold text-slate-500">Member No.</dt><dd class="text-right font-black"><%= profile&.membership_number.presence || "-" %></dd></div>
+    </dl>
+
+    <div class="receipt-rule my-4"></div>
+
+    <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-2 border-b border-slate-950 pb-1.5 text-[10px] font-black uppercase">
+      <span>Payment / Fund</span>
+      <span>Amount</span>
+    </div>
+    <div class="divide-y divide-dashed divide-slate-300">
+      <% payments.each do |payment| %>
+        <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 py-2.5 text-[11px] leading-4">
+          <div class="min-w-0">
+            <p class="font-black"><%= payment.membership_plan.name %></p>
+            <p class="mt-0.5 text-[10px] font-semibold text-slate-500"><%= payment.beneficiary_label %> · <%= payment.period_label %></p>
+          </div>
+          <p class="whitespace-nowrap text-right font-black tabular-nums"><%= yen(payment.amount) %></p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="receipt-rule mb-2 mt-1"></div>
+    <div class="flex items-end justify-between gap-4">
+      <span class="text-[12px] font-black uppercase">Total Paid</span>
+      <span class="text-[22px] font-black tabular-nums"><%= yen(@receipt_record.receipt_total) %></span>
+    </div>
+
+    <div class="my-4 rounded border-2 border-slate-950 py-1.5 text-center text-[15px] font-black uppercase tracking-[0.2em]">Paid</div>
+
+    <dl class="space-y-1.5 text-[10px] leading-4">
+      <div class="flex justify-between gap-4"><dt class="font-bold text-slate-500">Method</dt><dd class="text-right font-black"><%= @receipt_record.receipt_payment_method %></dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-bold text-slate-500">Reference</dt><dd class="max-w-[48mm] break-all text-right font-black"><%= @receipt_record.receipt_reference %></dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-bold text-slate-500">Approved by</dt><dd class="max-w-[48mm] text-right font-black"><%= @receipt_record.approved_by&.display_name || "MSJ Finance Team" %></dd></div>
+    </dl>
+
+    <div class="receipt-rule my-4"></div>
+    <footer class="text-center text-[10px] font-semibold leading-4 text-slate-600">
+      <p class="font-black text-slate-950">Thank you for your payment.</p>
+      <p class="mt-1">Please keep this receipt for your records.</p>
+      <p class="mt-3 font-mono text-[9px] tracking-wide"><%= @receipt_record.receipt_number %></p>
+    </footer>
+  </article>
+</main>

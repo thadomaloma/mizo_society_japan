@@ -15,6 +15,10 @@ class MembershipPaymentPolicy < ApplicationPolicy
     owns_record? && record.bank_transfer_submittable?
   end
 
+  def receipt?
+    show? && record.paid?
+  end
+
   def create?
     finance_user?
   end

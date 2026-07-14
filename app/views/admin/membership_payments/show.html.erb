@@ -14,7 +14,10 @@
       end,
       (link_to(edit_admin_membership_payment_path(@membership_payment), class: action_button_classes(:dark)) do
         safe_join([ icon_svg(:edit, classes: "h-4 w-4"), tag.span("Edit") ])
-      end if policy(@membership_payment).update?)
+      end if policy(@membership_payment).update?),
+      (link_to(printable_payment_receipt_path(@membership_payment), class: action_button_classes(:primary), target: "_blank", rel: "noopener") do
+        safe_join([ icon_svg(:printer, classes: "h-4 w-4"), tag.span("Print Receipt") ])
+      end if policy(@membership_payment).receipt?)
     ].compact, " ") %>
 
   <section class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">

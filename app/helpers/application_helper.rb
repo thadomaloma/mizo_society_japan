@@ -468,6 +468,8 @@ module ApplicationHelper
   end
 
   def payment_receipt_whatsapp_message(payment, sender: current_user)
+    receipt = payment.payment_batch&.paid? ? payment.payment_batch : payment
+    receipt_items = receipt.receipt_payments.to_a
     member_name = payment.user&.display_name || "Member"
     sender_name = sender&.display_name.presence || "MSJ Finance Team"
     sender_role = sender.present? ? User.role_label(sender.role) : "Finance Team"
@@ -490,20 +492,28 @@ module ApplicationHelper
       "Chibai #{member_name},",
       "",
       "MSJ Payment Receipt",
-      "Payment/Fund: #{payment.membership_plan.name}",
-      "Payment for: #{payment.beneficiary_label}",
-      "Type: #{payment.plan_type_label}",
-      "Period: #{payment.period_label}",
-      "Amount: #{yen(payment.amount)}",
+      "Receipt No: #{receipt.receipt_number}",
+      "Member No: #{payment.user&.member_profile&.membership_number || '-'}",
+      "",
+      *receipt_items.map { |item| "#{item.membership_plan.name} - #{item.beneficiary_label} (#{item.period_label}): #{yen(item.amount)}" },
+      "Total paid: #{yen(receipt.receipt_total)}",
       status_line,
       date_line,
-      ("Reference: #{payment.reference_number}" if payment.reference_number.present?),
+      ("Reference: #{receipt.receipt_reference}" unless receipt.receipt_reference == "-"),
       "",
       "Confirmed by: #{sender_name} (#{sender_role})",
       "Mizo Society of Japan",
       "",
       "Thank you."
     ].compact.join("\n")
+  end
+
+  def printable_payment_receipt_path(payment)
+    if payment.payment_batch&.paid?
+      receipt_payment_batch_path(payment.payment_batch)
+    else
+      receipt_membership_payment_path(payment)
+    end
   end
 
   def payment_receipt_label(payment)

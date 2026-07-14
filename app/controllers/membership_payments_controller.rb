@@ -1,5 +1,6 @@
 class MembershipPaymentsController < ApplicationController
   before_action :set_membership_payment, only: [ :show, :submit_transfer ]
+  before_action :set_receipt_payment, only: :receipt
   before_action :set_bank_transfer_details, only: [ :show, :submit_transfer ]
 
   def index
@@ -53,6 +54,13 @@ class MembershipPaymentsController < ApplicationController
     authorize @membership_payment
   end
 
+  def receipt
+    authorize @membership_payment, :receipt?
+    @receipt_record = @membership_payment
+    @back_path = current_user.finance_viewer? ? admin_membership_payment_path(@membership_payment) : membership_payment_path(@membership_payment)
+    render "payment_receipts/show", layout: "receipt"
+  end
+
   def submit_transfer
     authorize @membership_payment
     submission = bank_transfer_submission_params
@@ -91,6 +99,12 @@ class MembershipPaymentsController < ApplicationController
 
   def set_membership_payment
     @membership_payment = current_user.membership_payments.includes(:family_member, membership_plan: :membership_plan_type).find(params[:id])
+  end
+
+  def set_receipt_payment
+    @membership_payment = policy_scope(MembershipPayment)
+      .includes(:approved_by, :family_member, user: :member_profile, membership_plan: :membership_plan_type)
+      .find(params[:id])
   end
 
   def set_bank_transfer_details

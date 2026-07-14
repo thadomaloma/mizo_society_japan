@@ -407,8 +407,80 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Receipt ready"
     assert_includes response.body, "I sent this receipt"
     assert_includes response.body, "MSJ+Payment+Receipt"
+    assert_includes response.body, URI.encode_www_form_component(@payment.receipt_number)
     assert_includes response.body, URI.encode_www_form_component(@plan.name)
     assert_includes response.body, "Confirmed+by"
+    assert_includes response.body, receipt_membership_payment_path(@payment)
+  end
+
+  test "member can print an approved itemized payment receipt" do
+    @payment.update!(
+      status: :paid,
+      paid_on: Time.zone.local(2026, 7, 14, 10, 30),
+      approved_by: @president,
+      reference_number: "BANK-2026-001"
+    )
+    sign_in @member
+
+    get receipt_membership_payment_path(@payment)
+
+    assert_response :success
+    assert_select "article.thermal-receipt"
+    assert_includes response.body, "Official Payment Receipt"
+    assert_includes response.body, @payment.receipt_number
+    assert_includes response.body, @member.member_profile.membership_number
+    assert_includes response.body, @plan.name
+    assert_includes response.body, "¥5,000"
+    assert_includes response.body, "BANK-2026-001"
+    assert_includes response.body, @president.display_name
+    assert_includes response.body, "Print Receipt"
+  end
+
+  test "unpaid payment cannot be opened as an official receipt" do
+    sign_in @member
+
+    get receipt_membership_payment_path(@payment)
+
+    assert_redirected_to root_path
+    assert_equal "You are not authorized to access that area.", flash[:alert]
+  end
+
+  test "member can print one receipt for an approved combined payment" do
+    donation_payment = MembershipPayment.create!(
+      user: @member,
+      membership_plan: @donation_plan,
+      amount: @donation_plan.amount,
+      payment_year: Date.current.year,
+      payment_method: :manual_bank_transfer,
+      status: :paid,
+      paid_on: Time.current,
+      approved_by: @president
+    )
+    batch = @member.payment_batches.create!(
+      status: :paid,
+      total_amount: @payment.amount + donation_payment.amount,
+      transfer_reference_name: "COMBINED-REF",
+      approved_by: @president,
+      approved_at: Time.current
+    )
+    @payment.update!(status: :paid, paid_on: Time.current, approved_by: @president, payment_batch: batch)
+    donation_payment.update!(payment_batch: batch)
+    sign_in @member
+
+    get receipt_payment_batch_path(batch)
+
+    assert_response :success
+    assert_includes response.body, batch.receipt_number
+    assert_includes response.body, @plan.name
+    assert_includes response.body, @donation_plan.name
+    assert_includes response.body, "¥7,000"
+    assert_includes response.body, "COMBINED-REF"
+
+    get membership_payment_path(@payment)
+
+    assert_response :success
+    assert_includes response.body, receipt_payment_batch_path(batch)
+    assert_not_includes response.body, receipt_membership_payment_path(@payment)
   end
 
   test "admin payment records show receipt state and can mark receipt sent" do

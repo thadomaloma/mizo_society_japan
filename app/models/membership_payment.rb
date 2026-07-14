@@ -120,6 +120,30 @@ class MembershipPayment < ApplicationRecord
     receipt_sent_at.present?
   end
 
+  def receipt_number
+    "MSJ-P-#{id.to_s.rjust(6, '0')}"
+  end
+
+  def receipt_date
+    paid_on&.to_date || updated_at.to_date
+  end
+
+  def receipt_total
+    amount
+  end
+
+  def receipt_reference
+    reference_number.presence || transfer_reference_name.presence || "-"
+  end
+
+  def receipt_payment_method
+    payment_method.humanize
+  end
+
+  def receipt_payments
+    [ self ]
+  end
+
   def mark_receipt_sent!(sender)
     update!(receipt_sent_by: sender, receipt_sent_at: Time.current)
   end
