@@ -14,6 +14,26 @@ class JapanPrefecture
     "宮崎県" => "Miyazaki", "鹿児島県" => "Kagoshima", "沖縄県" => "Okinawa"
   }.freeze
 
+  ALIASES = ROMAJI.each_with_object({}) do |(kanji, romaji), aliases|
+    aliases[kanji] = kanji
+    aliases[romaji.downcase] = kanji
+  end.freeze
+
+  def self.canonical(value)
+    normalized = value.to_s.strip
+    return if normalized.blank?
+
+    ALIASES[normalized] || ALIASES[normalized.downcase]
+  end
+
+  def self.valid?(value)
+    canonical(value).present?
+  end
+
+  def self.options
+    ROMAJI.map { |kanji, romaji| [ "#{kanji} (#{romaji})", kanji ] }
+  end
+
   def self.romaji(value)
     normalized = value.to_s.strip
     return if normalized.blank?

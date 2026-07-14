@@ -28,23 +28,27 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_select "template select[id$='_date_of_birth_2i']", count: 1
     assert_select "template select[id$='_date_of_birth_3i']", count: 1
     assert_select "template input[id$='_date_of_birth']", count: 0
+    assert_select "select#member_profile_prefecture[required]"
+    assert_select "input#member_profile_postal_code[pattern]"
   end
 
   test "member can complete profile setup" do
     sign_in @member
 
-    patch complete_setup_profile_path, params: {
-      member_profile: {
-        full_name: "Complete Member",
-        mobile_number: "09024681357",
-        date_of_birth: "1990-01-01",
-        family_status: "single",
-        postal_code: "169-0075",
-        prefecture: "Tokyo",
-        city: "Shinjuku",
-        address_line1: "1-1-1 Okubo"
+    with_valid_postal_lookup do
+      patch complete_setup_profile_path, params: {
+        member_profile: {
+          full_name: "Complete Member",
+          mobile_number: "09024681357",
+          date_of_birth: "1990-01-01",
+          family_status: "single",
+          postal_code: "169-0075",
+          prefecture: "Tokyo",
+          city: "Shinjuku",
+          address_line1: "1-1-1 Okubo"
+        }
       }
-    }
+    end
 
     assert_redirected_to root_path
     assert @member.reload.profile_complete?
@@ -54,8 +58,9 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
   test "member can save family profile details with children" do
     sign_in @member
 
-    patch complete_setup_profile_path, params: {
-      member_profile: {
+    with_valid_postal_lookup do
+      patch complete_setup_profile_path, params: {
+        member_profile: {
         full_name: "Family Member",
         mobile_number: "09024681357",
         date_of_birth: "1990-01-01",
@@ -70,9 +75,10 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
         family_members_attributes: {
           "0" => { name: "Child One", date_of_birth: "2010-05-01", relationship: "Child" },
           "1" => { name: "Child Two", date_of_birth: "2015-08-02", relationship: "Child" }
+          }
         }
       }
-    }
+    end
 
     assert_redirected_to root_path
     profile = @member.reload.member_profile
@@ -113,8 +119,9 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     )
     sign_in @member
 
-    patch profile_path, params: {
-      member_profile: {
+    with_valid_postal_lookup do
+      patch profile_path, params: {
+        member_profile: {
         full_name: "Complete Member",
         mobile_number: "09024681357",
         date_of_birth: "1990-01-01",
@@ -126,9 +133,10 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
         spouse_name: "Spouse Name",
         family_members_attributes: {
           "0" => { id: stale_child.id, name: "My Child", relationship: "Child", _destroy: "0" }
+          }
         }
       }
-    }
+    end
 
     assert_redirected_to profile_path
     assert_equal [ "My Child" ], @member.member_profile.reload.child_family_members.pluck(:name)
@@ -156,5 +164,77 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "google.com/maps"
     assert_no_match(/>Call</, response.body)
     assert_no_match(/>WhatsApp</, response.body)
+  end
+
+  test "profile setup rejects a city that does not match the Japan postal code" do
+    sign_in @member
+    lookup = JapanPostalAddressLookup::Result.new(
+      status: :success,
+      addresses: [ JapanPostalAddressLookup::Address.new(prefecture: "東京都", city: "新宿区", town: "百人町") ]
+    )
+
+    with_postal_lookup(lookup) do
+      patch complete_setup_profile_path, params: {
+        member_profile: {
+          full_name: "Invalid Address Member",
+          mobile_number: "09024681357",
+          date_of_birth: "1990-01-01",
+          family_status: "single",
+          postal_code: "169-0075",
+          prefecture: "東京都",
+          city: "Los Angeles",
+          address_line1: "123 Main Street"
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "Postal code, prefecture, and city do not match a Japan address."
+    assert_not @member.reload.profile_complete?
+  end
+
+  test "profile setup rejects an address line outside the postal town" do
+    sign_in @member
+    lookup = JapanPostalAddressLookup::Result.new(
+      status: :success,
+      addresses: [ JapanPostalAddressLookup::Address.new(prefecture: "東京都", city: "新宿区", town: "高田馬場") ]
+    )
+
+    with_postal_lookup(lookup) do
+      patch complete_setup_profile_path, params: {
+        member_profile: {
+          full_name: "Wrong Town Member",
+          mobile_number: "09024681357",
+          date_of_birth: "1990-01-01",
+          family_status: "single",
+          postal_code: "169-0075",
+          prefecture: "東京都",
+          city: "新宿区",
+          address_line1: "西新宿1-1-1"
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "must include the town or chome returned by the postal code lookup"
+    assert_not @member.reload.profile_complete?
+  end
+
+  private
+
+  def with_valid_postal_lookup
+    lookup = JapanPostalAddressLookup::Result.new(
+      status: :success,
+      addresses: [ JapanPostalAddressLookup::Address.new(prefecture: "東京都", city: "Shinjuku", town: "Okubo") ]
+    )
+    with_postal_lookup(lookup) { yield }
+  end
+
+  def with_postal_lookup(result)
+    original = JapanPostalAddressLookup.method(:call)
+    JapanPostalAddressLookup.define_singleton_method(:call) { |_postal_code| result }
+    yield
+  ensure
+    JapanPostalAddressLookup.define_singleton_method(:call, original)
   end
 end

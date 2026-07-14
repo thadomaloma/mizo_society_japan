@@ -37,6 +37,26 @@ class MemberProfileTest < ActiveSupport::TestCase
     assert profile.valid?
   end
 
+  test "normalizes Japan postal code and romaji prefecture" do
+    profile = build_profile(mobile_number: "09024681357")
+    profile.postal_code = "１６９００７５"
+    profile.prefecture = "tokyo"
+
+    assert profile.valid?
+    assert_equal "169-0075", profile.postal_code
+    assert_equal "東京都", profile.prefecture
+  end
+
+  test "rejects non Japan postal code and prefecture" do
+    profile = build_profile(mobile_number: "09024681357")
+    profile.postal_code = "90210"
+    profile.prefecture = "California"
+
+    assert_not profile.valid?
+    assert_includes profile.errors[:postal_code], "must be a valid Japan postal code, such as 169-0075"
+    assert_includes profile.errors[:prefecture], "must be one of Japan's 47 prefectures"
+  end
+
   test "rejects example mobile numbers" do
     profile = build_profile(mobile_number: "07012345678")
 

@@ -101,13 +101,56 @@ class ProfilesController < ApplicationController
   end
 
   def update_member_profile_with_upload_handling(error_view)
-    @member_profile.update(member_profile_params)
+    @member_profile.assign_attributes(member_profile_params)
+    return false unless japan_address_verified?
+
+    @member_profile.save
   rescue ActiveStorage::Error => error
     handle_avatar_upload_error(error, error_view)
   rescue StandardError => error
     raise unless avatar_upload_attempt? && storage_service_error?(error)
 
     handle_avatar_upload_error(error, error_view)
+  end
+
+  def japan_address_verified?
+    address_attributes = %w[postal_code prefecture city address_line1]
+    return true if @member_profile.persisted? && address_attributes.none? { |attribute| @member_profile.will_save_change_to_attribute?(attribute) }
+
+    postal_code = MemberProfile.normalize_postal_code(@member_profile.postal_code)
+    canonical_prefecture = JapanPrefecture.canonical(@member_profile.prefecture)
+    return true if postal_code.blank? || canonical_prefecture.blank? || @member_profile.city.blank?
+
+    lookup = JapanPostalAddressLookup.call(postal_code)
+    unless lookup.success?
+      message = lookup.not_found? ? "was not found in Japan's postal address records" : "could not be verified right now. Please try again"
+      @member_profile.errors.add(:postal_code, message)
+      return false
+    end
+
+    submitted_city = normalize_address_text(@member_profile.city)
+    matching_locations = lookup.addresses.select do |address|
+      address.prefecture == canonical_prefecture && normalize_address_text(address.city) == submitted_city
+    end
+    if matching_locations.empty?
+      @member_profile.errors.add(:base, "Postal code, prefecture, and city do not match a Japan address.")
+      return false
+    end
+
+    submitted_street = normalize_address_text(@member_profile.address_line1)
+    known_towns = matching_locations.map(&:town).compact_blank.reject { |town| town.include?("以下に掲載がない場合") }
+    if known_towns.any? && known_towns.none? { |town| submitted_street.include?(normalize_address_text(town)) }
+      @member_profile.errors.add(:address_line1, "must include the town or chome returned by the postal code lookup")
+      return false
+    end
+
+    @member_profile.postal_code = postal_code
+    @member_profile.prefecture = canonical_prefecture
+    true
+  end
+
+  def normalize_address_text(value)
+    value.to_s.unicode_normalize(:nfkc).gsub(/[[:space:]]/, "").downcase
   end
 
   def handle_avatar_upload_error(error, error_view)

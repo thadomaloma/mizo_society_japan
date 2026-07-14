@@ -1,5 +1,6 @@
 class MemberProfile < ApplicationRecord
   JAPAN_MOBILE_NUMBER_REGEX = /\A0[789]0\d{8}\z/
+  JAPAN_POSTAL_CODE_REGEX = /\A\d{3}-\d{4}\z/
   RESERVED_MOBILE_NUMBERS = %w[
     07012345678
     08012345678
@@ -36,6 +37,7 @@ class MemberProfile < ApplicationRecord
   before_validation :assign_membership_number, if: -> { membership_number.blank? }
   before_validation :assign_joined_on, if: -> { joined_on.blank? }
   before_validation :normalize_mobile_number
+  before_validation :normalize_japan_address
   before_validation :clear_household_details_unless_family
   after_save :sync_spouse_family_member, if: :family?
   after_save :remove_family_members_unless_family
@@ -54,6 +56,11 @@ class MemberProfile < ApplicationRecord
   validates :mobile_number, uniqueness: {
     message: "is already used by another member"
   }, allow_blank: true
+  validates :postal_code, format: {
+    with: JAPAN_POSTAL_CODE_REGEX,
+    message: "must be a valid Japan postal code, such as 169-0075"
+  }, allow_blank: true
+  validate :prefecture_is_in_japan
 
   scope :latest, -> { order(created_at: :desc) }
   scope :by_status, ->(status) { statuses.key?(status.to_s) ? where(status: status) : all }
@@ -77,6 +84,13 @@ class MemberProfile < ApplicationRecord
       .to_i
 
     "#{prefix}#{(last_number + 1).to_s.rjust(4, "0")}"
+  end
+
+  def self.normalize_postal_code(value)
+    digits = value.to_s.tr("０１２３４５６７８９", "0123456789").gsub(/\D/, "")
+    return value.to_s.strip unless digits.length == 7
+
+    "#{digits.first(3)}-#{digits.last(4)}"
   end
 
   def age
@@ -170,6 +184,20 @@ class MemberProfile < ApplicationRecord
     else
       value.gsub(/\D/, "")
     end
+  end
+
+  def normalize_japan_address
+    self.postal_code = self.class.normalize_postal_code(postal_code) if postal_code.present?
+    self.prefecture = JapanPrefecture.canonical(prefecture) || prefecture.to_s.strip if prefecture.present?
+    self.city = city.to_s.strip if city.present?
+    self.address_line1 = address_line1.to_s.strip if address_line1.present?
+    self.address_line2 = address_line2.to_s.strip if address_line2.present?
+  end
+
+  def prefecture_is_in_japan
+    return if prefecture.blank? || JapanPrefecture.valid?(prefecture)
+
+    errors.add(:prefecture, "must be one of Japan's 47 prefectures")
   end
 
   def address_line1_includes_street_number

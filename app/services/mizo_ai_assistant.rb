@@ -268,7 +268,7 @@ class MizoAiAssistant
     profile = user.member_profile
     completion = profile&.profile_completion_percentage || 0
 
-    "Profile: Members must complete full name, Japan mobile number, date of birth, family status, postal code, prefecture, city, and address line 1 before using protected portal areas. Father name, mother name, spouse name, and family members may be captured for member records. Avatar/profile photo is optional. Current profile completion is #{completion}%."
+    "Profile: Members must complete full name, Japan mobile number, date of birth, family status, and a server-verified Japan address before using protected portal areas. Postal code must be a valid Japan seven-digit code; prefecture and city must match its postal record; address line 1 must include the town/street number. Father name, mother name, spouse name, and family members may be captured for member records. Avatar/profile photo is optional. Current profile completion is #{completion}%."
   end
 
   def welfare_context
@@ -652,6 +652,8 @@ class MizoAiAssistant
       6. Prefecture
       7. City
       8. Address line 1
+
+      Postal code-a Lookup hmang la, prefecture leh city auto-fill chu thlak danglam loh tur. Address line 1-ah town/chome leh street number, entirnan 3-11-2, ziak rawh. Postal code, prefecture leh city in-match loh chuan server-in save a phal lo ang.
 
       Tuna i profile completion: #{completion}%.
       Profile page-ah lut la, missing field awm chu update rawh.
