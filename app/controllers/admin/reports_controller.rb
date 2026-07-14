@@ -14,7 +14,18 @@ module Admin
       respond_to do |format|
         format.html
         format.csv do
-          authorize :report, :export?
+          authorize :report, :export_finance?
+          AuditLogger.call(
+            user: current_user,
+            action: "finance_report_exported",
+            metadata: {
+              format: "csv",
+              start_date: @report.start_date,
+              end_date: @report.end_date,
+              transaction_count: @summary[:transaction_count]
+            },
+            request: request
+          )
           send_data @report.to_csv,
             filename: "msj-finance-report-#{@report.start_date}-to-#{@report.end_date}.csv",
             type: "text/csv; charset=utf-8"
@@ -31,7 +42,17 @@ module Admin
       respond_to do |format|
         format.html
         format.csv do
-          authorize :report, :export?
+          authorize :report, :export_members?
+          AuditLogger.call(
+            user: current_user,
+            action: "member_report_exported",
+            metadata: {
+              format: "csv",
+              profile_count: @summary[:total_profiles],
+              household_population: @summary[:household_population]
+            },
+            request: request
+          )
           send_data @report.to_csv,
             filename: "msj-member-community-report-#{Date.current}.csv",
             type: "text/csv; charset=utf-8"

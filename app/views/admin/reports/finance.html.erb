@@ -1,7 +1,7 @@
 <% content_for :page_title, "Finance Report" %>
 <% content_for :body_class, "finance-report-page" %>
 
-<% can_export_reports = policy(:report).export? %>
+<% can_export_reports = policy(:report).export_finance? %>
 <% report_actions = [] %>
 <% if can_export_reports %>
   <% report_actions << link_to(

@@ -33,31 +33,20 @@ module Reports
     def to_csv
       ReportCsvExporter.call(
         bom: true,
-        summary_rows: [
-          [ "MSJ Finance Report" ],
-          [ "Reporting Period", start_date.iso8601, end_date.iso8601 ],
-          [ "Generated At", Time.current.iso8601 ],
-          [ "Currency", "JPY" ],
-          [ "Basis", "Approved transactions only" ],
-          [ "Transaction Count", summary[:transaction_count] ],
-          [ "Period Income", whole_yen(summary[:total_income]) ],
-          [ "Period Expense", whole_yen(summary[:total_expense]) ],
-          [ "Period Net", whole_yen(summary[:period_net]) ],
-          [ "Current Balance (All Time)", whole_yen(summary[:current_balance]) ]
-        ],
         headers: [
-          "Date", "Type", "Category", "Amount (JPY)", "Status", "Reference",
-          "Description", "Recorded By", "Approved By"
+          "Transaction ID", "Transaction Date", "Type", "Category", "Description",
+          "Amount (JPY)", "Status", "Reference Number", "Recorded By", "Approved By"
         ],
         rows: transactions.includes(:finance_category, :recorded_by, :approved_by).latest.map do |transaction|
           [
+            transaction.id,
             transaction.transaction_date.iso8601,
             transaction.transaction_type.humanize,
             transaction.finance_category.name,
+            transaction.description,
             whole_yen(transaction.amount),
             transaction.status.humanize,
             transaction.reference_number,
-            transaction.description,
             transaction.recorded_by.display_name,
             transaction.approved_by&.display_name
           ]

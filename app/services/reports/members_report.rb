@@ -46,7 +46,6 @@ module Reports
     def to_csv
       ReportCsvExporter.call(
         bom: true,
-        summary_rows: csv_summary_rows,
         headers: csv_headers,
         rows: directory_profiles.map { |profile| csv_profile_row(profile) }
       )
@@ -140,52 +139,12 @@ module Reports
       ((value.to_f / total) * 100).round
     end
 
-    def csv_summary_rows
-      rows = [
-        [ "MSJ Member Community Report" ],
-        [ "Generated At", Time.current.iso8601 ],
-        [ "Data Scope", "Completed member profiles and registered household members" ],
-        [ "Account Holder", "A portal user with a completed member profile" ],
-        [ "Household Population", "Account holders plus registered spouses and children" ],
-        [],
-        [ "COMMUNITY SUMMARY" ],
-        [ "Account Holder Profiles", summary[:total_profiles] ],
-        [ "Active Profiles", summary[:active_members] ],
-        [ "Inactive or Suspended Profiles", summary[:inactive_members] ],
-        [ "New Profiles This Month", summary[:new_members_this_month] ],
-        [ "Registered Spouses", summary[:registered_spouses] ],
-        [ "Registered Children", summary[:registered_children] ],
-        [ "Estimated Household Population", summary[:household_population] ],
-        [],
-        [ "GENDER - ACCOUNT HOLDERS", "Count", "Share" ],
-        [ "Male", summary.dig(:gender, :male), percentage(summary.dig(:gender, :male), summary[:total_profiles]) ],
-        [ "Female", summary.dig(:gender, :female), percentage(summary.dig(:gender, :female), summary[:total_profiles]) ],
-        [ "Not Recorded", summary.dig(:gender, :not_recorded), percentage(summary.dig(:gender, :not_recorded), summary[:total_profiles]) ],
-        [],
-        [ "FAMILY STATUS - ACCOUNT HOLDERS", "Count", "Share" ],
-        [ "Single", summary.dig(:family_status, :single), summary.dig(:family_status, :single_percentage) ],
-        [ "Family", summary.dig(:family_status, :family), summary.dig(:family_status, :family_percentage) ],
-        [ "Not Recorded", summary.dig(:family_status, :not_recorded), percentage(summary.dig(:family_status, :not_recorded), summary[:total_profiles]) ],
-        [],
-        [ "AGE GROUPS - ACCOUNT HOLDERS", "Count", "Share" ]
-      ]
-
-      summary[:age_levels].each { |bucket| rows << [ bucket[:label], bucket[:count], bucket[:percentage] ] }
-      rows << []
-      rows << [ "PREFECTURE DISTRIBUTION", "Count", "Share" ]
-      summary[:by_prefecture].each do |prefecture, count|
-        rows << [ prefecture, count, percentage(count, summary[:total_profiles]) ]
-      end
-      rows << []
-      rows << [ "MEMBER DIRECTORY" ]
-      rows
-    end
-
     def csv_headers
       [
-        "Membership Number", "Full Name", "Account Role", "Email", "Mobile Number", "Gender",
-        "Date of Birth", "Age", "Family Status", "Spouse Name", "Children", "Household Size",
-        "Father's Name", "Mother's Name", "Status", "Full Address", "Joined On", "Profile Completion"
+        "Membership Number", "Full Name", "Account Role", "Member Status", "Joined Date",
+        "Mobile Number", "Email Address", "Gender", "Date of Birth", "Age", "Family Status",
+        "Spouse Name", "Children Count", "Children Details", "Household Size", "Father's Name",
+        "Mother's Name", "Full Address", "Profile Completion (%)"
       ]
     end
 
@@ -194,29 +153,33 @@ module Reports
         profile.membership_number,
         profile.full_name,
         profile.user&.role&.humanize,
-        profile.user&.email,
+        profile.status&.humanize,
+        profile.joined_on&.iso8601,
         profile.mobile_number,
+        profile.user&.email,
         profile.gender&.humanize,
         profile.date_of_birth&.iso8601,
         profile.age,
         profile.family_status&.humanize,
         profile.spouse_name,
+        profile.family_members.count(&:child?),
         child_details(profile),
         1 + profile.family_members.size,
         profile.father_name,
         profile.mother_name,
-        profile.status&.humanize,
         profile.full_address,
-        profile.joined_on&.iso8601,
-        "#{profile.profile_completion_percentage}%"
+        profile.profile_completion_percentage
       ]
     end
 
     def child_details(profile)
       profile.family_members.select(&:child?).map do |child|
-        details = [ child.name, child.date_of_birth&.iso8601, child.age.present? ? "age #{child.age}" : nil ].compact
-        details.join(" | ")
-      end.join("; ")
+        [
+          child.name,
+          "DOB: #{child.date_of_birth&.iso8601 || 'Not recorded'}",
+          "Age: #{child.age || 'Not recorded'}"
+        ].join(" | ")
+      end.join("\n")
     end
   end
 end

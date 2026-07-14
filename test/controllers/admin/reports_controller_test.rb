@@ -9,6 +9,7 @@ module Admin
       @journal_secretary = create_user("Journal Report", "journal_report@example.test", :journal_secretary)
       @executive_member = create_user("Executive Report", "executive_report@example.test", :executive_member)
       @vice_president = create_user("Vice President Report", "vp_report@example.test", :vice_president)
+      @treasurer = create_user("Treasurer Report", "treasurer_report@example.test", :treasurer)
     end
 
     test "vice president can view reports but cannot export csv" do
@@ -56,6 +57,29 @@ module Admin
       assert_redirected_to root_path
     end
 
+    test "treasurer can export finance csv but cannot export confidential member csv" do
+      sign_in @treasurer
+
+      get finance_admin_reports_path
+      assert_response :success
+      assert_includes response.body, "Export CSV"
+
+      assert_difference -> { AuditLog.where(action: "finance_report_exported", user: @treasurer).count }, 1 do
+        get finance_admin_reports_path(format: :csv)
+      end
+      assert_response :success
+
+      get members_admin_reports_path
+      assert_response :success
+      assert_not_includes response.body, "Export CSV"
+      assert_not_includes response.body, "Print A4"
+
+      assert_no_difference -> { AuditLog.where(action: "member_report_exported", user: @treasurer).count } do
+        get members_admin_reports_path(format: :csv)
+      end
+      assert_redirected_to root_path
+    end
+
     test "authorized admin can export csv" do
       @president.member_profile.update!(
         father_name: "Father Report",
@@ -64,11 +88,22 @@ module Admin
         spouse_name: "Spouse Report",
         address_line2: "Room 201"
       )
-      @president.member_profile.family_members.create!(name: "Child Report", relationship: "Child")
+      @president.member_profile.family_members.create!(
+        name: "Child Report",
+        relationship: "Child",
+        date_of_birth: Date.new(2012, 3, 4)
+      )
+      @president.member_profile.family_members.create!(
+        name: "Second Child",
+        relationship: "Child",
+        date_of_birth: Date.new(2015, 6, 7)
+      )
 
       sign_in @president
 
-      get members_admin_reports_path(format: :csv)
+      assert_difference -> { AuditLog.where(action: "member_report_exported", user: @president).count }, 1 do
+        get members_admin_reports_path(format: :csv)
+      end
 
       assert_response :success
       assert_includes response.media_type, "text/csv"
@@ -85,28 +120,29 @@ module Admin
 
       assert response.body.start_with?("\uFEFF")
       rows = CSV.parse(response.body.delete_prefix("\uFEFF"))
-      assert_equal [ "MSJ Member Community Report" ], rows[0]
-      assert_equal "Generated At", rows[1][0]
-      assert_equal [ "COMMUNITY SUMMARY" ], rows[6]
-      assert_equal [ "Account Holder Profiles", MemberProfile.count.to_s ], rows[7]
-      assert_equal "Registered Spouses", rows[11][0]
-      assert_equal FamilyMember.where("LOWER(relationship) = ?", "spouse").count.to_s, rows[11][1]
-      assert_equal "Registered Children", rows[12][0]
-      assert_equal FamilyMember.where("LOWER(relationship) = ?", "child").count.to_s, rows[12][1]
-      assert_equal "GENDER - ACCOUNT HOLDERS", rows[15][0]
-      assert_equal "FAMILY STATUS - ACCOUNT HOLDERS", rows[20][0]
-      assert_equal "AGE GROUPS - ACCOUNT HOLDERS", rows[25][0]
-      directory_index = rows.index([ "MEMBER DIRECTORY" ])
-      assert directory_index
       assert_equal [
-        "Membership Number", "Full Name", "Account Role", "Email", "Mobile Number", "Gender",
-        "Date of Birth", "Age", "Family Status", "Spouse Name", "Children", "Household Size",
-        "Father's Name", "Mother's Name", "Status", "Full Address", "Joined On", "Profile Completion"
-      ], rows[directory_index + 2]
+        "Membership Number", "Full Name", "Account Role", "Member Status", "Joined Date",
+        "Mobile Number", "Email Address", "Gender", "Date of Birth", "Age", "Family Status",
+        "Spouse Name", "Children Count", "Children Details", "Household Size", "Father's Name",
+        "Mother's Name", "Full Address", "Profile Completion (%)"
+      ], rows[0]
+      assert rows.all? { |row| row.length == rows[0].length }, "every CSV row should match the header width"
+      assert_equal MemberProfile.count + 1, rows.length
       president_row = rows.find { |row| row[0] == @president.member_profile.membership_number }
-      assert_equal (1 + @president.member_profile.family_members.count).to_s, president_row[11]
-      assert_includes president_row[10], "Child Report"
-      assert_equal "100%", president_row[17]
+      assert_equal "2", president_row[12]
+      child_lines = president_row[13].split("\n")
+      assert_equal 2, child_lines.size
+      first_child = @president.member_profile.family_members.find_by!(name: "Child Report")
+      assert_equal "Child Report | DOB: 2012-03-04 | Age: #{first_child.age}", child_lines[0]
+      assert_match(/\ASecond Child \| DOB: 2015-06-07 \| Age: \d+\z/, child_lines[1])
+      assert_equal (1 + @president.member_profile.family_members.count).to_s, president_row[14]
+      assert_equal "Father Report", president_row[15]
+      assert_equal "Mother Report", president_row[16]
+      assert_equal "100", president_row[18]
+
+      export_log = AuditLog.where(action: "member_report_exported", user: @president).latest.first
+      assert_equal MemberProfile.count, export_log.metadata.fetch("profile_count")
+      assert_equal "csv", export_log.metadata.fetch("format")
     end
 
     test "member report renders community analysis directory and A4 print control" do
@@ -130,7 +166,7 @@ module Admin
       assert_includes response.body, "Member Directory"
     end
 
-    test "finance csv starts with summary totals before transaction rows" do
+    test "finance csv is a clean rectangular transaction dataset" do
       income_category = FinanceCategory.create!(name: "CSV Income", category_type: :income, active: true)
       expense_category = FinanceCategory.create!(name: "CSV Expense", category_type: :expense, active: true)
       FinanceTransaction.create!(
@@ -155,27 +191,26 @@ module Admin
       )
       sign_in @president
 
-      get finance_admin_reports_path(format: :csv)
+      assert_difference -> { AuditLog.where(action: "finance_report_exported", user: @president).count }, 1 do
+        get finance_admin_reports_path(format: :csv)
+      end
 
       assert_response :success
       assert_equal "text/csv", response.media_type
       assert response.body.start_with?("\uFEFF")
       rows = CSV.parse(response.body.delete_prefix("\uFEFF"))
-      assert_equal [ "MSJ Finance Report" ], rows[0]
-      assert_equal [ "Reporting Period", Date.current.beginning_of_year.iso8601, Date.current.iso8601 ], rows[1]
-      assert_equal "Generated At", rows[2][0]
-      assert_equal [ "Currency", "JPY" ], rows[3]
-      assert_equal [ "Basis", "Approved transactions only" ], rows[4]
-      assert_equal [ "Transaction Count", "2" ], rows[5]
-      assert_equal [ "Period Income", "12500" ], rows[6]
-      assert_equal [ "Period Expense", "3200" ], rows[7]
-      assert_equal [ "Period Net", "9300" ], rows[8]
-      assert_equal "Current Balance (All Time)", rows[9][0]
-      assert_empty rows[10]
       assert_equal [
-        "Date", "Type", "Category", "Amount (JPY)", "Status", "Reference",
-        "Description", "Recorded By", "Approved By"
-      ], rows[11]
+        "Transaction ID", "Transaction Date", "Type", "Category", "Description",
+        "Amount (JPY)", "Status", "Reference Number", "Recorded By", "Approved By"
+      ], rows[0]
+      assert_equal 3, rows.length
+      assert rows.all? { |row| row.length == rows[0].length }, "every CSV row should match the header width"
+      amount_by_type = rows.drop(1).to_h { |row| [ row[2], row[5] ] }
+      assert_equal({ "Income" => "12500", "Expense" => "3200" }, amount_by_type)
+
+      export_log = AuditLog.where(action: "finance_report_exported", user: @president).latest.first
+      assert_equal 2, export_log.metadata.fetch("transaction_count")
+      assert_equal "csv", export_log.metadata.fetch("format")
     end
 
     test "finance report renders professional summary chart and A4 print control" do

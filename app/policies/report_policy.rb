@@ -27,4 +27,12 @@ class ReportPolicy < ApplicationPolicy
       user.welfare_manager?
     )
   end
+
+  def export_finance?
+    user&.finance_team? || false
+  end
+
+  def export_members?
+    user&.super_admin? || false
+  end
 end
