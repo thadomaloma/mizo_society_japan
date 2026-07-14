@@ -1,80 +1,5 @@
 module Reports
   class MembersReport
-    def summary
-      @summary ||= {
-        total_members: User.member.count,
-        total_profiles: profiles.count,
-        active_members: profiles.active.count,
-        inactive_members: profiles.where.not(status: :active).count,
-        new_members_this_month: profiles.where(joined_on: Date.current.all_month).count,
-        gender: gender_summary,
-        registered_children: registered_children_count,
-        under_18_members: profiles.where("date_of_birth > ?", 18.years.ago.to_date).count,
-        by_prefecture: profiles.group(:prefecture).count,
-        by_city: profiles.group(:city).count,
-        family_status: family_status_summary(profiles),
-        age_levels: age_level_summary(profiles),
-        recent_members: profiles.latest.limit(10)
-      }
-    end
-
-    def to_csv
-      ReportCsvExporter.call(
-        summary_rows: [
-          [ "MSJ Member Report" ],
-          [ "Generated On", Date.current.iso8601 ],
-          [ "Total Member Profiles", summary[:total_profiles] ],
-          [ "Active Members", summary[:active_members] ],
-          [ "Inactive or Suspended", summary[:inactive_members] ],
-          [ "Male", summary.dig(:gender, :male) ],
-          [ "Female", summary.dig(:gender, :female) ],
-          [ "Gender Not Recorded", summary.dig(:gender, :not_recorded) ],
-          [ "Single", summary.dig(:family_status, :single) ],
-          [ "Family", summary.dig(:family_status, :family) ],
-          [ "Registered Children", summary[:registered_children] ],
-          [ "Member Profiles Under 18", summary[:under_18_members] ]
-        ],
-        headers: [
-          "Membership Number",
-          "Full Name",
-          "Email",
-          "Mobile Number",
-          "Gender",
-          "Date of Birth",
-          "Age",
-          "Father's Name",
-          "Mother's Name",
-          "Family Status",
-          "Spouse Name",
-          "Children",
-          "Status",
-          "Full Address",
-          "Joined On"
-        ],
-        rows: MemberProfile.includes(:user, :family_members).latest.map do |profile|
-          [
-            profile.membership_number,
-            profile.full_name,
-            profile.user.email,
-            profile.mobile_number,
-            profile.gender,
-            profile.date_of_birth,
-            profile.age,
-            profile.father_name,
-            profile.mother_name,
-            profile.family_status,
-            profile.spouse_name,
-            child_names(profile),
-            profile.status,
-            profile.full_address,
-            profile.joined_on
-          ]
-        end
-      )
-    end
-
-    private
-
     AGE_LEVELS = [
       [ "Under 18", ..17 ],
       [ "18-29", 18..29 ],
@@ -85,56 +10,128 @@ module Reports
       [ "Unknown", nil ]
     ].freeze
 
-    def profiles
-      @profiles ||= MemberProfile.includes(:user)
-    end
-
-    def gender_summary
-      counts = profiles.group(:gender).count
-
-      {
-        male: counts.fetch("male", counts.fetch(MemberProfile.genders[:male], 0)).to_i,
-        female: counts.fetch("female", counts.fetch(MemberProfile.genders[:female], 0)).to_i,
-        not_recorded: counts.fetch(nil, 0).to_i
+    def summary
+      @summary ||= {
+        total_members: profiles.size,
+        total_profiles: profiles.size,
+        portal_accounts: User.count,
+        active_members: profiles.count(&:active?),
+        inactive_members: profiles.count { |profile| !profile.active? },
+        new_members_this_month: profiles.count { |profile| profile.joined_on&.in?(Date.current.all_month) },
+        gender: gender_summary,
+        registered_children: children.size,
+        registered_spouses: spouses.size,
+        household_population: profiles.size + children.size + spouses.size,
+        children_14_and_over: children.count { |child| child.age.to_i >= 14 },
+        under_18_members: profiles.count { |profile| profile.age.present? && profile.age < 18 },
+        by_prefecture: location_summary(:prefecture),
+        by_city: location_summary(:city),
+        family_status: family_status_summary,
+        age_levels: age_level_summary,
+        data_quality: data_quality_summary,
+        recent_members: directory_profiles.first(10)
       }
     end
 
-    def registered_children_count
-      FamilyMember
-        .where(member_profile_id: profiles.select(:id))
-        .where("LOWER(relationship) = ?", "child")
-        .count
+    def directory_profiles
+      @directory_profiles ||= profiles.sort_by do |profile|
+        [ profile.full_name.to_s.downcase, profile.membership_number.to_s ]
+      end
     end
 
-    def family_status_summary(profiles)
-      counts = profiles.group(:family_status).count
-      single = counts.fetch("single", counts.fetch(MemberProfile.family_statuses[:single], 0)).to_i
-      family = counts.fetch("family", counts.fetch(MemberProfile.family_statuses[:family], 0)).to_i
-      total = single + family
+    def directory_scope
+      MemberProfile.includes(:user, :family_members).order(Arel.sql("LOWER(member_profiles.full_name) ASC"), :membership_number)
+    end
+
+    def to_csv
+      ReportCsvExporter.call(
+        bom: true,
+        summary_rows: csv_summary_rows,
+        headers: csv_headers,
+        rows: directory_profiles.map { |profile| csv_profile_row(profile) }
+      )
+    end
+
+    private
+
+    def profiles
+      @profiles ||= MemberProfile.includes(:user, :family_members).to_a
+    end
+
+    def children
+      @children ||= profiles.flat_map { |profile| profile.family_members.select(&:child?) }
+    end
+
+    def spouses
+      @spouses ||= profiles.flat_map { |profile| profile.family_members.select(&:spouse?) }
+    end
+
+    def gender_summary
+      counts = profiles.group_by { |profile| profile.gender.presence || "not_recorded" }.transform_values(&:size)
+
+      {
+        male: counts.fetch("male", 0),
+        female: counts.fetch("female", 0),
+        not_recorded: counts.fetch("not_recorded", 0)
+      }
+    end
+
+    def family_status_summary
+      counts = profiles.group_by { |profile| profile.family_status.presence || "not_recorded" }.transform_values(&:size)
+      single = counts.fetch("single", 0)
+      family = counts.fetch("family", 0)
+      not_recorded = counts.fetch("not_recorded", 0)
+      total = single + family + not_recorded
 
       {
         single: single,
         family: family,
+        not_recorded: not_recorded,
         total: total,
         single_percentage: percentage(single, total),
         family_percentage: percentage(family, total)
       }
     end
 
-    def age_level_summary(profiles)
+    def age_level_summary
       counts = AGE_LEVELS.to_h { |label, _range| [ label, 0 ] }
 
-      profiles.find_each do |profile|
+      profiles.each do |profile|
         age = profile.age
         label = AGE_LEVELS.find { |_name, range| range.nil? ? age.blank? : age.present? && range.cover?(age) }&.first
         counts[label || "Unknown"] += 1
       end
 
-      total = counts.values.sum
       AGE_LEVELS.map do |label, _range|
         count = counts.fetch(label, 0)
-        { label: label, count: count, percentage: percentage(count, total) }
+        { label: label, count: count, percentage: percentage(count, profiles.size) }
       end
+    end
+
+    def location_summary(attribute)
+      profiles
+        .group_by do |profile|
+          value = profile.public_send(attribute)
+          attribute == :prefecture ? (JapanPrefecture.romaji(value) || "Not recorded") : (value.presence || "Not recorded")
+        end
+        .transform_values(&:size)
+        .sort_by { |name, count| [ -count, name.to_s ] }
+        .to_h
+    end
+
+    def data_quality_summary
+      total = profiles.size
+      fields = {
+        gender_recorded: profiles.count { |profile| profile.gender.present? },
+        date_of_birth_recorded: profiles.count { |profile| profile.date_of_birth.present? },
+        mobile_recorded: profiles.count { |profile| profile.mobile_number.present? },
+        address_complete: profiles.count { |profile| profile.full_address.present? }
+      }
+
+      fields.merge(
+        complete_profiles: profiles.count(&:complete?),
+        completion_percentage: percentage(profiles.count(&:complete?), total)
+      )
     end
 
     def percentage(value, total)
@@ -143,8 +140,83 @@ module Reports
       ((value.to_f / total) * 100).round
     end
 
-    def child_names(profile)
-      profile.child_family_members.map(&:name).compact_blank.join("; ")
+    def csv_summary_rows
+      rows = [
+        [ "MSJ Member Community Report" ],
+        [ "Generated At", Time.current.iso8601 ],
+        [ "Data Scope", "Completed member profiles and registered household members" ],
+        [ "Account Holder", "A portal user with a completed member profile" ],
+        [ "Household Population", "Account holders plus registered spouses and children" ],
+        [],
+        [ "COMMUNITY SUMMARY" ],
+        [ "Account Holder Profiles", summary[:total_profiles] ],
+        [ "Active Profiles", summary[:active_members] ],
+        [ "Inactive or Suspended Profiles", summary[:inactive_members] ],
+        [ "New Profiles This Month", summary[:new_members_this_month] ],
+        [ "Registered Spouses", summary[:registered_spouses] ],
+        [ "Registered Children", summary[:registered_children] ],
+        [ "Estimated Household Population", summary[:household_population] ],
+        [],
+        [ "GENDER - ACCOUNT HOLDERS", "Count", "Share" ],
+        [ "Male", summary.dig(:gender, :male), percentage(summary.dig(:gender, :male), summary[:total_profiles]) ],
+        [ "Female", summary.dig(:gender, :female), percentage(summary.dig(:gender, :female), summary[:total_profiles]) ],
+        [ "Not Recorded", summary.dig(:gender, :not_recorded), percentage(summary.dig(:gender, :not_recorded), summary[:total_profiles]) ],
+        [],
+        [ "FAMILY STATUS - ACCOUNT HOLDERS", "Count", "Share" ],
+        [ "Single", summary.dig(:family_status, :single), summary.dig(:family_status, :single_percentage) ],
+        [ "Family", summary.dig(:family_status, :family), summary.dig(:family_status, :family_percentage) ],
+        [ "Not Recorded", summary.dig(:family_status, :not_recorded), percentage(summary.dig(:family_status, :not_recorded), summary[:total_profiles]) ],
+        [],
+        [ "AGE GROUPS - ACCOUNT HOLDERS", "Count", "Share" ]
+      ]
+
+      summary[:age_levels].each { |bucket| rows << [ bucket[:label], bucket[:count], bucket[:percentage] ] }
+      rows << []
+      rows << [ "PREFECTURE DISTRIBUTION", "Count", "Share" ]
+      summary[:by_prefecture].each do |prefecture, count|
+        rows << [ prefecture, count, percentage(count, summary[:total_profiles]) ]
+      end
+      rows << []
+      rows << [ "MEMBER DIRECTORY" ]
+      rows
+    end
+
+    def csv_headers
+      [
+        "Membership Number", "Full Name", "Account Role", "Email", "Mobile Number", "Gender",
+        "Date of Birth", "Age", "Family Status", "Spouse Name", "Children", "Household Size",
+        "Father's Name", "Mother's Name", "Status", "Full Address", "Joined On", "Profile Completion"
+      ]
+    end
+
+    def csv_profile_row(profile)
+      [
+        profile.membership_number,
+        profile.full_name,
+        profile.user&.role&.humanize,
+        profile.user&.email,
+        profile.mobile_number,
+        profile.gender&.humanize,
+        profile.date_of_birth&.iso8601,
+        profile.age,
+        profile.family_status&.humanize,
+        profile.spouse_name,
+        child_details(profile),
+        1 + profile.family_members.size,
+        profile.father_name,
+        profile.mother_name,
+        profile.status&.humanize,
+        profile.full_address,
+        profile.joined_on&.iso8601,
+        "#{profile.profile_completion_percentage}%"
+      ]
+    end
+
+    def child_details(profile)
+      profile.family_members.select(&:child?).map do |child|
+        details = [ child.name, child.date_of_birth&.iso8601, child.age.present? ? "age #{child.age}" : nil ].compact
+        details.join(" | ")
+      end.join("; ")
     end
   end
 end

@@ -83,19 +83,51 @@ module Admin
       assert_includes response.body, "Spouse Report"
       assert_includes response.body, "Child Report"
 
-      rows = CSV.parse(response.body)
-      assert_equal [ "MSJ Member Report" ], rows[0]
-      assert_equal "Total Member Profiles", rows[2][0]
-      assert_equal MemberProfile.count.to_s, rows[2][1]
-      assert_equal "Male", rows[5][0]
-      assert_equal "Female", rows[6][0]
-      assert_equal "Registered Children", rows[10][0]
-      assert_equal FamilyMember.where("LOWER(relationship) = ?", "child").count.to_s, rows[10][1]
-      assert_empty rows[12]
+      assert response.body.start_with?("\uFEFF")
+      rows = CSV.parse(response.body.delete_prefix("\uFEFF"))
+      assert_equal [ "MSJ Member Community Report" ], rows[0]
+      assert_equal "Generated At", rows[1][0]
+      assert_equal [ "COMMUNITY SUMMARY" ], rows[6]
+      assert_equal [ "Account Holder Profiles", MemberProfile.count.to_s ], rows[7]
+      assert_equal "Registered Spouses", rows[11][0]
+      assert_equal FamilyMember.where("LOWER(relationship) = ?", "spouse").count.to_s, rows[11][1]
+      assert_equal "Registered Children", rows[12][0]
+      assert_equal FamilyMember.where("LOWER(relationship) = ?", "child").count.to_s, rows[12][1]
+      assert_equal "GENDER - ACCOUNT HOLDERS", rows[15][0]
+      assert_equal "FAMILY STATUS - ACCOUNT HOLDERS", rows[20][0]
+      assert_equal "AGE GROUPS - ACCOUNT HOLDERS", rows[25][0]
+      directory_index = rows.index([ "MEMBER DIRECTORY" ])
+      assert directory_index
       assert_equal [
-        "Membership Number", "Full Name", "Email", "Mobile Number", "Gender", "Date of Birth", "Age",
-        "Father's Name", "Mother's Name", "Family Status", "Spouse Name", "Children", "Status", "Full Address", "Joined On"
-      ], rows[13]
+        "Membership Number", "Full Name", "Account Role", "Email", "Mobile Number", "Gender",
+        "Date of Birth", "Age", "Family Status", "Spouse Name", "Children", "Household Size",
+        "Father's Name", "Mother's Name", "Status", "Full Address", "Joined On", "Profile Completion"
+      ], rows[directory_index + 2]
+      president_row = rows.find { |row| row[0] == @president.member_profile.membership_number }
+      assert_equal (1 + @president.member_profile.family_members.count).to_s, president_row[11]
+      assert_includes president_row[10], "Child Report"
+      assert_equal "100%", president_row[17]
+    end
+
+    test "member report renders community analysis directory and A4 print control" do
+      sign_in @president
+
+      get members_admin_reports_path
+
+      assert_response :success
+      assert_select "body.members-report-page"
+      assert_select "[data-controller='report-print']"
+      assert_select "button[data-action='click->report-print#open']", text: /Print A4/
+      assert_select ".members-report-sheet"
+      assert_select ".members-report-summary > div", count: 5
+      assert_select "[aria-label='Member age distribution chart']"
+      assert_select ".members-report-directory-table table"
+      assert_select ".members-report-directory-cards"
+      assert_select "nav[aria-label='Table pagination']"
+      assert_select "select[name='per_page'] option[selected]", text: "25"
+      assert_includes response.body, "Household Reach"
+      assert_includes response.body, "Data Quality"
+      assert_includes response.body, "Member Directory"
     end
 
     test "finance csv starts with summary totals before transaction rows" do
@@ -159,6 +191,8 @@ module Admin
       assert_select ".finance-report-chart.overflow-hidden"
       assert_select ".finance-report-chart > .flex-col"
       assert_select "svg[aria-label='Monthly income and expense chart']"
+      assert_select "nav[aria-label='Table pagination']"
+      assert_select "select[name='per_page'] option[selected]", text: "25"
       assert_includes response.body, "Period Income"
       assert_includes response.body, "Period Expense"
       assert_includes response.body, "Period Net"

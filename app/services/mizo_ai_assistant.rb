@@ -261,7 +261,7 @@ class MizoAiAssistant
     pending_count = user.membership_payments.pending.count
     pending_verification_count = user.payment_batches.pending_verification.count + user.membership_payments.pending_verification.where(payment_batch_id: nil).count
 
-    "Payments: Members should use Payments page to select unpaid fees/funds, including separate eligible child fees shown under a parent account, pay together by one bank transfer, then submit transfer date, amount, and reference name. Screenshot is optional unless Office Bearers request it. Paid/approved items should not remain in current unpaid payments. Bank transfer is the main method. Yuucho-to-Yuucho transfer uses 記号 (kigou / symbol) and 番号 (bangou / number). Transfers from other banks use 店名 (tenmei / store name) and 口座番号 (kouza bangou / account number). Current user has #{pending_count} waiting transfer and #{pending_verification_count} pending verification."
+    "Payments: Members should use Payments page to select unpaid fees/funds, including separate spouse payments and eligible child fees shown under a family account, pay together by one bank transfer, then submit transfer date, amount, and reference name. Screenshot is optional unless Office Bearers request it. Paid/approved items should not remain in current unpaid payments. Bank transfer is the main method. Yuucho-to-Yuucho transfer uses 記号 (kigou / symbol) and 番号 (bangou / number). Transfers from other banks use 店名 (tenmei / store name) and 口座番号 (kouza bangou / account number). Current user has #{pending_count} waiting transfer and #{pending_verification_count} pending verification."
   end
 
   def profile_context
@@ -436,28 +436,31 @@ class MizoAiAssistant
   def family_fee_answer
     if user.super_admin? || user.finance_admin?
       <<~ANSWER.strip
-        Kum 14+ child membership fee setup dan:
+        Family account spouse leh kum 14+ child payment setup dan:
 
-        1. Payment Plans page-ah membership fee plan open la Edit Plan click rawh.
-        2. Required for all members tih enable rawh.
-        3. Charge eligible children aged 14 or older tih enable rawh.
-        4. Fee per eligible child amount chu whole yen-in dah rawh.
-        5. Save hnuah family profile-a date of birth recorded, kum 14 tling tawh child-te parent/guardian account Payments page-ah record hranin an lo lang ang.
-        6. Parent fee leh child fee te checkbox-in select kawp a, bank transfer vawi khat chauh tih theih a ni.
-        7. Payment Records review-ah For child name leh child membership number check la, bank transfer verify hnuah approve rawh.
+        1. Profile-ah Family Status chu Family leh Spouse Name dah fel tur a ni.
+        2. Required membership fee leh fundraiser/family fund plan save hnuah spouse payment chu family account-ah record hranin a lo lang ang.
+        3. Child fee atan Payment Plans page-ah membership fee plan open la Edit Plan click rawh.
+        4. Required for all members leh Charge eligible children aged 14 or older tih enable rawh.
+        5. Fee per eligible child amount chu whole yen-in dah rawh.
+        6. Family profile-a date of birth recorded, kum 14 tling tawh child-te payment pawh record hranin a lo lang ang.
+        7. Account holder, spouse leh child fee te checkbox-in select kawp a, bank transfer vawi khat chauh tih theih a ni.
+        8. Payment Records review-ah beneficiary name leh membership number check la, bank transfer verify hnuah approve rawh.
 
         Child tan login account hran siam a ngai lo. Date of birth awm lo child chu automatic charge a nei lo ang.
       ANSWER
     else
       <<~ANSWER.strip
-        Kum 14+ child membership fee pek dan:
+        Family account-a spouse leh kum 14+ child fee pek dan:
 
-        1. Profile page-ah Family Status chu Family thlang la, child name leh date of birth dah rawh.
-        2. MSJ-in child fee plan enable a, child kum 14 a tlin chuan parent/guardian Payments page-ah For child name tih nen fee hran a lo lang ang.
-        3. Parent fee leh child fee te checkbox-in select kawp rawh.
-        4. Pay Together click la, total amount chu bank transfer vawi khat chauh ti rawh.
-        5. Transfer date, total amount leh reference name submit rawh.
-        6. Treasurer/Finance team-in verify hnuah child fee record chu Paid-ah a inthlak ang.
+        1. Profile page-ah Family Status chu Family thlang la, Spouse Name dah rawh.
+        2. Child nei chuan child name leh date of birth dah bawk rawh.
+        3. Required membership fee/fund atan spouse payment chu Payments page-ah For spouse name tih nen record hran a lo lang ang.
+        4. MSJ-in child fee plan enable a, child kum 14 a tlin chuan child fee pawh record hran a lo lang ang.
+        5. Account holder, spouse leh child payments te checkbox-in select kawp rawh.
+        6. Pay Together click la, total amount chu bank transfer vawi khat chauh ti rawh.
+        7. Transfer date, total amount leh reference name submit rawh.
+        8. Treasurer/Finance team-in verify hnuah selected payment zawng zawng Paid-ah an inthlak ang.
 
         Child tan email/password account hran siam a ngai lo.
       ANSWER

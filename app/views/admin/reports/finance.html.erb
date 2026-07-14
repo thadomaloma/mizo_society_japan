@@ -203,6 +203,9 @@
         <% if @transactions.empty? %>
           <div class="p-8 text-center"><p class="text-sm font-black text-[#0F172A] dark:text-white">No approved transactions found.</p><p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Choose another reporting period.</p></div>
         <% end %>
+        <div class="finance-report-screen-only">
+          <%= render "shared/data_table_footer", pagination: @pagination, label: "transactions" %>
+        </div>
       </section>
     </div>
   </article>

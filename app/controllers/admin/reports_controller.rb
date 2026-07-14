@@ -8,7 +8,8 @@ module Admin
       authorize :report, :finance?
       @report = Reports::FinanceReport.new(start_date: params[:start_date], end_date: params[:end_date])
       @summary = @report.summary
-      @transactions = @report.transactions.includes(:finance_category, :recorded_by, :approved_by).latest
+      transaction_scope = @report.transactions.includes(:finance_category, :recorded_by, :approved_by).latest
+      @transactions = paginate_relation(transaction_scope)
 
       respond_to do |format|
         format.html
@@ -25,12 +26,15 @@ module Admin
       authorize :report, :members?
       @report = Reports::MembersReport.new
       @summary = @report.summary
+      @profiles = paginate_relation(@report.directory_scope)
 
       respond_to do |format|
         format.html
         format.csv do
           authorize :report, :export?
-          send_data @report.to_csv, filename: "msj-members-report-#{Date.current}.csv"
+          send_data @report.to_csv,
+            filename: "msj-member-community-report-#{Date.current}.csv",
+            type: "text/csv; charset=utf-8"
         end
       end
     end

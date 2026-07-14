@@ -64,9 +64,10 @@
     </div>
     <div class="mt-6 border-t border-[#E2E8F0] pt-6 dark:border-[#334155]">
       <p class="text-sm font-bold text-[#64748B] dark:text-[#CBD5E1]">Family member billing</p>
-      <p class="mt-2 text-sm font-black text-[#0F172A] dark:text-white">
-        <%= @membership_plan.child_fee_enabled? ? "Age 14+ · #{yen(@membership_plan.child_fee_amount)} per eligible child" : "Not enabled" %>
-      </p>
+      <div class="mt-2 space-y-1 text-sm font-black text-[#0F172A] dark:text-white">
+        <p><%= @membership_plan.provisions_spouse_payment? ? "Spouse · #{yen(@membership_plan.amount)}" : "Spouse · Not enabled" %></p>
+        <p><%= @membership_plan.child_fee_enabled? ? "Age 14+ child · #{yen(@membership_plan.child_fee_amount)} per eligible child" : "Age 14+ child · Not enabled" %></p>
+      </div>
     </div>
     <div class="mt-6 border-t border-[#E2E8F0] pt-6 dark:border-[#334155]">
       <p class="text-sm font-bold text-[#64748B] dark:text-[#CBD5E1]">Description</p>

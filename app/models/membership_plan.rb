@@ -1,4 +1,6 @@
 class MembershipPlan < ApplicationRecord
+  SPOUSE_PAYABLE_TYPE_CODES = %w[membership fundraiser].freeze
+
   belongs_to :membership_plan_type
   has_many :membership_payments, dependent: :restrict_with_error
 
@@ -45,6 +47,14 @@ class MembershipPlan < ApplicationRecord
 
   def provisions_child_fees?
     auto_provisionable? && membership? && child_fee_enabled? && child_fee_amount.to_i.positive?
+  end
+
+  def spouse_payable?
+    membership_plan_type&.code.in?(SPOUSE_PAYABLE_TYPE_CODES)
+  end
+
+  def provisions_spouse_payment?
+    auto_provisionable? && spouse_payable?
   end
 
   private

@@ -23,6 +23,14 @@ class FamilyMemberTest < ActiveSupport::TestCase
     assert_equal "#{@profile.membership_number}-C02", second_child.membership_number
   end
 
+  test "generates spouse membership number under account holder membership number" do
+    spouse = @profile.family_members.create!(name: "Family Spouse", relationship: "Spouse")
+
+    assert_equal "#{@profile.membership_number}-S01", spouse.membership_number
+    assert spouse.spouse?
+    assert_not spouse.child?
+  end
+
   test "membership fee eligibility starts on fourteenth birthday" do
     today = Date.new(2026, 7, 13)
     child = @profile.family_members.build(

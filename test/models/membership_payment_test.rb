@@ -100,6 +100,29 @@ class MembershipPaymentTest < ActiveSupport::TestCase
     assert_includes duplicate.errors[:base].join, child.membership_number
   end
 
+  test "allows spouse payment for a fundraiser plan at the standard amount" do
+    @user.member_profile.update!(family_status: :family, spouse_name: "Payment Spouse")
+    spouse = @user.member_profile.reload.spouse_family_member
+    fundraiser = MembershipPlan.create!(
+      name: "Family Fund Test",
+      membership_plan_type: membership_plan_types(:fundraiser),
+      amount: 2500,
+      billing_cycle: :yearly,
+      active: true,
+      required_for_members: true
+    )
+    payment = MembershipPayment.new(
+      user: @user,
+      membership_plan: fundraiser,
+      family_member: spouse,
+      payment_year: 2026,
+      status: :pending
+    )
+
+    assert payment.valid?
+    assert_equal 2500, payment.amount
+  end
+
   private
 
   def ensure_profile_for(user)

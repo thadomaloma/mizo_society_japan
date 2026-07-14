@@ -37,7 +37,8 @@ class MemberProfile < ApplicationRecord
   before_validation :assign_joined_on, if: -> { joined_on.blank? }
   before_validation :normalize_mobile_number
   before_validation :clear_household_details_unless_family
-  after_save :remove_children_unless_family
+  after_save :sync_spouse_family_member, if: :family?
+  after_save :remove_family_members_unless_family
 
   validates :full_name, :mobile_number, :date_of_birth, :family_status, :postal_code, :prefecture, :city, :address_line1, presence: true
   validates :membership_number, presence: true, uniqueness: true
@@ -45,6 +46,7 @@ class MemberProfile < ApplicationRecord
   validate :address_line1_includes_street_number
   validate :mobile_number_is_not_placeholder
   validate :family_status_preserves_payment_history
+  validate :spouse_name_preserves_payment_history
   validates :mobile_number, format: {
     with: JAPAN_MOBILE_NUMBER_REGEX,
     message: "must be a valid Japan mobile number starting with 070, 080, or 090"
@@ -93,7 +95,21 @@ class MemberProfile < ApplicationRecord
   end
 
   def child_family_members
-    family_members.where(relationship: "Child")
+    family_members.children
+  end
+
+  def spouse_family_member
+    family_members.spouses.first
+  end
+
+  def ensure_spouse_family_member!
+    return unless persisted? && family? && spouse_name.present?
+
+    spouse = spouse_family_member || family_members.build(relationship: "Spouse")
+    if spouse.new_record? || spouse.name != spouse_name || spouse.membership_number.blank?
+      spouse.update!(name: spouse_name, relationship: "Spouse")
+    end
+    spouse
   end
 
   def membership_fee_eligible_children(on: Date.current)
@@ -181,7 +197,14 @@ class MemberProfile < ApplicationRecord
     return unless will_save_change_to_family_status? && single?
     return unless family_members.joins(:membership_payments).exists?
 
-    errors.add(:family_status, "cannot be changed to single while a child has payment history")
+    errors.add(:family_status, "cannot be changed to single while a family member has payment history")
+  end
+
+  def spouse_name_preserves_payment_history
+    return unless will_save_change_to_spouse_name? && spouse_name.blank?
+    return unless spouse_family_member&.membership_payments&.exists?
+
+    errors.add(:spouse_name, "cannot be removed while the spouse has payment history")
   end
 
   def repeated_digits?(value)
@@ -195,7 +218,15 @@ class MemberProfile < ApplicationRecord
     ascending.include?(value) || descending.include?(value)
   end
 
-  def remove_children_unless_family
-    family_members.where(relationship: "Child").destroy_all unless family?
+  def sync_spouse_family_member
+    if spouse_name.present?
+      ensure_spouse_family_member!
+    elsif spouse_family_member&.membership_payments&.none?
+      spouse_family_member.destroy!
+    end
+  end
+
+  def remove_family_members_unless_family
+    family_members.destroy_all unless family?
   end
 end

@@ -36,6 +36,7 @@ class RequiredMembershipPaymentProvisioner
 
   def provision(member, plan)
     provision_payment(member, plan)
+    provision_spouse_payment(member, plan) if plan.provisions_spouse_payment?
     provision_child_payments(member, plan) if plan.provisions_child_fees?
   end
 
@@ -56,6 +57,14 @@ class RequiredMembershipPaymentProvisioner
     profile.membership_fee_eligible_children.each do |child|
       provision_payment(member, plan, family_member: child)
     end
+  end
+
+  def provision_spouse_payment(member, plan)
+    profile = member.member_profile
+    return unless profile&.family?
+
+    spouse = profile.ensure_spouse_family_member!
+    provision_payment(member, plan, family_member: spouse) if spouse.present?
   end
 
   def existing_payment(member, plan, family_member:)
@@ -81,7 +90,7 @@ class RequiredMembershipPaymentProvisioner
       payment_month: (month if plan.monthly?),
       payment_method: :bank_transfer,
       status: :pending,
-      notes: family_member.present? ? "Automatically generated for an eligible family member aged 14 or older." : "Automatically generated from a required payment plan."
+      notes: automatic_payment_note(family_member)
     )
   end
 
@@ -93,6 +102,13 @@ class RequiredMembershipPaymentProvisioner
   end
 
   def payment_amount(plan, family_member)
-    family_member.present? ? plan.child_fee_amount : plan.amount
+    family_member&.child? ? plan.child_fee_amount : plan.amount
+  end
+
+  def automatic_payment_note(family_member)
+    return "Automatically generated from a required payment plan." if family_member.blank?
+    return "Automatically generated for the spouse under the family account." if family_member.spouse?
+
+    "Automatically generated for an eligible family member aged 14 or older."
   end
 end

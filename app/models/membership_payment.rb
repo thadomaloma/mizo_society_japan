@@ -32,7 +32,7 @@ class MembershipPayment < ApplicationRecord
   validate :amounts_are_whole_yen
   validate :no_duplicate_active_payment_for_plan
   validate :family_member_belongs_to_guardian
-  validate :family_member_is_used_only_for_membership_fee
+  validate :family_member_is_eligible_for_plan
 
   before_validation :copy_plan_amount, if: -> { amount.blank? && membership_plan.present? }
   before_validation :assign_payment_year, if: -> { payment_year.blank? }
@@ -145,7 +145,7 @@ class MembershipPayment < ApplicationRecord
   private
 
   def copy_plan_amount
-    self.amount = family_member.present? ? membership_plan.child_fee_amount : membership_plan.amount
+    self.amount = family_member&.child? ? membership_plan.child_fee_amount : membership_plan.amount
   end
 
   def assign_payment_year
@@ -227,9 +227,10 @@ class MembershipPayment < ApplicationRecord
     errors.add(:family_member, "must belong to the selected member account")
   end
 
-  def family_member_is_used_only_for_membership_fee
+  def family_member_is_eligible_for_plan
     return if family_member.blank? || membership_plan.blank? || membership_plan.membership?
+    return if family_member.spouse? && membership_plan.spouse_payable?
 
-    errors.add(:family_member, "can be charged only for a membership fee plan")
+    errors.add(:family_member, "is not eligible for this payment plan")
   end
 end

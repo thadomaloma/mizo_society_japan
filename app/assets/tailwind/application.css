@@ -563,4 +563,181 @@ body {
   .finance-report-sheet svg {
     max-height: 43mm;
   }
+
+  @page members-report {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  .members-report-page {
+    page: members-report;
+    width: 194mm !important;
+    min-width: 194mm !important;
+    max-width: 194mm !important;
+    margin: 0 !important;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    color-scheme: light !important;
+    text-size-adjust: 100% !important;
+    -webkit-text-size-adjust: 100% !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .members-report-page > div > aside,
+  .members-report-page > div > nav,
+  .members-report-page .app-mobile-nav,
+  .members-report-page > div > [data-mobile-menu-target="drawer"],
+  .members-report-page > div > [data-global-search-target="modal"],
+  .members-report-page > div > div > header,
+  .members-report-screen-only {
+    display: none !important;
+  }
+
+  .members-report-page > div,
+  .members-report-page > div > div {
+    display: block !important;
+    width: 194mm !important;
+    min-width: 194mm !important;
+    max-width: 194mm !important;
+    min-height: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  .members-report-page main {
+    width: 194mm !important;
+    min-width: 194mm !important;
+    max-width: 194mm !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .members-report,
+  .members-report-sheet {
+    box-sizing: border-box !important;
+    width: 194mm !important;
+    min-width: 194mm !important;
+    max-width: 194mm !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #FFFFFF !important;
+    box-shadow: none !important;
+    color: #0F172A !important;
+    color-scheme: light !important;
+  }
+
+  .members-report-sheet :where(header, section, footer, table, thead, tbody, tr, th, td, div) {
+    border-color: #CBD5E1 !important;
+  }
+
+  .members-report-sheet :where(h1, h2, p, dt, dd, th, td, span) {
+    color: #0F172A !important;
+  }
+
+  .members-report-sheet > header {
+    padding: 0 0 2mm !important;
+    background: #FFFFFF !important;
+  }
+
+  .members-report-sheet h1 {
+    font-size: 14pt !important;
+    line-height: 1.15 !important;
+  }
+
+  .members-report-sheet > div {
+    padding: 1.8mm 0 0 !important;
+  }
+
+  .members-report-sheet > div > * + * {
+    margin-block-start: 1.6mm !important;
+  }
+
+  .members-report-summary {
+    gap: 1.4mm !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  .members-report-summary > div {
+    grid-column: auto !important;
+    padding: 1.5mm !important;
+    background: #F8FAFC !important;
+  }
+
+  .members-report-demographics {
+    gap: 1.4mm !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .members-report-analysis {
+    gap: 1.4mm !important;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) !important;
+  }
+
+  .members-report-demographics > div,
+  .members-report-analysis > div,
+  .members-report-quality {
+    padding: 1.7mm !important;
+    background: #FFFFFF !important;
+  }
+
+  .members-report-quality dl {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  .members-report-quality dl > div {
+    padding: 1.2mm !important;
+    background: #F8FAFC !important;
+  }
+
+  .members-report-block,
+  .members-report-directory-row {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .members-report-directory {
+    overflow: visible !important;
+  }
+
+  .members-report-directory > div:first-child {
+    padding: 1.5mm 1.8mm !important;
+  }
+
+  .members-report-directory-table {
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .members-report-directory-cards {
+    display: none !important;
+  }
+
+  .members-report-directory table {
+    width: 100% !important;
+    table-layout: fixed;
+    font-size: 6.6pt;
+  }
+
+  .members-report-directory thead {
+    display: table-header-group;
+    background: #F8FAFC !important;
+  }
+
+  .members-report-directory th,
+  .members-report-directory td {
+    padding: 1mm 1.1mm !important;
+    overflow-wrap: anywhere;
+  }
+
+  .members-report-directory th:nth-child(1) { width: 22%; }
+  .members-report-directory th:nth-child(2) { width: 20%; }
+  .members-report-directory th:nth-child(3) { width: 15%; }
+  .members-report-directory th:nth-child(4) { width: 13%; }
+  .members-report-directory th:nth-child(5) { width: 16%; }
+  .members-report-directory th:nth-child(6) { width: 14%; }
+
+  .members-report-footer {
+    display: block !important;
+  }
 }

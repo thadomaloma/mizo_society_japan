@@ -80,6 +80,8 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Mother Name", profile.mother_name
     assert_equal "family", profile.family_status
     assert_equal "Spouse Name", profile.spouse_name
+    assert_equal "Spouse Name", profile.spouse_family_member.name
+    assert_equal "#{profile.membership_number}-S01", profile.spouse_family_member.membership_number
     assert_equal [ "Child One", "Child Two" ], profile.child_family_members.order(:name).pluck(:name)
     assert_equal [ Date.new(2010, 5, 1), Date.new(2015, 8, 2) ], profile.child_family_members.order(:name).pluck(:date_of_birth)
     assert profile.child_family_members.all? { |child| child.membership_number.start_with?("#{profile.membership_number}-C") }

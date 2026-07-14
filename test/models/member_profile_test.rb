@@ -51,6 +51,22 @@ class MemberProfileTest < ActiveSupport::TestCase
     assert_includes profile.errors[:mobile_number], "cannot be an example or placeholder number"
   end
 
+  test "family profile keeps spouse as a synchronized beneficiary" do
+    profile = build_profile(mobile_number: "09024681357")
+    profile.family_status = :family
+    profile.spouse_name = "Original Spouse"
+    profile.save!
+
+    spouse = profile.spouse_family_member
+    assert_equal "Original Spouse", spouse.name
+    assert_equal "#{profile.membership_number}-S01", spouse.membership_number
+
+    profile.update!(spouse_name: "Updated Spouse")
+
+    assert_equal spouse.id, profile.reload.spouse_family_member.id
+    assert_equal "Updated Spouse", spouse.reload.name
+  end
+
   private
 
   def build_profile(mobile_number:)

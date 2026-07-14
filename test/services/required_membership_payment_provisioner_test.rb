@@ -67,4 +67,43 @@ class RequiredMembershipPaymentProvisionerTest < ActiveSupport::TestCase
 
     assert_equal 2500, child_payment.reload.amount
   end
+
+  test "creates a separate spouse membership payment under the family account" do
+    @profile.update!(spouse_name: "Provisioning Spouse")
+
+    assert_difference -> { @user.membership_payments.where(membership_plan: @plan).count }, 2 do
+      RequiredMembershipPaymentProvisioner.call(user: @user, membership_plan: @plan)
+    end
+
+    spouse = @profile.reload.spouse_family_member
+    spouse_payment = @user.membership_payments.find_by!(membership_plan: @plan, family_member: spouse)
+    assert_equal @plan.amount, spouse_payment.amount
+    assert_equal "Provisioning Spouse", spouse_payment.beneficiary_name
+    assert_equal spouse.membership_number, spouse_payment.beneficiary_membership_number
+  end
+
+  test "creates spouse fundraiser payment but does not charge children for the fund" do
+    @profile.update!(spouse_name: "Fund Spouse")
+    child = @profile.family_members.create!(
+      name: "Fund Child",
+      relationship: "Child",
+      date_of_birth: 15.years.ago.to_date
+    )
+    fund = MembershipPlan.create!(
+      name: "Spouse Provisioning Fund",
+      amount: 3000,
+      membership_plan_type: membership_plan_types(:fundraiser),
+      billing_cycle: :yearly,
+      active: true,
+      required_for_members: true
+    )
+
+    assert_difference -> { @user.membership_payments.where(membership_plan: fund).count }, 2 do
+      RequiredMembershipPaymentProvisioner.call(user: @user, membership_plan: fund)
+    end
+
+    spouse = @profile.reload.spouse_family_member
+    assert @user.membership_payments.exists?(membership_plan: fund, family_member: spouse, amount: 3000)
+    assert_not @user.membership_payments.exists?(membership_plan: fund, family_member: child)
+  end
 end

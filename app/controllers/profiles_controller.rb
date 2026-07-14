@@ -43,6 +43,7 @@ class ProfilesController < ApplicationController
     return if result == :upload_error
 
     if result
+      MembershipPaymentProvisioner.call(user: current_user)
       AuditLogger.call(
         user: current_user,
         action: "member_updated",
