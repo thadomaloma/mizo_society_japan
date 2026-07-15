@@ -408,7 +408,7 @@ class MizoAiAssistant
       5. Transfer i zawh hnuah portal-ah transfer date, amount, leh reference name submit rawh.
       6. Treasurer/Finance team-in bank record nen verify hnuah Paid-ah a inthlak ang.
       7. Paid a nih chuan notification-ah i hmu thei ang.
-      8. Finance team-in Share Receipt click chuan WhatsApp-ah secure receipt link an rawn share thei. Link open turin portal-ah sign in a ngai ang.
+      8. Finance team-in Share Receipt Image click chuan receipt PNG file a siam ang. Mobile share sheet-ah WhatsApp thlang la; desktop-ah PNG download fallback a awm.
 
       Screenshot chu optional a ni, mahse transfer verify a awlsam zawk nan upload theih a ni.
 
@@ -825,7 +825,7 @@ class MizoAiAssistant
       2. Member transfer date, amount, reference name, leh screenshot a awm chuan check rawh.
       3. Bank account record nen a inmil chuan Approve rawh.
       4. A inmil loh chuan Reject rawh, member-in update leh theih nan.
-      5. Approve zawh hnuah Share Receipt click chuan WhatsApp message-ah secure receipt link a tel ang. WhatsApp Opened tih chu message send confirmed tihna ni lovin WhatsApp share window hawn tawh tihna a ni.
+      5. Approve zawh hnuah Share Receipt Image click la. Mobile share sheet-ah WhatsApp thlang la; receipt PNG file kha attach sa ang. Receipt Shared tih chu device share flow complete tawh tihna a ni.
       6. Same member + same plan + same year/period-a paid/active record a awm tawh chuan add payment thar siam suh.
 
       Payment confirm loh chuan Paid-ah mark suh.
@@ -844,7 +844,7 @@ class MizoAiAssistant
       3. Review button click la, member transfer date, amount, reference name, leh screenshot a awm chuan check rawh.
       4. Bank account real record nen amount leh sender/reference name a inmil em verify rawh.
       5. A dik chuan Approve rawh. A dik loh chuan Reject rawh, member-in submit leh theih nan.
-      6. Approve zawh hnuah Share Receipt click la; WhatsApp message-ah member chauh access theih secure receipt link a tel ang.
+      6. Approve zawh hnuah Share Receipt Image click la; mobile-ah WhatsApp thlang la. Receipt PNG file attach sa-in share theih ang.
       7. Duplicate record awm chuan new payment siam lovin existing record update rawh.
 
       Payment confirm loh chuan Paid-ah mark suh.

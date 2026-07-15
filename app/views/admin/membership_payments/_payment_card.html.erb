@@ -60,13 +60,13 @@
     <div class="mt-2 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-2.5 dark:border-emerald-500/20 dark:bg-emerald-500/10 sm:hidden">
       <div class="flex items-center justify-between gap-2">
         <div class="min-w-0">
-          <p class="text-[10px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">WhatsApp Receipt</p>
-          <p class="mt-0.5 truncate text-xs font-semibold text-emerald-800 dark:text-emerald-100"><%= payment.receipt_whatsapp_opened? ? "WhatsApp was opened for this receipt." : "Includes a secure receipt link." %></p>
+          <p class="text-[10px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Receipt Image</p>
+          <p class="mt-0.5 truncate text-xs font-semibold text-emerald-800 dark:text-emerald-100"><%= payment.receipt_shared? ? "Receipt image was shared." : "Share a PNG receipt from this device." %></p>
         </div>
-        <%= icon_svg(:chat, classes: "h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300") %>
+        <%= icon_svg(:upload, classes: "h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300") %>
       </div>
       <div class="mt-2">
-        <%= whatsapp_receipt_share_button(payment, classes: "#{payment.receipt_whatsapp_opened? ? mobile_button_neutral : mobile_button_success} w-full") %>
+        <%= receipt_image_share_button(payment, classes: "#{payment.receipt_shared? ? mobile_button_neutral : mobile_button_success} w-full") %>
       </div>
     </div>
   <% end %>
@@ -90,9 +90,9 @@
       <span class="inline-flex min-w-0 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 px-2.5 py-2 text-xs font-black text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500">No action</span>
     <% end %>
     <% if payment.receipt_sendable? %>
-      <%= whatsapp_receipt_share_button(
+      <%= receipt_image_share_button(
         payment,
-        classes: action_button_classes(payment.receipt_whatsapp_opened? ? :secondary : :success, size: :xs, full_width: true, extra: "rounded-xl sm:col-span-2")
+        classes: action_button_classes(payment.receipt_shared? ? :secondary : :success, size: :xs, full_width: true, extra: "rounded-xl sm:col-span-2")
       ) %>
     <% end %>
   </div>

@@ -11,7 +11,7 @@ module Admin
       @plan_type_id = params[:plan_type_id]
       @query = params[:query]
       filtered_payments = policy_scope(MembershipPayment)
-        .includes(:family_member, { membership_plan: :membership_plan_type }, user: :member_profile)
+        .includes(*receipt_associations)
         .merge(visible_payment_records)
         .search(@query)
         .by_year(@year)
@@ -140,34 +140,38 @@ module Admin
       authorize @membership_payment, :share_receipt?
 
       unless @membership_payment.receipt_sendable?
-        redirect_back fallback_location: admin_membership_payment_path(@membership_payment), alert: "The receipt can be shared only after payment is paid and WhatsApp is available."
+        render json: { error: "The receipt can be shared only after payment is paid." }, status: :unprocessable_entity
         return
       end
 
-      whatsapp_url = helpers.whatsapp_url_for(
-        @membership_payment.user.member_profile,
-        message: helpers.payment_receipt_whatsapp_message(@membership_payment, sender: current_user)
-      )
-
-      if whatsapp_url.present?
-        @membership_payment.mark_receipt_whatsapp_opened!(current_user)
+      unless @membership_payment.receipt_shared?
+        @membership_payment.mark_receipt_shared!(current_user)
         AuditLogger.call(
           user: current_user,
-          action: "payment_receipt_whatsapp_opened",
+          action: "payment_receipt_shared",
           auditable: @membership_payment,
           metadata: membership_payment_metadata(@membership_payment),
           request: request
         )
-        redirect_to whatsapp_url, allow_other_host: true
-      else
-        redirect_back fallback_location: admin_membership_payment_path(@membership_payment), alert: "A valid member WhatsApp number is required."
       end
+
+      head :no_content
     end
 
     private
 
     def set_membership_payment
-      @membership_payment = MembershipPayment.includes(:family_member).find(params[:id])
+      @membership_payment = MembershipPayment.includes(*receipt_associations).find(params[:id])
+    end
+
+    def receipt_associations
+      [
+        :approved_by,
+        :family_member,
+        { membership_plan: :membership_plan_type },
+        { payment_batch: [ :approved_by, { membership_payments: [ :family_member, { membership_plan: :membership_plan_type } ] } ] },
+        { user: :member_profile }
+      ]
     end
 
     def visible_payment_records

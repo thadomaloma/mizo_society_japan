@@ -6,7 +6,7 @@ class MembershipPayment < ApplicationRecord
   belongs_to :user
   belongs_to :membership_plan
   belongs_to :approved_by, class_name: "User", optional: true
-  belongs_to :receipt_whatsapp_opened_by, class_name: "User", optional: true
+  belongs_to :receipt_shared_by, class_name: "User", optional: true
   belongs_to :payment_batch, optional: true
   belongs_to :family_member, optional: true
 
@@ -113,11 +113,11 @@ class MembershipPayment < ApplicationRecord
   end
 
   def receipt_sendable?
-    paid? && user&.member_profile&.whatsapp_url.present?
+    paid?
   end
 
-  def receipt_whatsapp_opened?
-    receipt_whatsapp_opened_at.present?
+  def receipt_shared?
+    receipt_shared_at.present?
   end
 
   def receipt_number
@@ -144,8 +144,11 @@ class MembershipPayment < ApplicationRecord
     [ self ]
   end
 
-  def mark_receipt_whatsapp_opened!(user)
-    update!(receipt_whatsapp_opened_by: user, receipt_whatsapp_opened_at: Time.current)
+  def mark_receipt_shared!(user)
+    shared_at = Time.current
+    payments = payment_batch&.paid? ? payment_batch.membership_payments : self.class.where(id: id)
+    payments.update_all(receipt_shared_by_id: user.id, receipt_shared_at: shared_at, updated_at: shared_at)
+    reload
   end
 
   def period_label

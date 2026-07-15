@@ -390,7 +390,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "option[value='#{@donation_plan.id}']", text: /Emergency Relief Donation/
   end
 
-  test "admin payment show uses WhatsApp receipt message without call button" do
+  test "admin payment show offers a PNG receipt without a receipt link" do
     @payment.update!(
       status: :paid,
       paid_on: Time.current,
@@ -405,8 +405,9 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/>Call</, response.body)
     assert_includes response.body, "WhatsApp"
     assert_includes response.body, "Ready to share"
-    assert_not_includes response.body, "I sent this receipt"
+    assert_includes response.body, "Share Receipt Image"
     assert_includes response.body, share_receipt_admin_membership_payment_path(@payment)
+    assert_not_includes response.body, receipt_membership_payment_url(@payment)
   end
 
   test "member can print an approved itemized payment receipt" do
@@ -479,7 +480,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, receipt_membership_payment_path(@payment)
   end
 
-  test "admin payment records track when WhatsApp is opened for a receipt" do
+  test "admin payment records track a shared receipt image" do
     @payment.update!(
       status: :paid,
       paid_on: Time.current,
@@ -492,25 +493,48 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Ready to share"
     assert_includes response.body, share_receipt_admin_membership_payment_path(@payment)
-    assert_not_includes response.body, "I sent it"
+    assert_includes response.body, "Share Image"
 
     patch share_receipt_admin_membership_payment_path(@payment)
 
-    assert_response :redirect
-    assert_match %r{\Ahttps://wa\.me/}, response.location
-    whatsapp_message = URI.decode_www_form_component(URI.parse(response.location).query.delete_prefix("text="))
-    assert_includes whatsapp_message, "MSJ Payment Receipt"
-    assert_includes whatsapp_message, @payment.receipt_number
-    assert_includes whatsapp_message, @plan.name
-    assert_includes whatsapp_message, "Confirmed by"
-    assert_includes whatsapp_message, receipt_membership_payment_url(@payment)
-    assert @payment.reload.receipt_whatsapp_opened?
-    assert_equal @president, @payment.receipt_whatsapp_opened_by
+    assert_response :no_content
+    assert @payment.reload.receipt_shared?
+    assert_equal @president, @payment.receipt_shared_by
 
     get admin_membership_payments_path(status: "paid")
 
     assert_response :success
-    assert_includes response.body, "WhatsApp opened"
+    assert_includes response.body, "Receipt shared"
+  end
+
+  test "sharing a combined receipt marks every included payment as shared" do
+    donation_payment = MembershipPayment.create!(
+      user: @member,
+      membership_plan: @donation_plan,
+      amount: @donation_plan.amount,
+      payment_year: Date.current.year,
+      payment_method: :manual_bank_transfer,
+      status: :paid,
+      paid_on: Time.current,
+      approved_by: @president
+    )
+    batch = @member.payment_batches.create!(
+      status: :paid,
+      total_amount: @payment.amount + donation_payment.amount,
+      transfer_reference_name: "SHARED-BATCH",
+      approved_by: @president,
+      approved_at: Time.current
+    )
+    @payment.update!(status: :paid, paid_on: Time.current, approved_by: @president, payment_batch: batch)
+    donation_payment.update!(payment_batch: batch)
+    sign_in @president
+
+    patch share_receipt_admin_membership_payment_path(@payment)
+
+    assert_response :no_content
+    assert @payment.reload.receipt_shared?
+    assert donation_payment.reload.receipt_shared?
+    assert_equal @president, donation_payment.receipt_shared_by
   end
 
   test "admin payment records hide prepared combined payments until transfer is submitted" do

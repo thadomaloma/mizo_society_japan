@@ -61,13 +61,13 @@
               <p class="mt-1 truncate font-black text-slate-950 dark:text-white"><%= @membership_payment.user.display_name %></p>
               <p class="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400"><%= @membership_payment.user.member_profile.mobile_number %></p>
               <span class="mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-black ring-1 ring-inset <%= payment_receipt_badge_classes(@membership_payment) %>"><%= payment_receipt_label(@membership_payment) %></span>
-              <p class="mt-2 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">Share a secure receipt link with a pre-filled WhatsApp message.</p>
+              <p class="mt-2 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">Share the official receipt as a PNG image. On mobile, choose WhatsApp from the share sheet.</p>
             </div>
             <div class="grid gap-2 sm:min-w-52">
               <% if @membership_payment.receipt_sendable? %>
-                <%= whatsapp_receipt_share_button(
+                <%= receipt_image_share_button(
                   @membership_payment,
-                  classes: action_button_classes(@membership_payment.receipt_whatsapp_opened? ? :secondary : :success, size: :sm, full_width: true, extra: "rounded-xl")
+                  classes: action_button_classes(@membership_payment.receipt_shared? ? :secondary : :success, size: :sm, full_width: true, extra: "rounded-xl")
                 ) %>
               <% else %>
                 <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs font-black text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">Receipt unavailable</div>
