@@ -117,6 +117,89 @@ class Admin::WelfareCasesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "resolved welfare cases are read only" do
+    welfare_case = WelfareCase.create!(
+      user: @member,
+      welfare_category: @category,
+      title: "Resolved support request",
+      description: "A completed private support request.",
+      assigned_to: @secretary,
+      status: :resolved,
+      resolved_at: Time.current
+    )
+    sign_in @president
+
+    get admin_welfare_case_path(welfare_case)
+
+    assert_response :success
+    assert_select "a[href='#{edit_admin_welfare_case_path(welfare_case)}']", count: 0
+    assert_select "form[action='#{assign_admin_welfare_case_path(welfare_case)}']", count: 0
+    assert_select "form[action='#{resolve_admin_welfare_case_path(welfare_case)}']", count: 0
+    assert_select "form[action='#{reject_admin_welfare_case_path(welfare_case)}']", count: 0
+    assert_select "p", text: /Details are now read-only/
+
+    get edit_admin_welfare_case_path(welfare_case)
+    assert_redirected_to root_path
+
+    patch assign_admin_welfare_case_path(welfare_case), params: { welfare_case: { assigned_to_id: @assistant_secretary.id } }
+    assert_redirected_to root_path
+    assert_equal @secretary, welfare_case.reload.assigned_to
+  end
+
+  test "case form keeps closure in the reviewed workflow" do
+    welfare_case = WelfareCase.create!(
+      user: @member,
+      welfare_category: @category,
+      title: "Open support request",
+      description: "A private support request.",
+      assigned_to: @secretary,
+      status: :reviewing
+    )
+    sign_in @president
+
+    get edit_admin_welfare_case_path(welfare_case)
+
+    assert_response :success
+    assert_select "select[name='welfare_case[status]'] option[value='submitted']", count: 1
+    assert_select "select[name='welfare_case[status]'] option[value='reviewing']", count: 1
+    assert_select "select[name='welfare_case[status]'] option[value='in_progress']", count: 1
+    assert_select "select[name='welfare_case[status]'] option[value='resolved']", count: 0
+    assert_select "select[name='welfare_case[status]'] option[value='rejected']", count: 0
+
+    patch admin_welfare_case_path(welfare_case), params: {
+      welfare_case: {
+        title: "Updated open support request",
+        welfare_category_id: @category.id,
+        description: welfare_case.description,
+        priority: welfare_case.priority,
+        status: "resolved",
+        assigned_to_id: @secretary.id,
+        confidential: "1"
+      }
+    }
+
+    assert_redirected_to admin_welfare_case_path(welfare_case)
+    welfare_case.reload
+    assert_equal "Updated open support request", welfare_case.title
+    assert_equal "reviewing", welfare_case.status
+    assert_nil welfare_case.resolved_at
+  end
+
+  test "attachments on resolved welfare cases cannot be deleted" do
+    welfare_case = WelfareCase.create!(
+      user: @member,
+      welfare_category: @category,
+      title: "Closed case with evidence",
+      description: "A completed private support request.",
+      status: :resolved,
+      resolved_at: Time.current
+    )
+    attachment = WelfareAttachment.new(welfare_case: welfare_case, uploaded_by: @member)
+
+    assert_not WelfareAttachmentPolicy.new(@president, attachment).destroy?
+    assert_not WelfareAttachmentPolicy.new(@member, attachment).destroy?
+  end
+
   private
 
   def create_user(name, email, role)

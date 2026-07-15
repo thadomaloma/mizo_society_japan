@@ -8,8 +8,15 @@ module Admin
       @status = params[:status]
       @priority = params[:priority]
       @query = params[:query]
-      @welfare_cases = policy_scope(WelfareCase)
-        .includes(:welfare_category, :user, :assigned_to)
+      welfare_scope = policy_scope(WelfareCase)
+      @welfare_summary = {
+        open: welfare_scope.open_cases.count,
+        urgent: welfare_scope.open_cases.urgent.count,
+        unassigned: welfare_scope.open_cases.unassigned.count,
+        resolved: welfare_scope.resolved.count
+      }
+      @welfare_cases = welfare_scope
+        .includes(:welfare_category, :assigned_to, user: :member_profile)
         .search(@query)
         .by_status(@status)
         .by_priority(@priority)
@@ -138,7 +145,9 @@ module Admin
       ]
       permitted_attributes << :user_id if action_name == "create"
 
-      params.require(:welfare_case).permit(permitted_attributes)
+      attributes = params.require(:welfare_case).permit(permitted_attributes)
+      attributes.delete(:status) unless WelfareCase::OPEN_STATUSES.include?(attributes[:status].to_s)
+      attributes
     end
 
     def welfare_case_metadata(welfare_case)

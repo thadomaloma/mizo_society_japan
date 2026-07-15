@@ -16,15 +16,15 @@ class WelfareCasePolicy < ApplicationPolicy
   end
 
   def update?
-    welfare_user? || owner_editable_case?
+    (welfare_user? && record.open?) || owner_editable_case?
   end
 
   def destroy?
-    welfare_user?
+    welfare_user? && record.submitted?
   end
 
   def assign?
-    welfare_user?
+    welfare_user? && record.open?
   end
 
   def resolve?

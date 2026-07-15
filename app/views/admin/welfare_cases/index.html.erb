@@ -1,87 +1,62 @@
 <% content_for :page_title, "Welfare Cases" %>
 
-<div class="space-y-4 sm:space-y-6">
-  <% open_count = @welfare_cases.count(&:open?) %>
-  <% urgent_count = @welfare_cases.count(&:urgent?) %>
-  <% unassigned_count = @welfare_cases.count { |welfare_case| welfare_case.assigned_to_id.blank? } %>
-  <% resolved_count = @welfare_cases.count(&:resolved?) %>
-
+<div class="space-y-5 sm:space-y-6">
   <% header_actions = capture do %>
     <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
-    <% if policy(WelfareCategory).index? %>
-      <%= link_to admin_welfare_categories_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
-        <%= icon_svg(:tag, classes: "h-4 w-4") %>
-        <span>Categories</span>
+      <% if policy(WelfareCategory).index? %>
+        <%= link_to admin_welfare_categories_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
+          <%= icon_svg(:tag, classes: "h-4 w-4") %><span>Categories</span>
+        <% end %>
       <% end %>
-    <% end %>
-    <% if policy(WelfareCase).admin_create? %>
-      <%= link_to new_admin_welfare_case_path, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
-        <%= icon_svg(:plus, classes: "h-4 w-4") %>
-        <span>New Case</span>
+      <% if policy(WelfareCase).admin_create? %>
+        <%= link_to new_admin_welfare_case_path, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
+          <%= icon_svg(:plus, classes: "h-4 w-4") %><span>New Case</span>
+        <% end %>
       <% end %>
-    <% end %>
     </div>
   <% end %>
+
   <%= render "shared/page_header",
     eyebrow: "Confidential welfare",
     title: "Welfare Cases",
-    subtitle: "Review support requests, assign Office Bearers, and track case progress.",
+    subtitle: "Review support requests, assign Office Bearers, and track each case to a clear outcome.",
     actions: header_actions %>
 
-  <section class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-    <% [
-      [ "Open", open_count, :welfare, "text-red-700 dark:text-red-300", "bg-red-50 dark:bg-red-500/15" ],
-      [ "Urgent", urgent_count, :notifications, "text-amber-700 dark:text-amber-300", "bg-amber-50 dark:bg-amber-500/15" ],
-      [ "Unassigned", unassigned_count, :user_plus, "text-sky-700 dark:text-sky-300", "bg-sky-50 dark:bg-sky-500/15" ],
-      [ "Resolved", resolved_count, :check, "text-emerald-700 dark:text-emerald-300", "bg-emerald-50 dark:bg-emerald-500/15" ]
-    ].each do |label, value, icon, tone, bg| %>
-      <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-4">
-        <div class="flex items-center gap-3">
-          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl <%= bg %> <%= tone %>"><%= icon_svg(icon, classes: "h-5 w-5") %></span>
-          <div>
-            <p class="text-[11px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500"><%= label %></p>
-            <p class="mt-0.5 text-2xl font-black text-slate-950 dark:text-white"><%= value %></p>
-          </div>
-        </div>
-      </div>
-    <% end %>
-  </section>
+  <%= render "overview_panel", welfare_summary: @welfare_summary %>
 
-  <%= form_with url: admin_welfare_cases_path, method: :get, class: "grid gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-4 lg:grid-cols-[minmax(16rem,1fr)_11rem_11rem_auto]" do |form| %>
-    <%= form.search_field :query, value: @query, placeholder: "Search case, member, email...", class: "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white" %>
-    <%= form.select :status, options_for_select([ [ "All statuses", "" ] ] + WelfareCase.statuses.keys.map { |status| [ status.humanize, status ] }, @status), {}, class: "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white" %>
-    <%= form.select :priority, options_for_select([ [ "All priorities", "" ] ] + WelfareCase.priorities.keys.map { |priority| [ priority.humanize, priority ] }, @priority), {}, class: "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white" %>
-    <%= form.button type: :submit, class: action_button_classes(:dark, full_width: true, extra: "lg:w-auto") do %>
-      <%= icon_svg(:filter, classes: "h-4 w-4") %>
-      <span>Filter</span>
+  <%= render ::RubyUI::Card.new(class: "rounded-xl border-[#E2E8F0] bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]") do %>
+    <%= form_with url: admin_welfare_cases_path, method: :get, class: "grid grid-cols-2 gap-2 lg:grid-cols-[minmax(16rem,1fr)_11rem_11rem_auto]" do |form| %>
+      <div class="relative col-span-2 lg:col-span-1">
+        <span class="pointer-events-none absolute inset-y-0 left-0 grid w-10 place-items-center text-slate-400"><%= icon_svg(:search, classes: "h-4 w-4") %></span>
+        <%= form.search_field :query, value: @query, placeholder: "Search case, member, or member number...", aria: { label: "Search welfare cases" }, class: "w-full rounded-lg border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-3 text-sm font-semibold text-[#0F172A] outline-none placeholder:text-slate-400 focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white dark:placeholder:text-slate-400" %>
+      </div>
+      <%= form.select :status, options_for_select([[ "All statuses", "" ]] + WelfareCase.statuses.keys.map { |status| [ status.humanize, status ] }, @status), {}, aria: { label: "Case status" }, class: "rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
+      <%= form.select :priority, options_for_select([[ "All priorities", "" ]] + WelfareCase.priorities.keys.map { |priority| [ priority.humanize, priority ] }, @priority), {}, aria: { label: "Case priority" }, class: "rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm font-semibold text-[#0F172A] outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
+      <div class="col-span-2 flex justify-end gap-2 lg:col-span-1">
+        <% if @query.present? || @status.present? || @priority.present? %>
+          <%= link_to admin_welfare_cases_path, class: action_button_classes(:secondary, size: :sm) do %><%= icon_svg(:x_mark, classes: "h-4 w-4") %><span>Reset</span><% end %>
+        <% end %>
+        <%= form.button type: :submit, class: action_button_classes(:dark, size: :sm) do %><%= icon_svg(:filter, classes: "h-4 w-4") %><span>Filter</span><% end %>
+      </div>
     <% end %>
   <% end %>
 
   <% if @welfare_cases.any? %>
-    <div class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 lg:block">
-      <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-700">
-        <thead class="bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500 dark:bg-slate-900 dark:text-slate-400">
-          <tr>
-            <th class="px-5 py-3">Case ID</th>
-            <th class="px-5 py-3">Member</th>
-            <th class="px-5 py-3">Category</th>
-            <th class="px-5 py-3">Priority</th>
-            <th class="px-5 py-3">Status</th>
-            <th class="px-5 py-3">Office Bearer</th>
-            <th class="px-5 py-3">Submitted</th>
-            <th class="px-5 py-3 text-right">Actions</th>
-          </tr>
+    <%= render ::RubyUI::Card.new(class: "hidden overflow-hidden rounded-xl border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B] lg:block") do %>
+      <%= render ::RubyUI::Table.new(class: "min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-[#334155]") do %>
+        <thead class="bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500 dark:bg-[#0F172A] dark:text-slate-300">
+          <tr><th class="px-5 py-3">Case</th><th class="px-5 py-3">Member</th><th class="px-5 py-3">Priority</th><th class="px-5 py-3">Status</th><th class="px-5 py-3">Office Bearer</th><th class="px-5 py-3">Submitted</th><th class="px-5 py-3 text-right">Actions</th></tr>
         </thead>
-        <tbody class="divide-y divide-slate-100 bg-white dark:divide-slate-700 dark:bg-slate-800">
+        <tbody class="divide-y divide-slate-100 bg-white dark:divide-[#334155] dark:bg-[#1E293B]">
           <%= render partial: "case_row", collection: @welfare_cases, as: :welfare_case %>
         </tbody>
-      </table>
-    </div>
+      <% end %>
+    <% end %>
 
-    <div class="grid gap-2 lg:hidden">
+    <div class="grid gap-2.5 md:grid-cols-2 lg:hidden">
       <%= render partial: "case_card", collection: @welfare_cases, as: :welfare_case %>
     </div>
   <% else %>
-    <%= render "shared/empty_state", title: "No welfare cases found", message: "Try changing the filters." %>
+    <%= render "shared/empty_state", title: "No welfare cases found", message: "Try changing the filters or create a new welfare case." %>
   <% end %>
 </div>

@@ -1,5 +1,7 @@
 class WelfareAttachmentPolicy < ApplicationPolicy
   def destroy?
+    return false if record.welfare_case.closed?
+
     welfare_user? || owner_uploaded_attachment?
   end
 

@@ -5,7 +5,13 @@ class WelfareCasesController < ApplicationController
   def index
     authorize WelfareCase
     @status = params[:status]
-    @welfare_cases = policy_scope(WelfareCase)
+    welfare_scope = policy_scope(WelfareCase)
+    @welfare_summary = {
+      open: welfare_scope.open_cases.count,
+      review: welfare_scope.where(status: [ :reviewing, :in_progress ]).count,
+      resolved: welfare_scope.resolved.count
+    }
+    @welfare_cases = welfare_scope
       .includes(:welfare_category, :assigned_to)
       .by_status(@status)
       .latest

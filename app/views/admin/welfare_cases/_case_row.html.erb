@@ -1,26 +1,9 @@
-<tr class="transition hover:bg-slate-50 dark:hover:bg-slate-700/40">
-  <td class="px-5 py-4 font-black text-slate-950 dark:text-white">#<%= welfare_case.id %></td>
-  <td class="px-5 py-4">
-    <p class="font-black text-slate-950 dark:text-white"><%= user_label(welfare_case.user) %></p>
-    <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400"><%= welfare_case.user.email %></p>
-  </td>
-  <td class="px-5 py-4 font-semibold text-slate-700 dark:text-slate-200"><%= welfare_case.welfare_category.name %></td>
-  <td class="px-5 py-4 font-semibold text-slate-700 dark:text-slate-200"><%= welfare_case.priority.humanize %></td>
-  <td class="px-5 py-4"><%= render "shared/status_badge", status: welfare_case.status %></td>
-  <td class="px-5 py-4 font-semibold text-slate-600 dark:text-slate-300"><%= welfare_case.assigned_to&.display_name || "Unassigned" %></td>
-  <td class="px-5 py-4 font-semibold text-slate-600 dark:text-slate-300"><%= welfare_case.submitted_at.strftime("%b %d, %Y") %></td>
-  <td class="px-5 py-4">
-    <div class="flex justify-end gap-2">
-      <%= link_to admin_welfare_case_path(welfare_case), class: action_button_classes(:secondary, size: :xs) do %>
-        <%= icon_svg(:eye, classes: "h-3.5 w-3.5") %>
-        <span>View</span>
-      <% end %>
-      <% if policy(welfare_case).edit? %>
-        <%= link_to edit_admin_welfare_case_path(welfare_case), class: action_button_classes(:dark, size: :xs) do %>
-          <%= icon_svg(:edit, classes: "h-3.5 w-3.5") %>
-          <span>Edit</span>
-        <% end %>
-      <% end %>
-    </div>
-  </td>
+<tr class="transition hover:bg-slate-50/80 dark:hover:bg-[#334155]/35">
+  <td class="px-5 py-4"><%= link_to admin_welfare_case_path(welfare_case), class: "block max-w-64" do %><p class="truncate font-black text-[#0F172A] transition hover:text-red-700 dark:text-white dark:hover:text-red-400"><%= welfare_case.title %></p><p class="mt-0.5 truncate text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">#<%= welfare_case.id %> · <%= welfare_case.welfare_category.name %></p><% end %></td>
+  <td class="px-5 py-4"><p class="font-black text-[#0F172A] dark:text-white"><%= user_label(welfare_case.user) %></p><p class="mt-0.5 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= welfare_case.user.member_profile&.membership_number || welfare_case.user.email %></p></td>
+  <td class="whitespace-nowrap px-5 py-4 font-black <%= welfare_case.urgent? ? 'text-red-700 dark:text-red-300' : 'text-[#0F172A] dark:text-white' %>"><%= welfare_case.priority.humanize %></td>
+  <td class="whitespace-nowrap px-5 py-4"><%= render "shared/status_badge", status: welfare_case.status %></td>
+  <td class="px-5 py-4 font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= welfare_case.assigned_to&.display_name || "Unassigned" %></td>
+  <td class="whitespace-nowrap px-5 py-4 font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= welfare_case.submitted_at.strftime("%d %b %Y") %></td>
+  <td class="px-5 py-4"><div class="flex items-center justify-end gap-1.5"><%= link_to admin_welfare_case_path(welfare_case), class: action_button_classes(:secondary, size: :xs, extra: "h-8 w-8 px-0"), title: "View #{welfare_case.title}", aria: { label: "View #{welfare_case.title}" } do %><%= icon_svg(:eye, classes: "h-3.5 w-3.5") %><% end %><% if policy(welfare_case).edit? %><%= link_to edit_admin_welfare_case_path(welfare_case), class: action_button_classes(:dark, size: :xs, extra: "h-8 w-8 px-0"), title: "Edit #{welfare_case.title}", aria: { label: "Edit #{welfare_case.title}" } do %><%= icon_svg(:edit, classes: "h-3.5 w-3.5") %><% end %><% end %></div></td>
 </tr>

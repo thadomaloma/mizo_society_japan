@@ -1,4 +1,7 @@
 class WelfareCase < ApplicationRecord
+  OPEN_STATUSES = %w[submitted reviewing in_progress].freeze
+  CLOSED_STATUSES = %w[resolved rejected].freeze
+
   belongs_to :user
   belongs_to :welfare_category
   belongs_to :assigned_to, class_name: "User", optional: true
@@ -22,7 +25,7 @@ class WelfareCase < ApplicationRecord
   validate :assigned_officer_is_eligible
 
   scope :latest, -> { order(submitted_at: :desc, created_at: :desc) }
-  scope :open_cases, -> { where(status: [ :submitted, :reviewing, :in_progress ]) }
+  scope :open_cases, -> { where(status: OPEN_STATUSES) }
   scope :urgent, -> { where(priority: :urgent) }
   scope :assigned, -> { where.not(assigned_to_id: nil) }
   scope :unassigned, -> { where(assigned_to_id: nil) }
@@ -44,11 +47,11 @@ class WelfareCase < ApplicationRecord
   }
 
   def open?
-    submitted? || reviewing? || in_progress?
+    status.in?(OPEN_STATUSES)
   end
 
   def closed?
-    resolved? || rejected?
+    status.in?(CLOSED_STATUSES)
   end
 
   def assigned?
