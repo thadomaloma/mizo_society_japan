@@ -159,11 +159,69 @@ module Admin
       assert_select "[aria-label='Member age distribution chart']"
       assert_select ".members-report-directory-table table"
       assert_select ".members-report-directory-cards"
+      assert_select "input[name='query']"
+      assert_select "select[name='status']"
+      assert_select "select[name='family_status']"
+      assert_select "select[name='prefecture']"
+      assert_select "select[name='age_group']"
+      assert_select "a[href='#{admin_member_report_path(@president.member_profile)}']"
       assert_select "nav[aria-label='Table pagination']"
       assert_select "select[name='per_page'] option[selected]", text: "25"
       assert_includes response.body, "Household Reach"
       assert_includes response.body, "Data Quality"
       assert_includes response.body, "Member Directory"
+    end
+
+    test "member directory filters profiles by query status household prefecture and age" do
+      matching_user = create_user("Filtered Member", "filtered_member@example.test", :member)
+      matching_user.member_profile.update!(
+        full_name: "Unique Directory Member",
+        status: :active,
+        family_status: :family,
+        spouse_name: "Directory Spouse",
+        prefecture: "東京都",
+        date_of_birth: 25.years.ago.to_date
+      )
+      create_user("Different Member", "different_member@example.test", :member)
+      sign_in @president
+
+      get members_admin_reports_path, params: {
+        query: "Unique Directory",
+        status: "active",
+        family_status: "family",
+        prefecture: "東京都",
+        age_group: "18_29"
+      }
+
+      assert_response :success
+      assert_includes response.body, "Unique Directory Member"
+      assert_not_includes response.body, "Different Member"
+      assert_select "option[value='18_29'][selected]", text: "18-29"
+      assert_select ".members-report-directory", text: /1 matching profile/
+    end
+
+    test "office bearer can open confidential member details" do
+      sign_in @vice_president
+
+      get admin_member_report_path(@president.member_profile)
+
+      assert_response :success
+      assert_includes response.body, @president.member_profile.full_name
+      assert_includes response.body, @president.member_profile.mobile_number
+      assert_includes response.body, "Registered household"
+      assert_includes response.body, "Confidential member information"
+    end
+
+    test "executive member cannot open confidential member details" do
+      sign_in @executive_member
+
+      get members_admin_reports_path
+      assert_response :success
+      assert_not_includes response.body, admin_member_report_path(@president.member_profile)
+      assert_includes response.body, "Office Bearers only"
+
+      get admin_member_report_path(@president.member_profile)
+      assert_redirected_to root_path
     end
 
     test "finance csv is a clean rectangular transaction dataset" do

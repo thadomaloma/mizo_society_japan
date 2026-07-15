@@ -1,5 +1,16 @@
 module Reports
   class MembersReport
+    AGE_FILTER_OPTIONS = [
+      [ "All ages", "" ],
+      [ "Under 18", "under_18" ],
+      [ "18-29", "18_29" ],
+      [ "30-39", "30_39" ],
+      [ "40-49", "40_49" ],
+      [ "50-59", "50_59" ],
+      [ "60+", "60_plus" ],
+      [ "Age not recorded", "unknown" ]
+    ].freeze
+
     AGE_LEVELS = [
       [ "Under 18", ..17 ],
       [ "18-29", 18..29 ],
@@ -39,8 +50,18 @@ module Reports
       end
     end
 
-    def directory_scope
-      MemberProfile.includes(:user, :family_members).order(Arel.sql("LOWER(member_profiles.full_name) ASC"), :membership_number)
+    def directory_scope(filters: {})
+      scope = MemberProfile.left_joins(:user).includes(:user, :family_members)
+      scope = filter_by_query(scope, filters[:query])
+      scope = scope.where(status: filters[:status]) if MemberProfile.statuses.key?(filters[:status].to_s)
+      scope = scope.where(family_status: filters[:family_status]) if MemberProfile.family_statuses.key?(filters[:family_status].to_s)
+      scope = scope.where(prefecture: filters[:prefecture]) if filters[:prefecture].present?
+      scope = filter_by_age(scope, filters[:age_group])
+      scope.order(Arel.sql("LOWER(member_profiles.full_name) ASC"), :membership_number)
+    end
+
+    def prefecture_options
+      MemberProfile.where.not(prefecture: [ nil, "" ]).distinct.order(:prefecture).pluck(:prefecture)
     end
 
     def to_csv
@@ -52,6 +73,45 @@ module Reports
     end
 
     private
+
+    def filter_by_query(scope, query)
+      normalized_query = query.to_s.strip
+      return scope if normalized_query.blank?
+
+      pattern = "%#{ActiveRecord::Base.sanitize_sql_like(normalized_query)}%"
+      scope.where(
+        <<~SQL.squish,
+          member_profiles.full_name ILIKE :query
+          OR member_profiles.membership_number ILIKE :query
+          OR member_profiles.mobile_number ILIKE :query
+          OR member_profiles.city ILIKE :query
+          OR member_profiles.prefecture ILIKE :query
+          OR users.email ILIKE :query
+        SQL
+        query: pattern
+      )
+    end
+
+    def filter_by_age(scope, age_group)
+      case age_group.to_s
+      when "under_18"
+        scope.where("member_profiles.date_of_birth > ?", 18.years.ago.to_date)
+      when "18_29"
+        scope.where(member_profiles: { date_of_birth: 30.years.ago.to_date.next_day..18.years.ago.to_date })
+      when "30_39"
+        scope.where(member_profiles: { date_of_birth: 40.years.ago.to_date.next_day..30.years.ago.to_date })
+      when "40_49"
+        scope.where(member_profiles: { date_of_birth: 50.years.ago.to_date.next_day..40.years.ago.to_date })
+      when "50_59"
+        scope.where(member_profiles: { date_of_birth: 60.years.ago.to_date.next_day..50.years.ago.to_date })
+      when "60_plus"
+        scope.where("member_profiles.date_of_birth <= ?", 60.years.ago.to_date)
+      when "unknown"
+        scope.where(date_of_birth: nil)
+      else
+        scope
+      end
+    end
 
     def profiles
       @profiles ||= MemberProfile.includes(:user, :family_members).to_a

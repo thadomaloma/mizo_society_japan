@@ -139,6 +139,7 @@ Rails.application.routes.draw do
         get :welfare
       end
     end
+    get "reports/members/:id", to: "reports#member", as: :member_report
     resource :settings, only: [ :show, :update ]
     get "permissions", to: "user_roles#permissions"
     resources :user_roles, only: [ :index, :new, :create, :edit, :update ] do

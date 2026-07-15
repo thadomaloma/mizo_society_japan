@@ -37,7 +37,16 @@ module Admin
       authorize :report, :members?
       @report = Reports::MembersReport.new
       @summary = @report.summary
-      @profiles = paginate_relation(@report.directory_scope)
+      @directory_filters = {
+        query: params[:query].to_s.strip,
+        status: params[:status].to_s,
+        family_status: params[:family_status].to_s,
+        prefecture: params[:prefecture].to_s,
+        age_group: params[:age_group].to_s
+      }
+      @prefecture_options = @report.prefecture_options
+      @profiles = paginate_relation(@report.directory_scope(filters: @directory_filters))
+      @can_view_member_details = policy(:report).member_details?
 
       respond_to do |format|
         format.html
@@ -58,6 +67,11 @@ module Admin
             type: "text/csv; charset=utf-8"
         end
       end
+    end
+
+    def member
+      authorize :report, :member_details?
+      @member_profile = MemberProfile.includes(:user, :family_members).find(params[:id])
     end
 
     def events
