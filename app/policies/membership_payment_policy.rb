@@ -39,7 +39,7 @@ class MembershipPaymentPolicy < ApplicationPolicy
     finance_approver? && record.pending_verification?
   end
 
-  def mark_receipt_sent?
+  def share_receipt?
     finance_user? && record.receipt_sendable?
   end
 

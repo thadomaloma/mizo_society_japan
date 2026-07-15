@@ -2,8 +2,7 @@
 <% table_button_neutral = "#{table_button_base} border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" %>
 <% table_button_dark = "#{table_button_base} bg-slate-900 text-white shadow-sm shadow-slate-950/10 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600" %>
 <% table_button_success = "#{table_button_base} bg-emerald-600 text-white shadow-sm shadow-emerald-950/10 hover:bg-emerald-700" %>
-<% table_button_receipt = "#{table_button_base} #{payment.receipt_sent? ? "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" : "bg-emerald-600 text-white shadow-sm shadow-emerald-950/10 hover:bg-emerald-700"}" %>
-<% table_button_mark_sent = "#{table_button_base} border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/15" %>
+<% table_button_receipt = "#{table_button_base} #{payment.receipt_whatsapp_opened? ? "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" : "bg-emerald-600 text-white shadow-sm shadow-emerald-950/10 hover:bg-emerald-700"}" %>
 
 <tr class="transition-colors hover:bg-slate-50/80 dark:hover:bg-[#334155]/45">
   <td class="px-5 py-4">
@@ -53,16 +52,7 @@
         <div class="rounded-xl border border-emerald-100 bg-emerald-50/70 p-1.5 dark:border-emerald-500/20 dark:bg-emerald-500/10">
           <p class="mb-1 px-1 text-right text-[10px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Receipt</p>
           <div class="flex flex-wrap justify-end gap-1.5">
-            <%= link_to whatsapp_url_for(payment.user.member_profile, message: payment_receipt_whatsapp_message(payment, sender: current_user)), target: "_blank", rel: "noopener", class: table_button_receipt do %>
-              <%= icon_svg(:chat, classes: "h-3.5 w-3.5") %>
-              <span><%= payment.receipt_sent? ? "Open" : "Send" %></span>
-            <% end %>
-            <% unless payment.receipt_sent? %>
-              <%= button_to mark_receipt_sent_admin_membership_payment_path(payment), method: :patch, form: { class: "min-w-0" }, class: table_button_mark_sent, data: { turbo_confirm: "Mark this WhatsApp receipt as sent?" } do %>
-                <%= icon_svg(:check, classes: "h-3.5 w-3.5") %>
-                <span>I sent it</span>
-              <% end %>
-            <% end %>
+            <%= whatsapp_receipt_share_button(payment, classes: table_button_receipt, label: payment.receipt_whatsapp_opened? ? "Open" : "Share") %>
           </div>
         </div>
       <% end %>

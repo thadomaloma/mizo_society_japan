@@ -1,80 +1,146 @@
 <% content_for :page_title, "Finance Transaction" %>
 
-<div class="space-y-6">
+<% transaction = @finance_transaction %>
+<% income = transaction.income? %>
+<% pending_review = transaction.pending? %>
+<% source_is_payment = transaction.reference_number.to_s.start_with?("membership-payment-") %>
+
+<div class="min-w-0 space-y-5 sm:space-y-6">
   <%= render "shared/page_header",
     eyebrow: "Finance transaction",
-    title: @finance_transaction.finance_category.name,
-    subtitle: @finance_transaction.transaction_date.strftime("%B %d, %Y"),
+    title: transaction.finance_category.name,
+    subtitle: "Recorded on #{transaction.transaction_date.strftime("%B %d, %Y")}",
     actions: safe_join([
-      link_to(admin_finance_transactions_path, class: action_button_classes(:secondary)) do
+      link_to(admin_finance_transactions_path, class: action_button_classes(:secondary, size: :sm)) do
         safe_join([ icon_svg(:arrow_left, classes: "h-4 w-4"), tag.span("Back") ])
       end,
-      (link_to(edit_admin_finance_transaction_path(@finance_transaction), class: action_button_classes(:dark)) do
+      (link_to(edit_admin_finance_transaction_path(transaction), class: action_button_classes(:dark, size: :sm)) do
         safe_join([ icon_svg(:edit, classes: "h-4 w-4"), tag.span("Edit") ])
-      end if policy(@finance_transaction).update?)
+      end if policy(transaction).update?)
     ].compact, " ") %>
 
-  <section class="grid gap-5 lg:grid-cols-[1fr_22rem]">
-    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <div class="grid gap-5 sm:grid-cols-2">
-        <div>
-          <p class="text-sm font-bold text-gray-500">Amount</p>
-          <p class="mt-2 text-3xl font-black text-gray-950"><%= yen(@finance_transaction.amount) %></p>
+  <section class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_21rem] xl:items-start">
+    <div class="min-w-0 space-y-4">
+      <article class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="flex min-w-0 items-start justify-between gap-4 border-b border-slate-100 p-4 dark:border-slate-700 sm:p-5">
+          <div class="flex min-w-0 items-start gap-3">
+            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl <%= income ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300" %>">
+              <%= icon_svg(:banknotes, classes: "h-5 w-5") %>
+            </span>
+            <div class="min-w-0">
+              <p class="text-xs font-black uppercase text-slate-500 dark:text-slate-400"><%= transaction.transaction_type.humanize %></p>
+              <p class="mt-1 break-words text-2xl font-black tabular-nums text-slate-950 dark:text-white sm:text-3xl"><%= yen(transaction.amount) %></p>
+              <p class="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400"><%= transaction.finance_category.name %></p>
+            </div>
+          </div>
+          <%= render "shared/status_badge", status: transaction.status %>
         </div>
-        <div>
-          <p class="text-sm font-bold text-gray-500">Status</p>
-          <p class="mt-2"><%= render "shared/status_badge", status: @finance_transaction.status %></p>
-        </div>
-        <div>
-          <p class="text-sm font-bold text-gray-500">Type</p>
-          <p class="mt-2"><%= render "shared/status_badge", status: @finance_transaction.transaction_type %></p>
-        </div>
-        <div>
-          <p class="text-sm font-bold text-gray-500">Reference</p>
-          <p class="mt-2 font-black text-gray-950"><%= @finance_transaction.reference_number.presence || "Not recorded" %></p>
-        </div>
-        <div>
-          <p class="text-sm font-bold text-gray-500">Recorded by</p>
-          <p class="mt-2 font-black text-gray-950"><%= @finance_transaction.recorded_by.display_name %></p>
-        </div>
-        <div>
-          <p class="text-sm font-bold text-gray-500">Approved by</p>
-          <p class="mt-2 font-black text-gray-950"><%= @finance_transaction.approved_by&.display_name || "Not approved" %></p>
-        </div>
-      </div>
 
-      <div class="mt-6 border-t border-gray-200 pt-6">
-        <p class="text-sm font-bold text-gray-500">Description</p>
-        <p class="mt-2 text-sm leading-6 text-gray-700"><%= @finance_transaction.description.presence || "No description." %></p>
-      </div>
+        <dl class="grid min-w-0 grid-cols-2 divide-x divide-y divide-slate-100 dark:divide-slate-700 sm:grid-cols-3">
+          <div class="min-w-0 p-4 sm:p-5">
+            <dt class="text-xs font-bold text-slate-500 dark:text-slate-400">Transaction date</dt>
+            <dd class="mt-1.5 text-sm font-black text-slate-950 dark:text-white"><%= transaction.transaction_date.strftime("%d %b %Y") %></dd>
+          </div>
+          <div class="min-w-0 p-4 sm:p-5">
+            <dt class="text-xs font-bold text-slate-500 dark:text-slate-400">Reference</dt>
+            <dd class="mt-1.5 break-all text-sm font-black text-slate-950 dark:text-white"><%= transaction.reference_number.presence || "Not recorded" %></dd>
+          </div>
+          <div class="col-span-2 min-w-0 p-4 sm:col-span-1 sm:p-5">
+            <dt class="text-xs font-bold text-slate-500 dark:text-slate-400">Source</dt>
+            <dd class="mt-1.5 text-sm font-black text-slate-950 dark:text-white"><%= source_is_payment ? "Approved member payment" : "Manual finance record" %></dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <header class="flex items-center gap-3 border-b border-slate-100 px-4 py-3.5 dark:border-slate-700 sm:px-5">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+            <%= icon_svg(:documents, classes: "h-4 w-4") %>
+          </span>
+          <div>
+            <h2 class="text-sm font-black text-slate-950 dark:text-white">Record details</h2>
+            <p class="mt-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">People and notes attached to this transaction.</p>
+          </div>
+        </header>
+
+        <dl class="grid min-w-0 gap-px bg-slate-100 dark:bg-slate-700 sm:grid-cols-2">
+          <div class="min-w-0 bg-white p-4 dark:bg-slate-800 sm:p-5">
+            <dt class="text-xs font-bold text-slate-500 dark:text-slate-400">Recorded by</dt>
+            <dd class="mt-1.5 break-words text-sm font-black text-slate-950 dark:text-white"><%= transaction.recorded_by.display_name %></dd>
+          </div>
+          <div class="min-w-0 bg-white p-4 dark:bg-slate-800 sm:p-5">
+            <dt class="text-xs font-bold text-slate-500 dark:text-slate-400"><%= transaction.rejected? ? "Reviewed by" : "Approved by" %></dt>
+            <dd class="mt-1.5 break-words text-sm font-black text-slate-950 dark:text-white"><%= transaction.approved_by&.display_name || "Awaiting review" %></dd>
+          </div>
+          <div class="min-w-0 bg-white p-4 dark:bg-slate-800 sm:col-span-2 sm:p-5">
+            <dt class="text-xs font-bold text-slate-500 dark:text-slate-400">Description</dt>
+            <dd class="mt-1.5 whitespace-pre-wrap break-words text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200"><%= transaction.description.presence || "No description recorded." %></dd>
+          </div>
+        </dl>
+      </article>
     </div>
 
-    <aside class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:p-5">
-      <div class="mb-3 flex items-center gap-2 sm:mb-4">
-        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
-          <%= icon_svg(:lock, classes: "h-4 w-4") %>
+    <aside class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 xl:sticky xl:top-24">
+      <header class="flex items-start gap-3 border-b border-slate-100 px-4 py-4 dark:border-slate-700">
+        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl <%= pending_review ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300" : (transaction.approved? ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300") %>">
+          <%= icon_svg(pending_review ? :clock : (transaction.approved? ? :shield_check : :x_mark), classes: "h-5 w-5") %>
         </span>
-        <h3 class="text-base font-black text-gray-950 dark:text-white sm:text-lg">Review actions</h3>
-      </div>
+        <div class="min-w-0">
+          <h2 class="text-base font-black text-slate-950 dark:text-white"><%= pending_review ? "Review transaction" : "Review complete" %></h2>
+          <p class="mt-0.5 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">
+            <%= pending_review ? "Verify the amount, category, date, and reference before deciding." : "This finance record is locked to preserve its review history." %>
+          </p>
+        </div>
+      </header>
 
-      <% review_button_classes = "inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-xs font-black leading-4 transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-[#0F172A] sm:px-3 sm:text-sm" %>
-      <div class="grid grid-cols-3 gap-2 sm:grid-cols-1">
-      <% if policy(@finance_transaction).approve? %>
-        <%= button_to approve_admin_finance_transaction_path(@finance_transaction), method: :patch, form: { class: "min-w-0" }, class: "#{review_button_classes} bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-600" do %>
-          <%= icon_svg(:check, classes: "h-4 w-4") %>
-          <span>Approve</span>
+      <div class="space-y-4 p-4">
+        <% if pending_review && (policy(transaction).approve? || policy(transaction).reject?) %>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/20 dark:bg-amber-500/10">
+            <p class="text-xs font-bold leading-5 text-amber-900 dark:text-amber-100">Approval includes this amount in finance reports. Reject it when the supporting details do not match.</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <% if policy(transaction).approve? %>
+              <%= button_to approve_admin_finance_transaction_path(transaction), method: :patch, form: { class: "min-w-0" }, class: action_button_classes(:success, size: :sm, full_width: true, extra: "min-h-11 rounded-xl") do %>
+                <%= icon_svg(:check, classes: "h-4 w-4") %>
+                <span>Approve</span>
+              <% end %>
+            <% end %>
+            <% if policy(transaction).reject? %>
+              <%= button_to reject_admin_finance_transaction_path(transaction), method: :patch, data: { turbo_confirm: "Reject this transaction?" }, form: { class: "min-w-0" }, class: action_button_classes(:danger, size: :sm, full_width: true, extra: "min-h-11 rounded-xl") do %>
+                <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
+                <span>Reject</span>
+              <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="rounded-xl border <%= transaction.approved? ? "border-emerald-200 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10" : (transaction.rejected? ? "border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-500/10" : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900") %> p-3.5">
+            <div class="flex items-start gap-2.5">
+              <span class="mt-0.5 shrink-0 <%= transaction.approved? ? "text-emerald-700 dark:text-emerald-300" : (transaction.rejected? ? "text-red-700 dark:text-red-300" : "text-slate-600 dark:text-slate-300") %>">
+                <%= icon_svg(transaction.approved? ? :check : (transaction.rejected? ? :x_mark : :lock), classes: "h-4 w-4") %>
+              </span>
+              <div class="min-w-0">
+                <p class="text-sm font-black <%= transaction.approved? ? "text-emerald-900 dark:text-emerald-100" : (transaction.rejected? ? "text-red-900 dark:text-red-100" : "text-slate-900 dark:text-white") %>"><%= transaction.status.humanize %></p>
+                <p class="mt-1 text-xs font-semibold leading-5 <%= transaction.approved? ? "text-emerald-800 dark:text-emerald-200" : (transaction.rejected? ? "text-red-800 dark:text-red-200" : "text-slate-600 dark:text-slate-300") %>">
+                  <%= transaction.approved? ? "Included in approved finance totals and reports." : (transaction.rejected? ? "Excluded from approved finance totals and reports." : "You have read-only access to this pending record.") %>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <% unless pending_review %>
+            <p class="text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">To correct a completed record, create a new adjusting transaction so the audit history remains clear.</p>
+          <% end %>
         <% end %>
-        <%= button_to reject_admin_finance_transaction_path(@finance_transaction), method: :patch, form: { class: "min-w-0" }, class: "#{review_button_classes} bg-red-700 text-white hover:bg-red-800 focus:ring-red-600 dark:bg-red-600 dark:hover:bg-red-500" do %>
-          <%= icon_svg(:x_mark, classes: "h-4 w-4") %>
-          <span>Reject</span>
+
+        <% if policy(transaction).destroy? %>
+          <div class="border-t border-slate-100 pt-4 dark:border-slate-700">
+            <%= button_to admin_finance_transaction_path(transaction), method: :delete, data: { turbo_confirm: "Delete this pending transaction? This cannot be undone." }, form: { class: "min-w-0" }, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "min-h-10 rounded-xl border-red-200 text-red-700 hover:bg-red-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10") do %>
+              <%= icon_svg(:trash, classes: "h-4 w-4") %>
+              <span>Delete pending record</span>
+            <% end %>
+          </div>
         <% end %>
-      <% end %>
-      <% if policy(@finance_transaction).destroy? %>
-        <%= button_to admin_finance_transaction_path(@finance_transaction), method: :delete, data: { turbo_confirm: "Delete this transaction?" }, form: { class: "min-w-0" }, class: "#{review_button_classes} border border-red-200 bg-white text-red-700 hover:bg-red-50 focus:ring-red-600 dark:border-red-500/40 dark:bg-[#0F172A] dark:text-red-300 dark:hover:bg-red-500/10" do %>
-          <%= icon_svg(:trash, classes: "h-4 w-4") %>
-          <span>Delete</span>
-        <% end %>
-      <% end %>
       </div>
     </aside>
   </section>

@@ -1,6 +1,6 @@
 <% content_for :page_title, "Combined Payment" %>
 
-<div class="space-y-4 sm:space-y-6">
+<div class="min-w-0 space-y-4 sm:space-y-6">
   <%= render "shared/page_header",
     eyebrow: "Finance review",
     title: user_label(@payment_batch.user),
@@ -13,11 +13,11 @@
   <% screenshot_attached = @payment_batch.transfer_screenshot.attached? %>
   <% screenshot_is_image = screenshot_attached && @payment_batch.transfer_screenshot.blob.content_type.to_s.start_with?("image/") %>
 
-  <section class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-    <div class="space-y-4">
-      <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+  <section class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <div class="min-w-0 space-y-4">
+      <article class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div class="border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white p-4 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800 sm:p-5">
-          <div class="flex items-start justify-between gap-3">
+          <div class="flex min-w-0 items-start justify-between gap-3">
             <div class="min-w-0">
               <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Finance review</p>
               <h2 class="mt-1 text-2xl font-black text-slate-950 dark:text-white"><%= yen(@payment_batch.total_amount) %></h2>
@@ -43,9 +43,9 @@
         </div>
       </article>
 
-      <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <article class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-700">
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <h3 class="text-base font-black text-slate-950 dark:text-white">Transfer evidence</h3>
             <p class="mt-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Screenshot or receipt uploaded by the member.</p>
           </div>
@@ -80,23 +80,23 @@
           </div>
         <% else %>
           <div class="p-4 sm:p-5">
-            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+            <div class="min-w-0 break-words rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
               No screenshot was uploaded. Verify using transfer date, amount, and reference name.
             </div>
           </div>
         <% end %>
       </article>
 
-      <article class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <article class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-700">
           <h3 class="text-base font-black text-slate-950 dark:text-white">Included payments</h3>
         </div>
         <div class="divide-y divide-slate-100 dark:divide-slate-700">
           <% @payment_batch.membership_payments.each do |payment| %>
-            <div class="flex items-center justify-between gap-3 px-4 py-3">
+            <div class="flex min-w-0 items-start justify-between gap-3 px-4 py-3 sm:items-center">
               <div class="min-w-0">
                 <p class="truncate text-sm font-black text-slate-950 dark:text-white"><%= payment.membership_plan.name %></p>
-                <p class="mt-0.5 truncate text-xs font-semibold text-slate-500 dark:text-slate-400"><%= payment.payment_for_label %> · <%= payment.beneficiary_number %> · <%= payment.period_label %></p>
+                <p class="mt-0.5 break-words text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400 sm:truncate"><%= payment.payment_for_label %> · <%= payment.beneficiary_number %> · <%= payment.period_label %></p>
               </div>
               <div class="shrink-0 text-right">
                 <p class="text-sm font-black text-slate-950 dark:text-white"><%= yen(payment.amount) %></p>
@@ -108,7 +108,7 @@
       </article>
     </div>
 
-    <aside class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5 xl:sticky xl:top-24 xl:self-start">
+    <aside class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5 xl:sticky xl:top-24 xl:self-start">
       <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Treasurer Review</p>
       <h3 class="mt-1 text-lg font-black text-slate-950 dark:text-white">Batch actions</h3>
       <p class="mt-2 text-sm font-semibold leading-6 text-slate-500 dark:text-slate-400">Check the bank account and uploaded evidence before approving this batch.</p>

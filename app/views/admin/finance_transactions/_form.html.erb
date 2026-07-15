@@ -1,51 +1,131 @@
-<%= form_with model: [ :admin, finance_transaction ], class: "rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6" do |form| %>
+<% field_classes = "mt-2 block min-h-[46px] w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base font-semibold text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-red-500 dark:focus:ring-red-500/15 sm:text-sm" %>
+<% label_classes = "block text-sm font-black text-slate-800 dark:text-slate-100" %>
+<% required_mark = tag.span("*", class: "ml-0.5 text-red-600 dark:text-red-400", aria: { hidden: true }) %>
+
+<%= form_with model: [ :admin, finance_transaction ], class: "min-w-0 space-y-4 sm:space-y-5" do |form| %>
   <%= render "devise/shared/error_messages", resource: finance_transaction %>
 
-  <div class="grid gap-5 md:grid-cols-2">
-    <div>
-      <%= form.label :finance_category_id, "Category", class: "block text-sm font-bold text-gray-700" %>
-      <%= form.select :finance_category_id, @finance_categories.map { |category| [ "#{category.name} (#{category.category_type.humanize})", category.id ] }, { prompt: "Select category" }, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
+  <%# Category is the source of truth for income/expense, preventing mismatched submissions. %>
+  <%= form.hidden_field :transaction_type, value: "" %>
 
-    <div>
-      <%= form.label :transaction_type, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.select :transaction_type, FinanceTransaction.transaction_types.keys.map { |type| [ type.humanize, type ] }, { prompt: "Select type" }, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
+  <div class="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+    <section class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <header class="flex items-start gap-3 border-b border-slate-100 px-4 py-4 dark:border-slate-700 sm:px-5">
+        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
+          <%= icon_svg(:banknotes, classes: "h-5 w-5") %>
+        </span>
+        <div class="min-w-0">
+          <h3 class="text-base font-black text-slate-950 dark:text-white">Transaction details</h3>
+          <p class="mt-0.5 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">Choose a category, enter the whole-yen amount, and set the transaction date.</p>
+        </div>
+      </header>
 
-    <div>
-      <%= form.label :amount, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.number_field :amount, step: "0.01", min: 0, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
+      <div class="grid min-w-0 gap-4 p-4 sm:grid-cols-2 sm:gap-5 sm:p-5">
+        <div class="min-w-0 sm:col-span-2">
+          <%= form.label :finance_category_id, class: label_classes do %>
+            Category<%= required_mark %>
+          <% end %>
+          <%= form.select :finance_category_id,
+            @finance_categories.map { |category| [ "#{category.category_type.upcase} · #{category.name}", category.id ] },
+            { prompt: "Select income or expense category" },
+            class: field_classes,
+            required: true %>
+          <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold">
+            <span class="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Income adds money</span>
+            <span class="inline-flex items-center gap-1.5 text-red-700 dark:text-red-300"><span class="h-2 w-2 rounded-full bg-red-500"></span>Expense uses money</span>
+          </div>
+        </div>
 
-    <div>
-      <%= form.label :transaction_date, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.date_field :transaction_date, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
+        <div class="min-w-0">
+          <%= form.label :amount, class: label_classes do %>
+            Amount (JPY)<%= required_mark %>
+          <% end %>
+          <div class="relative mt-2">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-lg font-black text-slate-500 dark:text-slate-400">¥</span>
+            <%= form.number_field :amount,
+              step: 1,
+              min: 0,
+              inputmode: "numeric",
+              placeholder: "0",
+              class: "block min-h-[46px] w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-9 pr-3.5 text-base font-black tabular-nums text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-red-500 dark:focus:ring-red-500/15",
+              required: true %>
+          </div>
+          <p class="mt-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Enter a whole yen amount without decimals.</p>
+        </div>
 
-    <div>
-      <%= form.label :status, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.select :status, FinanceTransaction.statuses.keys.map { |status| [ status.humanize, status ] }, {}, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
+        <div class="min-w-0">
+          <%= form.label :transaction_date, class: label_classes do %>
+            Transaction Date<%= required_mark %>
+          <% end %>
+          <%= form.date_field :transaction_date, class: field_classes, required: true %>
+          <p class="mt-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">Use the date shown on the receipt or bank record.</p>
+        </div>
 
-    <div>
-      <%= form.label :reference_number, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.text_field :reference_number, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
+        <div class="min-w-0 sm:col-span-2">
+          <%= form.label :description, class: label_classes do %>
+            Description
+          <% end %>
+          <%= form.text_area :description,
+            rows: 4,
+            placeholder: "Briefly describe this transaction...",
+            class: "#{field_classes} min-h-28 resize-y leading-6" %>
+        </div>
+      </div>
+    </section>
 
-    <div class="md:col-span-2">
-      <%= form.label :description, class: "block text-sm font-bold text-gray-700" %>
-      <%= form.text_area :description, rows: 4, class: "mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-950 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100" %>
-    </div>
+    <aside class="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 lg:sticky lg:top-24">
+      <header class="flex items-start gap-3 border-b border-slate-100 px-4 py-4 dark:border-slate-700">
+        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+          <%= icon_svg(:shield_check, classes: "h-4 w-4") %>
+        </span>
+        <div class="min-w-0">
+          <h3 class="text-sm font-black text-slate-950 dark:text-white">Record settings</h3>
+          <p class="mt-0.5 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">Set review status and optional tracking reference.</p>
+        </div>
+      </header>
+
+      <div class="space-y-4 p-4">
+        <div class="min-w-0">
+          <%= form.label :status, class: label_classes do %>
+            Review Status<%= required_mark %>
+          <% end %>
+          <%= form.select :status,
+            FinanceTransaction.statuses.keys.map { |status| [ status.humanize, status ] },
+            {},
+            class: field_classes,
+            required: true %>
+          <p class="mt-1.5 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">Use Pending when another officer must verify the record.</p>
+        </div>
+
+        <div class="min-w-0">
+          <%= form.label :reference_number, "Reference Number", class: label_classes %>
+          <%= form.text_field :reference_number,
+            placeholder: "Receipt or transfer reference",
+            autocomplete: "off",
+            class: field_classes %>
+          <p class="mt-1.5 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">Optional. Add a bank, receipt, or internal reference.</p>
+        </div>
+
+        <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/20 dark:bg-amber-500/10">
+          <div class="flex gap-2.5">
+            <span class="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300"><%= icon_svg(:lock, classes: "h-4 w-4") %></span>
+            <p class="text-xs font-semibold leading-5 text-amber-900 dark:text-amber-100">Check the category, amount, and date carefully. Approved records are included in finance reports.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
   </div>
 
-  <div class="mt-6 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
-    <%= link_to admin_finance_transactions_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
-      <%= icon_svg(:arrow_left, classes: "h-4 w-4") %>
-      <span>Cancel</span>
-    <% end %>
-    <%= form.button type: :submit, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "px-2 sm:w-auto sm:px-3") do %>
-      <%= icon_svg(:save, classes: "h-4 w-4") %>
-      <span><%= finance_transaction.persisted? ? "Update Transaction" : "Create Transaction" %></span>
-    <% end %>
+  <div class="sticky bottom-[calc(env(safe-area-inset-bottom)+4.85rem)] z-20 -mx-3.5 border-t border-slate-200 bg-slate-50/95 px-3.5 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-700 dark:bg-slate-950/95 sm:mx-0 sm:rounded-2xl sm:border sm:bg-white/95 sm:px-4 sm:shadow-lg sm:dark:bg-slate-900/95 lg:bottom-4">
+    <div class="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+      <%= link_to admin_finance_transactions_path, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "min-h-11 rounded-xl sm:w-auto") do %>
+        <%= icon_svg(:arrow_left, classes: "h-4 w-4 shrink-0") %>
+        <span>Cancel</span>
+      <% end %>
+      <%= form.button type: :submit, class: action_button_classes(:primary, size: :sm, full_width: true, extra: "min-h-11 rounded-xl sm:w-auto") do %>
+        <%= icon_svg(:save, classes: "h-4 w-4 shrink-0") %>
+        <span><%= finance_transaction.persisted? ? "Update" : "Save Transaction" %></span>
+      <% end %>
+    </div>
   </div>
 <% end %>

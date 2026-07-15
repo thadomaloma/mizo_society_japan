@@ -1,6 +1,6 @@
 module Admin
   class MembershipPaymentsController < ApplicationController
-    before_action :set_membership_payment, only: [ :show, :edit, :update, :destroy, :approve, :reject, :mark_receipt_sent ]
+    before_action :set_membership_payment, only: [ :show, :edit, :update, :destroy, :approve, :reject, :share_receipt ]
     before_action :set_form_collections, only: [ :new, :create, :edit, :update ]
     rescue_from ActiveRecord::RecordNotUnique, with: :handle_duplicate_payment_record
 
@@ -136,14 +136,31 @@ module Admin
       redirect_back fallback_location: admin_membership_payment_path(@membership_payment), notice: "Membership payment was rejected."
     end
 
-    def mark_receipt_sent
-      authorize @membership_payment, :mark_receipt_sent?
+    def share_receipt
+      authorize @membership_payment, :share_receipt?
 
-      if @membership_payment.receipt_sendable?
-        @membership_payment.mark_receipt_sent!(current_user)
-        redirect_back fallback_location: admin_membership_payment_path(@membership_payment), notice: "Receipt was marked as sent."
+      unless @membership_payment.receipt_sendable?
+        redirect_back fallback_location: admin_membership_payment_path(@membership_payment), alert: "The receipt can be shared only after payment is paid and WhatsApp is available."
+        return
+      end
+
+      whatsapp_url = helpers.whatsapp_url_for(
+        @membership_payment.user.member_profile,
+        message: helpers.payment_receipt_whatsapp_message(@membership_payment, sender: current_user)
+      )
+
+      if whatsapp_url.present?
+        @membership_payment.mark_receipt_whatsapp_opened!(current_user)
+        AuditLogger.call(
+          user: current_user,
+          action: "payment_receipt_whatsapp_opened",
+          auditable: @membership_payment,
+          metadata: membership_payment_metadata(@membership_payment),
+          request: request
+        )
+        redirect_to whatsapp_url, allow_other_host: true
       else
-        redirect_back fallback_location: admin_membership_payment_path(@membership_payment), alert: "Receipt can be marked sent only after payment is paid and WhatsApp is available."
+        redirect_back fallback_location: admin_membership_payment_path(@membership_payment), alert: "A valid member WhatsApp number is required."
       end
     end
 

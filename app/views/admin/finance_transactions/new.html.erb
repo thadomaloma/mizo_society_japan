@@ -1,6 +1,6 @@
 <% content_for :page_title, "New Finance Transaction" %>
 
-<div class="space-y-6">
-  <%= render "shared/page_header", eyebrow: "Finance", title: "New Finance Transaction", subtitle: "Record income or expense activity." %>
+<div class="min-w-0 space-y-4 sm:space-y-6">
+  <%= render "shared/page_header", eyebrow: "Finance", title: "New Transaction", subtitle: "Record income or expense with clear review details." %>
   <%= render "form", finance_transaction: @finance_transaction %>
 </div>

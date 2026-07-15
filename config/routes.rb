@@ -102,7 +102,7 @@ Rails.application.routes.draw do
       member do
         patch :approve
         patch :reject
-        patch :mark_receipt_sent
+        patch :share_receipt
       end
     end
     resources :payment_batches, path: "combined_payments", only: [ :show ] do

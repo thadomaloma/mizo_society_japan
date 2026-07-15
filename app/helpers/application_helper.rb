@@ -500,6 +500,7 @@ module ApplicationHelper
       status_line,
       date_line,
       ("Reference: #{receipt.receipt_reference}" unless receipt.receipt_reference == "-"),
+      "Secure receipt: #{printable_payment_receipt_url(payment)}",
       "",
       "Confirmed by: #{sender_name} (#{sender_role})",
       "Mizo Society of Japan",
@@ -516,16 +517,39 @@ module ApplicationHelper
     end
   end
 
+  def printable_payment_receipt_url(payment)
+    if payment.payment_batch&.paid?
+      receipt_payment_batch_url(payment.payment_batch)
+    else
+      receipt_membership_payment_url(payment)
+    end
+  end
+
+  def whatsapp_receipt_share_button(payment, classes:, label: nil)
+    button_label = label || (payment.receipt_whatsapp_opened? ? "Open WhatsApp Again" : "Share Receipt")
+
+    button_to share_receipt_admin_membership_payment_path(payment),
+      method: :patch,
+      form: { class: "min-w-0", target: "_blank" },
+      class: classes,
+      title: "Open WhatsApp with a secure receipt link" do
+        safe_join([
+          icon_svg(:chat, classes: "h-4 w-4 shrink-0"),
+          tag.span(button_label, class: "truncate")
+        ])
+      end
+  end
+
   def payment_receipt_label(payment)
-    return "Receipt sent" if payment.receipt_sent?
-    return "Receipt ready" if payment.receipt_sendable?
+    return "WhatsApp opened" if payment.receipt_whatsapp_opened?
+    return "Ready to share" if payment.receipt_sendable?
     return "Verify first" unless payment.paid?
 
     "No WhatsApp"
   end
 
   def payment_receipt_badge_classes(payment)
-    if payment.receipt_sent?
+    if payment.receipt_whatsapp_opened?
       "bg-emerald-50 text-emerald-700 ring-emerald-200"
     elsif payment.receipt_sendable?
       "bg-sky-50 text-sky-700 ring-sky-200"

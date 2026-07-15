@@ -61,22 +61,16 @@
               <p class="mt-1 truncate font-black text-slate-950 dark:text-white"><%= @membership_payment.user.display_name %></p>
               <p class="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400"><%= @membership_payment.user.member_profile.mobile_number %></p>
               <span class="mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-black ring-1 ring-inset <%= payment_receipt_badge_classes(@membership_payment) %>"><%= payment_receipt_label(@membership_payment) %></span>
-              <p class="mt-2 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">Send a pre-filled payment receipt by WhatsApp.</p>
+              <p class="mt-2 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">Share a secure receipt link with a pre-filled WhatsApp message.</p>
             </div>
             <div class="grid gap-2 sm:min-w-52">
               <% if @membership_payment.receipt_sendable? %>
-                <%= link_to whatsapp_url_for(@membership_payment.user.member_profile, message: payment_receipt_whatsapp_message(@membership_payment, sender: current_user)), target: "_blank", rel: "noopener", class: action_button_classes(@membership_payment.receipt_sent? ? :secondary : :success, size: :sm, full_width: true, extra: "rounded-xl") do %>
-                  <%= icon_svg(:chat, classes: "h-4 w-4") %>
-                  <span><%= @membership_payment.receipt_sent? ? "Open Receipt" : "Send Receipt" %></span>
-                <% end %>
+                <%= whatsapp_receipt_share_button(
+                  @membership_payment,
+                  classes: action_button_classes(@membership_payment.receipt_whatsapp_opened? ? :secondary : :success, size: :sm, full_width: true, extra: "rounded-xl")
+                ) %>
               <% else %>
                 <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs font-black text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">Receipt unavailable</div>
-              <% end %>
-              <% if policy(@membership_payment).mark_receipt_sent? && !@membership_payment.receipt_sent? %>
-                <%= button_to mark_receipt_sent_admin_membership_payment_path(@membership_payment), method: :patch, class: action_button_classes(:secondary, size: :sm, full_width: true, extra: "rounded-xl"), data: { turbo_confirm: "Mark this WhatsApp receipt as sent?" } do %>
-                  <%= icon_svg(:check, classes: "h-4 w-4") %>
-                  <span>I sent this receipt</span>
-                <% end %>
               <% end %>
             </div>
           </div>

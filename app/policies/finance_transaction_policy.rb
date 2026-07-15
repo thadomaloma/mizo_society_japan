@@ -12,19 +12,19 @@ class FinanceTransactionPolicy < ApplicationPolicy
   end
 
   def update?
-    finance_user?
+    finance_user? && record.pending?
   end
 
   def destroy?
-    finance_user?
+    finance_user? && record.pending?
   end
 
   def approve?
-    finance_approver?
+    finance_approver? && record.pending?
   end
 
   def reject?
-    finance_approver?
+    finance_approver? && record.pending?
   end
 
   class Scope < ApplicationPolicy::Scope

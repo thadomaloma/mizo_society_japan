@@ -3,6 +3,7 @@ require "test_helper"
 module Admin
   class FinanceObserverControllerTest < ActionDispatch::IntegrationTest
     setup do
+      ensure_profile_for(users(:admin))
       @vice_president = User.create!(
         name: "Vice President",
         email: "vp_finance_observer@example.test",
@@ -90,6 +91,37 @@ module Admin
 
         sign_out user
       end
+    end
+
+    test "finance approver can review only a pending transaction" do
+      sign_in users(:admin)
+
+      get admin_finance_transaction_path(@transaction)
+      assert_response :success
+      assert_includes response.body, "Review transaction"
+      assert_includes response.body, "Approve"
+      assert_includes response.body, "Reject"
+      assert_includes response.body, edit_admin_finance_transaction_path(@transaction)
+
+      patch approve_admin_finance_transaction_path(@transaction)
+      assert_redirected_to admin_finance_transaction_path(@transaction)
+      assert_predicate @transaction.reload, :approved?
+
+      get admin_finance_transaction_path(@transaction)
+      assert_response :success
+      assert_includes response.body, "Review complete"
+      assert_not_includes response.body, edit_admin_finance_transaction_path(@transaction)
+      assert_not_includes response.body, approve_admin_finance_transaction_path(@transaction)
+      assert_not_includes response.body, reject_admin_finance_transaction_path(@transaction)
+      assert_not_includes response.body, "Delete pending record"
+
+      patch reject_admin_finance_transaction_path(@transaction)
+      assert_redirected_to root_path
+      assert_predicate @transaction.reload, :approved?
+
+      delete admin_finance_transaction_path(@transaction)
+      assert_redirected_to root_path
+      assert FinanceTransaction.exists?(@transaction.id)
     end
 
     private

@@ -404,13 +404,9 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_no_match(/>Call</, response.body)
     assert_includes response.body, "WhatsApp"
-    assert_includes response.body, "Receipt ready"
-    assert_includes response.body, "I sent this receipt"
-    assert_includes response.body, "MSJ+Payment+Receipt"
-    assert_includes response.body, URI.encode_www_form_component(@payment.receipt_number)
-    assert_includes response.body, URI.encode_www_form_component(@plan.name)
-    assert_includes response.body, "Confirmed+by"
-    assert_includes response.body, receipt_membership_payment_path(@payment)
+    assert_includes response.body, "Ready to share"
+    assert_not_includes response.body, "I sent this receipt"
+    assert_includes response.body, share_receipt_admin_membership_payment_path(@payment)
   end
 
   test "member can print an approved itemized payment receipt" do
@@ -483,7 +479,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, receipt_membership_payment_path(@payment)
   end
 
-  test "admin payment records show receipt state and can mark receipt sent" do
+  test "admin payment records track when WhatsApp is opened for a receipt" do
     @payment.update!(
       status: :paid,
       paid_on: Time.current,
@@ -494,19 +490,27 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     get admin_membership_payments_path(status: "paid")
 
     assert_response :success
-    assert_includes response.body, "Receipt ready"
-    assert_includes response.body, mark_receipt_sent_admin_membership_payment_path(@payment)
+    assert_includes response.body, "Ready to share"
+    assert_includes response.body, share_receipt_admin_membership_payment_path(@payment)
+    assert_not_includes response.body, "I sent it"
 
-    patch mark_receipt_sent_admin_membership_payment_path(@payment), headers: { "HTTP_REFERER" => admin_membership_payments_url(status: "paid") }
+    patch share_receipt_admin_membership_payment_path(@payment)
 
-    assert_redirected_to admin_membership_payments_path(status: "paid")
-    assert @payment.reload.receipt_sent?
-    assert_equal @president, @payment.receipt_sent_by
+    assert_response :redirect
+    assert_match %r{\Ahttps://wa\.me/}, response.location
+    whatsapp_message = URI.decode_www_form_component(URI.parse(response.location).query.delete_prefix("text="))
+    assert_includes whatsapp_message, "MSJ Payment Receipt"
+    assert_includes whatsapp_message, @payment.receipt_number
+    assert_includes whatsapp_message, @plan.name
+    assert_includes whatsapp_message, "Confirmed by"
+    assert_includes whatsapp_message, receipt_membership_payment_url(@payment)
+    assert @payment.reload.receipt_whatsapp_opened?
+    assert_equal @president, @payment.receipt_whatsapp_opened_by
 
     get admin_membership_payments_path(status: "paid")
 
     assert_response :success
-    assert_includes response.body, "Receipt sent"
+    assert_includes response.body, "WhatsApp opened"
   end
 
   test "admin payment records hide prepared combined payments until transfer is submitted" do
