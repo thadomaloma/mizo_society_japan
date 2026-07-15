@@ -6,7 +6,8 @@ class MembershipPayment < ApplicationRecord
   belongs_to :user
   belongs_to :membership_plan
   belongs_to :approved_by, class_name: "User", optional: true
-  belongs_to :receipt_shared_by, class_name: "User", optional: true
+  belongs_to :receipt_whatsapp_opened_by, class_name: "User", optional: true
+  belongs_to :receipt_sent_by, class_name: "User", optional: true
   belongs_to :payment_batch, optional: true
   belongs_to :family_member, optional: true
 
@@ -113,11 +114,15 @@ class MembershipPayment < ApplicationRecord
   end
 
   def receipt_sendable?
-    paid?
+    paid? && user&.member_profile&.whatsapp_url.present?
   end
 
-  def receipt_shared?
-    receipt_shared_at.present?
+  def receipt_whatsapp_opened?
+    receipt_whatsapp_opened_at.present?
+  end
+
+  def receipt_sent?
+    receipt_sent_at.present?
   end
 
   def receipt_number
@@ -144,11 +149,18 @@ class MembershipPayment < ApplicationRecord
     [ self ]
   end
 
-  def mark_receipt_shared!(user)
-    shared_at = Time.current
-    payments = payment_batch&.paid? ? payment_batch.membership_payments : self.class.where(id: id)
-    payments.update_all(receipt_shared_by_id: user.id, receipt_shared_at: shared_at, updated_at: shared_at)
-    reload
+  def mark_receipt_whatsapp_opened!(user)
+    update_receipt_delivery_tracking(
+      receipt_whatsapp_opened_by_id: user.id,
+      receipt_whatsapp_opened_at: Time.current
+    )
+  end
+
+  def mark_receipt_sent!(user)
+    update_receipt_delivery_tracking(
+      receipt_sent_by_id: user.id,
+      receipt_sent_at: Time.current
+    )
   end
 
   def period_label
@@ -170,6 +182,16 @@ class MembershipPayment < ApplicationRecord
   end
 
   private
+
+  def update_receipt_delivery_tracking(attributes)
+    tracked_at = attributes.values.grep(ActiveSupport::TimeWithZone).first || Time.current
+    receipt_tracking_payments.update_all(**attributes, updated_at: tracked_at)
+    reload
+  end
+
+  def receipt_tracking_payments
+    payment_batch&.paid? ? payment_batch.membership_payments : self.class.where(id: id)
+  end
 
   def copy_plan_amount
     self.amount = family_member&.child? ? membership_plan.child_fee_amount : membership_plan.amount

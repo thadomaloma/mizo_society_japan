@@ -1,0 +1,52 @@
+<% payment_count = plan.membership_payments_count.to_i %>
+
+<tr class="transition hover:bg-slate-50/80 dark:hover:bg-[#334155]/35">
+  <td class="px-5 py-4">
+    <div class="flex min-w-0 items-center gap-3">
+      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
+        <%= icon_svg(:tag, classes: "h-4 w-4") %>
+      </span>
+      <div class="min-w-0">
+        <%= link_to plan.name, admin_membership_plan_path(plan), class: "block max-w-64 truncate font-black text-[#0F172A] transition hover:text-red-700 dark:text-white dark:hover:text-red-400" %>
+        <p class="mt-0.5 max-w-64 truncate text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= plan.description.presence || "No description" %></p>
+      </div>
+    </div>
+  </td>
+  <td class="whitespace-nowrap px-5 py-4 font-black tabular-nums text-[#0F172A] dark:text-white"><%= yen(plan.amount) %></td>
+  <td class="whitespace-nowrap px-5 py-4 font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= plan.billing_cycle.humanize %></td>
+  <td class="px-5 py-4">
+    <% if plan.required_for_members? %>
+      <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-black text-red-700 ring-1 ring-red-100 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20">Required</span>
+    <% else %>
+      <span class="text-xs font-bold text-[#64748B] dark:text-[#CBD5E1]">Optional</span>
+    <% end %>
+  </td>
+  <td class="whitespace-nowrap px-5 py-4">
+    <p class="font-black tabular-nums text-[#0F172A] dark:text-white"><%= payment_count %></p>
+    <p class="mt-0.5 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= "payment".pluralize(payment_count) %></p>
+  </td>
+  <td class="whitespace-nowrap px-5 py-4"><%= render "shared/status_badge", status: plan.active? ? "active" : "inactive" %></td>
+  <td class="px-5 py-4">
+    <div class="flex items-center justify-end gap-1.5">
+      <%= link_to admin_membership_plan_path(plan), class: action_button_classes(:secondary, size: :xs, extra: "h-8 w-8 px-0"), title: "View #{plan.name}", aria: { label: "View #{plan.name}" } do %>
+        <%= icon_svg(:eye, classes: "h-3.5 w-3.5") %>
+      <% end %>
+      <% if policy(plan).update? %>
+        <%= link_to edit_admin_membership_plan_path(plan), class: action_button_classes(:dark, size: :xs, extra: "h-8 w-8 px-0"), title: "Edit #{plan.name}", aria: { label: "Edit #{plan.name}" } do %>
+          <%= icon_svg(:edit, classes: "h-3.5 w-3.5") %>
+        <% end %>
+      <% end %>
+      <% if policy(plan).destroy? %>
+        <% if payment_count.positive? %>
+          <span class="inline-flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-slate-400 dark:border-[#334155] dark:bg-[#0F172A] dark:text-slate-500" title="Deactivate this plan instead; it has payment records." aria-label="Cannot delete #{plan.name} because it has payment records">
+            <%= icon_svg(:lock, classes: "h-3.5 w-3.5") %>
+          </span>
+        <% else %>
+          <%= button_to admin_membership_plan_path(plan), method: :delete, data: { turbo_confirm: "Delete #{plan.name}? This cannot be undone." }, form: { class: "inline-flex" }, class: action_button_classes(:outline_danger, size: :xs, extra: "h-8 w-8 px-0"), title: "Delete #{plan.name}", aria: { label: "Delete #{plan.name}" } do %>
+            <%= icon_svg(:trash, classes: "h-3.5 w-3.5") %>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  </td>
+</tr>

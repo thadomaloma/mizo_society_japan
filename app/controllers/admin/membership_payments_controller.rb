@@ -1,6 +1,6 @@
 module Admin
   class MembershipPaymentsController < ApplicationController
-    before_action :set_membership_payment, only: [ :show, :edit, :update, :destroy, :approve, :reject, :share_receipt ]
+    before_action :set_membership_payment, only: [ :show, :edit, :update, :destroy, :approve, :reject, :mark_receipt_whatsapp_opened, :mark_receipt_sent ]
     before_action :set_form_collections, only: [ :new, :create, :edit, :update ]
     rescue_from ActiveRecord::RecordNotUnique, with: :handle_duplicate_payment_record
 
@@ -136,19 +136,19 @@ module Admin
       redirect_back fallback_location: admin_membership_payment_path(@membership_payment), notice: "Membership payment was rejected."
     end
 
-    def share_receipt
-      authorize @membership_payment, :share_receipt?
+    def mark_receipt_whatsapp_opened
+      authorize @membership_payment, :mark_receipt_whatsapp_opened?
 
       unless @membership_payment.receipt_sendable?
-        render json: { error: "The receipt can be shared only after payment is paid." }, status: :unprocessable_entity
+        render json: { error: "A paid receipt and valid member WhatsApp number are required." }, status: :unprocessable_entity
         return
       end
 
-      unless @membership_payment.receipt_shared?
-        @membership_payment.mark_receipt_shared!(current_user)
+      unless @membership_payment.receipt_whatsapp_opened?
+        @membership_payment.mark_receipt_whatsapp_opened!(current_user)
         AuditLogger.call(
           user: current_user,
-          action: "payment_receipt_shared",
+          action: "payment_receipt_whatsapp_opened",
           auditable: @membership_payment,
           metadata: membership_payment_metadata(@membership_payment),
           request: request
@@ -156,6 +156,20 @@ module Admin
       end
 
       head :no_content
+    end
+
+    def mark_receipt_sent
+      authorize @membership_payment, :mark_receipt_sent?
+      @membership_payment.mark_receipt_sent!(current_user)
+      AuditLogger.call(
+        user: current_user,
+        action: "payment_receipt_sent",
+        auditable: @membership_payment,
+        metadata: membership_payment_metadata(@membership_payment),
+        request: request
+      )
+
+      redirect_back fallback_location: admin_membership_payment_path(@membership_payment), notice: "Receipt marked as sent."
     end
 
     private
@@ -168,6 +182,8 @@ module Admin
       [
         :approved_by,
         :family_member,
+        :receipt_whatsapp_opened_by,
+        :receipt_sent_by,
         { membership_plan: :membership_plan_type },
         { payment_batch: [ :approved_by, { membership_payments: [ :family_member, { membership_plan: :membership_plan_type } ] } ] },
         { user: :member_profile }

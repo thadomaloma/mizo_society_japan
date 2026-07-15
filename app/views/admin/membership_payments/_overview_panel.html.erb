@@ -1,0 +1,41 @@
+<% stats = [
+  { label: "Records", value: payment_summary[:total], caption: "Filtered results", icon: :credit_card, icon_classes: "bg-slate-900 text-white dark:bg-slate-600" },
+  { label: "To verify", value: payment_summary[:pending], caption: "Need review", icon: :notifications, icon_classes: "bg-amber-500 text-white" },
+  { label: "Paid", value: payment_summary[:paid], caption: "Approved records", icon: :check, icon_classes: "bg-emerald-600 text-white" },
+  { label: "Amount", value: yen(payment_summary[:amount]), caption: "Filtered total", icon: :finance, icon_classes: "bg-red-600 text-white" }
+] %>
+
+<%= render ::RubyUI::Card.new(class: "overflow-hidden rounded-xl border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]") do %>
+  <div class="flex items-center justify-between gap-3 border-b border-[#E2E8F0] px-4 py-3 dark:border-[#334155] sm:px-5">
+    <div class="min-w-0">
+      <p class="text-sm font-black text-[#0F172A] dark:text-white">Payment records</p>
+      <p class="mt-0.5 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]">Current filtered summary</p>
+    </div>
+    <%= render ::RubyUI::Badge.new(variant: :slate, size: :sm, class: "shrink-0 font-black") do %>
+      <%= pluralize(payment_summary[:total], "record") %>
+    <% end %>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4">
+    <% stats.each_with_index do |stat, index| %>
+      <% border_classes = [
+        ("border-l" if index.odd?),
+        ("border-t" if index >= 2),
+        ("lg:border-l" if index.positive?),
+        ("lg:border-t-0" if index >= 2)
+      ].compact.join(" ") %>
+      <div class="min-w-0 border-[#E2E8F0] p-3 dark:border-[#334155] sm:p-4 <%= border_classes %>">
+        <div class="flex min-w-0 items-start gap-3">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg <%= stat[:icon_classes] %>">
+            <%= icon_svg(stat[:icon], classes: "h-4 w-4") %>
+          </span>
+          <div class="min-w-0">
+            <p class="text-[11px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]"><%= stat[:label] %></p>
+            <p class="mt-0.5 truncate text-xl font-black tabular-nums text-[#0F172A] dark:text-white sm:text-2xl"><%= stat[:value] %></p>
+          </div>
+        </div>
+        <p class="mt-2 truncate text-[11px] font-bold text-[#64748B] dark:text-[#CBD5E1]"><%= stat[:caption] %></p>
+      </div>
+    <% end %>
+  </div>
+<% end %>

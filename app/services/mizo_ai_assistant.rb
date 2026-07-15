@@ -408,7 +408,7 @@ class MizoAiAssistant
       5. Transfer i zawh hnuah portal-ah transfer date, amount, leh reference name submit rawh.
       6. Treasurer/Finance team-in bank record nen verify hnuah Paid-ah a inthlak ang.
       7. Paid a nih chuan notification-ah i hmu thei ang.
-      8. Finance team-in Share Receipt Image click chuan receipt PNG file a siam ang. Mobile share sheet-ah WhatsApp thlang la; desktop-ah PNG download fallback a awm.
+      8. Finance team-in Send via WhatsApp click chuan member number-ah itemized receipt text direct a open ang. Message send zawh hnuah portal-ah Confirm Sent click tur a ni.
 
       Screenshot chu optional a ni, mahse transfer verify a awlsam zawk nan upload theih a ni.
 
@@ -427,7 +427,7 @@ class MizoAiAssistant
       5. Screenshot chu optional a ni; transfer hriat hran a harsat chuan upload rawh.
       6. Submit Transfer click rawh. Status chu Pending Verification-ah a inthlak ang.
       7. Treasurer emaw Finance Secretary-in bank record nen verify hnuah Paid-ah a inthlak ang.
-      8. Payments history leh notification-ah approval i check thei ang. Finance team-in Share Receipt click chuan WhatsApp-ah approved receipt link an rawn share thei.
+      8. Payments history leh notification-ah approval i check thei ang. Finance team-in WhatsApp-ah itemized receipt text an rawn thawn thei.
 
       Pending Verification la nih chhung chuan payment nawn leh suh. Reject a nih chuan reason en la, transfer details dik takin submit leh rawh.
     ANSWER
@@ -825,7 +825,7 @@ class MizoAiAssistant
       2. Member transfer date, amount, reference name, leh screenshot a awm chuan check rawh.
       3. Bank account record nen a inmil chuan Approve rawh.
       4. A inmil loh chuan Reject rawh, member-in update leh theih nan.
-      5. Approve zawh hnuah Share Receipt Image click la. Mobile share sheet-ah WhatsApp thlang la; receipt PNG file kha attach sa ang. Receipt Shared tih chu device share flow complete tawh tihna a ni.
+      5. Approve zawh hnuah Send via WhatsApp click la. Member conversation-ah receipt text fill sa a open ang. Message send zawh hnuah portal-ah Confirm Sent click la; Receipt sent status chu confirmation hnuah chauh a lang ang.
       6. Same member + same plan + same year/period-a paid/active record a awm tawh chuan add payment thar siam suh.
 
       Payment confirm loh chuan Paid-ah mark suh.
@@ -844,7 +844,7 @@ class MizoAiAssistant
       3. Review button click la, member transfer date, amount, reference name, leh screenshot a awm chuan check rawh.
       4. Bank account real record nen amount leh sender/reference name a inmil em verify rawh.
       5. A dik chuan Approve rawh. A dik loh chuan Reject rawh, member-in submit leh theih nan.
-      6. Approve zawh hnuah Share Receipt Image click la; mobile-ah WhatsApp thlang la. Receipt PNG file attach sa-in share theih ang.
+      6. Approve zawh hnuah Send via WhatsApp click la; member number-ah itemized receipt text direct a open ang. Message send zawh hnuah portal-ah Confirm Sent click tur a ni.
       7. Duplicate record awm chuan new payment siam lovin existing record update rawh.
 
       Payment confirm loh chuan Paid-ah mark suh.

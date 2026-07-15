@@ -105,6 +105,21 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match(/Select Payments.*#{@payment.membership_plan.name}/m, response.body)
     assert_match(/Payment History.*#{paid_payment.membership_plan.name}/m, response.body)
+    assert_includes response.body, receipt_membership_payment_path(paid_payment)
+    assert_includes response.body, "Receipt"
+  end
+
+  test "cancelled payment history links to details instead of a receipt" do
+    @payment.update!(status: :cancelled)
+    sign_in @member
+
+    get membership_payments_path
+
+    assert_response :success
+    assert_match(/Payment History.*#{@plan.name}/m, response.body)
+    assert_includes response.body, membership_payment_path(@payment)
+    assert_includes response.body, "Details"
+    assert_not_includes response.body, receipt_membership_payment_path(@payment)
   end
 
   test "paid guardian fee does not hide an unpaid child fee for the same plan" do
@@ -381,6 +396,22 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "#{admin_membership_payments_path}?class="
   end
 
+  test "payment records keep editing on the detail page instead of the index" do
+    sign_in @president
+
+    get admin_membership_payments_path
+
+    assert_response :success
+    assert_includes response.body, admin_membership_payment_path(@payment)
+    assert_not_includes response.body, edit_admin_membership_payment_path(@payment)
+
+    get admin_membership_payment_path(@payment)
+
+    assert_response :success
+    assert_includes response.body, edit_admin_membership_payment_path(@payment)
+    assert_includes response.body, "Edit Record"
+  end
+
   test "admin can select an active donation plan for a manual payment" do
     sign_in @president
 
@@ -390,7 +421,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "option[value='#{@donation_plan.id}']", text: /Emergency Relief Donation/
   end
 
-  test "admin payment show offers a PNG receipt without a receipt link" do
+  test "admin payment show offers a direct WhatsApp text receipt without a receipt link" do
     @payment.update!(
       status: :paid,
       paid_on: Time.current,
@@ -404,10 +435,19 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_no_match(/>Call</, response.body)
     assert_includes response.body, "WhatsApp"
-    assert_includes response.body, "Ready to share"
-    assert_includes response.body, "Share Receipt Image"
-    assert_includes response.body, share_receipt_admin_membership_payment_path(@payment)
-    assert_not_includes response.body, receipt_membership_payment_url(@payment)
+    assert_includes response.body, "Not sent"
+    assert_includes response.body, "Send via WhatsApp"
+    assert_includes response.body, mark_receipt_whatsapp_opened_admin_membership_payment_path(@payment)
+
+    whatsapp_link = css_select("a[href^='https://wa.me/']").first
+    assert whatsapp_link
+    message = URI.decode_www_form_component(URI.parse(whatsapp_link["href"]).query.delete_prefix("text="))
+    assert_includes message, "MSJ PAYMENT RECEIPT"
+    assert_includes message, @payment.receipt_number
+    assert_includes message, @plan.name
+    assert_includes message, "Total paid: ¥5,000"
+    assert_includes message, "Confirmed by: #{@president.display_name}"
+    assert_not_includes message, receipt_membership_payment_url(@payment)
   end
 
   test "member can print an approved itemized payment receipt" do
@@ -480,7 +520,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, receipt_membership_payment_path(@payment)
   end
 
-  test "admin payment records track a shared receipt image" do
+  test "admin payment records track WhatsApp opened and confirmed sent separately" do
     @payment.update!(
       status: :paid,
       paid_on: Time.current,
@@ -491,23 +531,48 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     get admin_membership_payments_path(status: "paid")
 
     assert_response :success
-    assert_includes response.body, "Ready to share"
-    assert_includes response.body, share_receipt_admin_membership_payment_path(@payment)
-    assert_includes response.body, "Share Image"
+    assert_includes response.body, "Not sent"
+    assert_includes response.body, mark_receipt_whatsapp_opened_admin_membership_payment_path(@payment)
+    assert_includes response.body, "Send via WhatsApp"
 
-    patch share_receipt_admin_membership_payment_path(@payment)
+    patch mark_receipt_sent_admin_membership_payment_path(@payment)
+
+    assert_redirected_to root_path
+    assert_not @payment.reload.receipt_sent?
+
+    patch mark_receipt_whatsapp_opened_admin_membership_payment_path(@payment)
 
     assert_response :no_content
-    assert @payment.reload.receipt_shared?
-    assert_equal @president, @payment.receipt_shared_by
+    assert @payment.reload.receipt_whatsapp_opened?
+    assert_equal @president, @payment.receipt_whatsapp_opened_by
+    assert_not @payment.receipt_sent?
 
     get admin_membership_payments_path(status: "paid")
 
     assert_response :success
-    assert_includes response.body, "Receipt shared"
+    assert_includes response.body, "Awaiting confirmation"
+    assert_includes response.body, "Confirm Sent"
+
+    patch mark_receipt_sent_admin_membership_payment_path(@payment),
+      headers: { "HTTP_REFERER" => admin_membership_payment_path(@payment) }
+
+    assert_redirected_to admin_membership_payment_path(@payment)
+    assert @payment.reload.receipt_sent?
+    assert_equal @president, @payment.receipt_sent_by
+
+    get admin_membership_payments_path(status: "paid")
+
+    assert_response :success
+    assert_includes response.body, "Sent"
+    assert_not_includes response.body, "Send Again"
+
+    get admin_membership_payment_path(@payment)
+
+    assert_response :success
+    assert_includes response.body, "Send Again"
   end
 
-  test "sharing a combined receipt marks every included payment as shared" do
+  test "opening and confirming a combined receipt updates every included payment" do
     donation_payment = MembershipPayment.create!(
       user: @member,
       membership_plan: @donation_plan,
@@ -529,12 +594,21 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     donation_payment.update!(payment_batch: batch)
     sign_in @president
 
-    patch share_receipt_admin_membership_payment_path(@payment)
+    patch mark_receipt_whatsapp_opened_admin_membership_payment_path(@payment)
 
     assert_response :no_content
-    assert @payment.reload.receipt_shared?
-    assert donation_payment.reload.receipt_shared?
-    assert_equal @president, donation_payment.receipt_shared_by
+    assert @payment.reload.receipt_whatsapp_opened?
+    assert donation_payment.reload.receipt_whatsapp_opened?
+    assert_equal @president, donation_payment.receipt_whatsapp_opened_by
+    assert_not @payment.receipt_sent?
+    assert_not donation_payment.receipt_sent?
+
+    patch mark_receipt_sent_admin_membership_payment_path(@payment)
+
+    assert_redirected_to admin_membership_payment_path(@payment)
+    assert @payment.reload.receipt_sent?
+    assert donation_payment.reload.receipt_sent?
+    assert_equal @president, donation_payment.receipt_sent_by
   end
 
   test "admin payment records hide prepared combined payments until transfer is submitted" do

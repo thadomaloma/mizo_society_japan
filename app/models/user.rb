@@ -46,7 +46,8 @@ class User < ApplicationRecord
   has_many :membership_payments, dependent: :destroy
   has_many :payment_batches, dependent: :destroy
   has_many :approved_membership_payments, class_name: "MembershipPayment", foreign_key: :approved_by_id, dependent: :nullify, inverse_of: :approved_by
-  has_many :shared_membership_payment_receipts, class_name: "MembershipPayment", foreign_key: :receipt_shared_by_id, dependent: :nullify, inverse_of: :receipt_shared_by
+  has_many :opened_membership_payment_receipts, class_name: "MembershipPayment", foreign_key: :receipt_whatsapp_opened_by_id, dependent: :nullify, inverse_of: :receipt_whatsapp_opened_by
+  has_many :sent_membership_payment_receipts, class_name: "MembershipPayment", foreign_key: :receipt_sent_by_id, dependent: :nullify, inverse_of: :receipt_sent_by
   has_many :recorded_finance_transactions, class_name: "FinanceTransaction", foreign_key: :recorded_by_id, dependent: :restrict_with_error, inverse_of: :recorded_by
   has_many :approved_finance_transactions, class_name: "FinanceTransaction", foreign_key: :approved_by_id, dependent: :nullify, inverse_of: :approved_by
   has_many :authored_announcements, class_name: "Announcement", foreign_key: :author_id, dependent: :restrict_with_error, inverse_of: :author

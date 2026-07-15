@@ -1,0 +1,27 @@
+<% recorded_date = payment.paid? ? payment.receipt_date : payment.updated_at.to_date %>
+<% receipt_available = policy(payment).receipt? %>
+<% action_path = receipt_available ? printable_payment_receipt_path(payment) : membership_payment_path(payment) %>
+
+<tr class="border-b border-[#E2E8F0] transition hover:bg-slate-50/80 last:border-b-0 dark:border-[#334155] dark:hover:bg-[#334155]/40">
+  <td class="whitespace-nowrap px-4 py-3 text-xs font-bold text-[#64748B] dark:text-[#CBD5E1]"><%= recorded_date.strftime("%d %b %Y") %></td>
+  <td class="min-w-48 px-4 py-3">
+    <p class="font-black text-[#0F172A] dark:text-white"><%= payment.membership_plan.name %></p>
+    <p class="mt-0.5 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= payment.plan_type_label %></p>
+  </td>
+  <td class="min-w-40 px-4 py-3">
+    <p class="truncate text-sm font-bold text-[#0F172A] dark:text-white"><%= payment.beneficiary_label %></p>
+    <p class="mt-0.5 truncate text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= payment.period_label %></p>
+  </td>
+  <td class="whitespace-nowrap px-4 py-3 font-black tabular-nums text-[#0F172A] dark:text-white"><%= yen(payment.amount) %></td>
+  <td class="px-4 py-3"><%= render "shared/status_badge", status: payment.status, compact: true %></td>
+  <td class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= payment.payment_method.humanize %></td>
+  <td class="px-4 py-3 text-right">
+    <%= link_to action_path,
+      class: action_button_classes(receipt_available ? :secondary : :ghost, size: :xs),
+      target: ("_blank" if receipt_available),
+      rel: ("noopener" if receipt_available) do %>
+      <%= icon_svg(receipt_available ? :printer : :eye, classes: "h-3.5 w-3.5") %>
+      <span><%= receipt_available ? "Receipt" : "Details" %></span>
+    <% end %>
+  </td>
+</tr>

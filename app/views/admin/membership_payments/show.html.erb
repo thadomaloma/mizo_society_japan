@@ -12,8 +12,8 @@
       link_to(admin_membership_payments_path, class: action_button_classes(:secondary)) do
         safe_join([ icon_svg(:arrow_left, classes: "h-4 w-4"), tag.span("Back") ])
       end,
-      (link_to(edit_admin_membership_payment_path(@membership_payment), class: action_button_classes(:dark)) do
-        safe_join([ icon_svg(:edit, classes: "h-4 w-4"), tag.span("Edit") ])
+      (link_to(edit_admin_membership_payment_path(@membership_payment), class: action_button_classes(:secondary)) do
+        safe_join([ icon_svg(:edit, classes: "h-4 w-4"), tag.span("Edit Record") ])
       end if policy(@membership_payment).update?),
       (link_to(printable_payment_receipt_path(@membership_payment), class: action_button_classes(:primary), target: "_blank", rel: "noopener") do
         safe_join([ icon_svg(:printer, classes: "h-4 w-4"), tag.span("Print Receipt") ])
@@ -56,19 +56,23 @@
       <% if @membership_payment.user.member_profile.present? %>
         <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div class="min-w-0">
-              <p class="text-xs font-black uppercase tracking-wide text-red-700 dark:text-red-300">Member Contact</p>
-              <p class="mt-1 truncate font-black text-slate-950 dark:text-white"><%= @membership_payment.user.display_name %></p>
-              <p class="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400"><%= @membership_payment.user.member_profile.mobile_number %></p>
-              <span class="mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-black ring-1 ring-inset <%= payment_receipt_badge_classes(@membership_payment) %>"><%= payment_receipt_label(@membership_payment) %></span>
-              <p class="mt-2 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400">Share the official receipt as a PNG image. On mobile, choose WhatsApp from the share sheet.</p>
+            <div class="flex min-w-0 items-start gap-3">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"><%= icon_svg(:chat, classes: "h-5 w-5") %></span>
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h3 class="font-black text-slate-950 dark:text-white">WhatsApp receipt</h3>
+                  <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-black ring-1 ring-inset <%= payment_receipt_badge_classes(@membership_payment) %>"><%= payment_receipt_label(@membership_payment) %></span>
+                </div>
+                <p class="mt-1 truncate text-sm font-bold text-slate-700 dark:text-slate-200"><%= @membership_payment.user.display_name %> · <%= @membership_payment.user.member_profile.mobile_number %></p>
+                <p class="mt-1 text-xs font-semibold leading-5 text-slate-500 dark:text-slate-400"><%= payment_receipt_delivery_description(@membership_payment) %></p>
+              </div>
             </div>
             <div class="grid gap-2 sm:min-w-52">
               <% if @membership_payment.receipt_sendable? %>
-                <%= receipt_image_share_button(
-                  @membership_payment,
-                  classes: action_button_classes(@membership_payment.receipt_shared? ? :secondary : :success, size: :sm, full_width: true, extra: "rounded-xl")
-                ) %>
+                <%= render "admin/membership_payments/receipt_delivery_actions",
+                  payment: @membership_payment,
+                  send_classes: action_button_classes(@membership_payment.receipt_sent? ? :secondary : :success, size: :sm, full_width: true, extra: "rounded-xl"),
+                  confirm_classes: action_button_classes(:success, size: :sm, full_width: true, extra: "rounded-xl") %>
               <% else %>
                 <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs font-black text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">Receipt unavailable</div>
               <% end %>

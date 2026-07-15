@@ -6,8 +6,20 @@ module Admin
     def index
       authorize MembershipPlan
       @plan_type_id = params[:plan_type_id].presence
-      @membership_plans = policy_scope(MembershipPlan)
-        .includes(:membership_payments, :membership_plan_type)
+      plan_scope = policy_scope(MembershipPlan)
+      @plan_summary = {
+        total: plan_scope.count,
+        active: plan_scope.active.count,
+        required: plan_scope.where(required_for_members: true).count,
+        in_use: plan_scope.joins(:membership_payments).distinct.count
+      }
+      @membership_plans = plan_scope
+        .includes(:membership_plan_type)
+        .select(<<~SQL.squish)
+          membership_plans.*,
+          (SELECT COUNT(*) FROM membership_payments
+           WHERE membership_payments.membership_plan_id = membership_plans.id) AS membership_payments_count
+        SQL
         .by_plan_type(@plan_type_id)
         .latest
       @plan_type_options = MembershipPlanType.active.latest

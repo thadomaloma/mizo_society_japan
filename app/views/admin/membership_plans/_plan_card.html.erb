@@ -1,0 +1,72 @@
+<% payment_count = plan.membership_payments_count.to_i %>
+<% editable = policy(plan).update? %>
+<% deletable = policy(plan).destroy? %>
+
+<%= render ::RubyUI::Card.new(class: "overflow-hidden rounded-xl border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B]") do %>
+  <div class="p-3.5 sm:p-4">
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex min-w-0 items-start gap-3">
+        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
+          <%= icon_svg(:tag, classes: "h-4 w-4") %>
+        </span>
+        <div class="min-w-0">
+          <h2 class="truncate text-sm font-black text-[#0F172A] dark:text-white sm:text-base"><%= plan.name %></h2>
+          <p class="mt-1 text-xs font-semibold text-[#64748B] dark:text-[#CBD5E1]"><%= plan.billing_cycle.humanize %> billing</p>
+        </div>
+      </div>
+      <%= render "shared/status_badge", status: plan.active? ? "active" : "inactive", compact: true %>
+    </div>
+
+    <div class="mt-3 flex items-end justify-between gap-3 border-b border-[#E2E8F0] pb-3 dark:border-[#334155]">
+      <div>
+        <p class="text-[10px] font-black uppercase tracking-wide text-[#64748B] dark:text-[#CBD5E1]">Amount</p>
+        <p class="mt-0.5 text-2xl font-black tabular-nums text-[#0F172A] dark:text-white"><%= yen(plan.amount) %></p>
+      </div>
+      <% if plan.required_for_members? %>
+        <span class="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-red-700 ring-1 ring-red-100 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20">
+          <%= icon_svg(:members, classes: "h-3 w-3") %>
+          Required
+        </span>
+      <% else %>
+        <span class="rounded-md bg-slate-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-slate-600 ring-1 ring-slate-200 dark:bg-[#0F172A] dark:text-slate-300 dark:ring-[#334155]">Optional</span>
+      <% end %>
+    </div>
+
+    <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+      <div>
+        <p class="font-bold text-[#64748B] dark:text-[#CBD5E1]">Payment records</p>
+        <p class="mt-0.5 font-black text-[#0F172A] dark:text-white"><%= pluralize(payment_count, "record") %></p>
+      </div>
+      <div>
+        <p class="font-bold text-[#64748B] dark:text-[#CBD5E1]">Family billing</p>
+        <p class="mt-0.5 truncate font-black text-[#0F172A] dark:text-white"><%= plan.provisions_child_fees? ? "Spouse + children" : (plan.provisions_spouse_payment? ? "Spouse included" : "Account holder") %></p>
+      </div>
+    </div>
+
+    <% if plan.description.present? %>
+      <p class="mt-3 line-clamp-2 text-xs font-semibold leading-5 text-[#64748B] dark:text-[#CBD5E1]"><%= plan.description %></p>
+    <% end %>
+  </div>
+
+  <div class="grid gap-2 border-t border-[#E2E8F0] bg-slate-50/70 p-2.5 dark:border-[#334155] dark:bg-[#0F172A]/60 <%= editable || deletable ? "grid-cols-3" : "grid-cols-1" %>">
+    <%= link_to admin_membership_plan_path(plan), class: action_button_classes(:secondary, size: :xs, full_width: true) do %>
+      <%= icon_svg(:eye, classes: "h-3.5 w-3.5") %><span>View</span>
+    <% end %>
+    <% if editable %>
+      <%= link_to edit_admin_membership_plan_path(plan), class: action_button_classes(:dark, size: :xs, full_width: true) do %>
+        <%= icon_svg(:edit, classes: "h-3.5 w-3.5") %><span>Edit</span>
+      <% end %>
+    <% end %>
+    <% if deletable %>
+      <% if payment_count.positive? %>
+        <span class="inline-flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs font-black text-slate-400 dark:border-[#334155] dark:bg-[#1E293B] dark:text-slate-500" title="Deactivate this plan instead; it has payment records.">
+          <%= icon_svg(:lock, classes: "h-3.5 w-3.5") %><span>In use</span>
+        </span>
+      <% else %>
+        <%= button_to admin_membership_plan_path(plan), method: :delete, data: { turbo_confirm: "Delete #{plan.name}? This cannot be undone." }, form: { class: "min-w-0" }, class: action_button_classes(:outline_danger, size: :xs, full_width: true) do %>
+          <%= icon_svg(:trash, classes: "h-3.5 w-3.5") %><span>Delete</span>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,35 @@
+<% wrapper_classes = local_assigns.fetch(:wrapper_classes, "grid gap-2") %>
+<% compact = local_assigns.fetch(:compact, false) %>
+<% whatsapp_url = payment_receipt_whatsapp_url(payment) %>
+
+<div class="<%= wrapper_classes %>"
+     data-controller="receipt-delivery"
+     data-receipt-delivery-mark-opened-url-value="<%= mark_receipt_whatsapp_opened_admin_membership_payment_path(payment) %>"
+     data-receipt-delivery-compact-value="<%= compact %>"
+     data-receipt-delivery-sent-value="<%= payment.receipt_sent? %>">
+  <% if !payment.receipt_whatsapp_opened? || payment.receipt_sent? || !compact %>
+    <%= link_to whatsapp_url,
+      target: "_blank",
+      rel: "noopener",
+      class: "#{send_classes} #{'hidden' if compact && payment.receipt_whatsapp_opened?}",
+      title: "Open this member's WhatsApp with an itemized payment receipt",
+      data: { action: "receipt-delivery#opened", receipt_delivery_target: "send" } do %>
+      <%= icon_svg(:chat, classes: "h-4 w-4 shrink-0") %>
+      <span class="truncate" data-receipt-delivery-target="label"><%= payment_receipt_send_label(payment) %></span>
+    <% end %>
+  <% end %>
+
+  <% unless payment.receipt_sent? %>
+    <%= button_to mark_receipt_sent_admin_membership_payment_path(payment),
+      method: :patch,
+      data: { turbo_confirm: "Confirm that this receipt was sent to the member?" },
+      form: {
+        class: payment.receipt_whatsapp_opened? ? "min-w-0" : "hidden min-w-0",
+        data: { receipt_delivery_target: "confirmation" }
+      },
+      class: confirm_classes do %>
+      <%= icon_svg(:check, classes: "h-4 w-4 shrink-0") %>
+      <span>Confirm Sent</span>
+    <% end %>
+  <% end %>
+</div>

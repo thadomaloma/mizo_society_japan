@@ -39,8 +39,12 @@ class MembershipPaymentPolicy < ApplicationPolicy
     finance_approver? && record.pending_verification?
   end
 
-  def share_receipt?
+  def mark_receipt_whatsapp_opened?
     finance_user? && record.receipt_sendable?
+  end
+
+  def mark_receipt_sent?
+    finance_user? && record.receipt_sendable? && record.receipt_whatsapp_opened? && !record.receipt_sent?
   end
 
   class Scope < ApplicationPolicy::Scope

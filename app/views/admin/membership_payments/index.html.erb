@@ -1,4 +1,4 @@
-<% content_for :page_title, "Payments" %>
+<% content_for :page_title, "Payment Records" %>
 
 <div class="space-y-6">
   <% header_actions = capture do %>
@@ -12,21 +12,18 @@
 
   <%= render "shared/page_header",
     eyebrow: "Finance",
-    title: "Payments",
+    title: "Payment Records",
     subtitle: "Record, review, approve, and reconcile membership, donation, fundraiser, and society fund payments.",
     actions: header_actions %>
 
-  <% payment_record_stats = [
-    { label: "Records", value: @payment_summary[:total], tone: "dark", icon: :credit_card, caption: "Filtered results" },
-    { label: "To Verify", value: @payment_summary[:pending], tone: "amber", icon: :notifications, caption: "Pending review" },
-    { label: "Paid", value: @payment_summary[:paid], tone: "green", icon: :check, caption: "Approved records" },
-    { label: "Amount", value: yen(@payment_summary[:amount]), tone: "green", icon: :finance, caption: "Filtered total" }
-  ] %>
+  <%= render "overview_panel", payment_summary: @payment_summary %>
 
-  <%= render "shared/mobile_stats_panel", stats: payment_record_stats, title: "Payment Records", subtitle: "Review summary" %>
-
-  <%= form_with url: admin_membership_payments_path, method: :get, class: "grid grid-cols-2 gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] xl:grid-cols-[minmax(16rem,1fr)_11rem_11rem_11rem_auto]" do |form| %>
-    <%= form.search_field :query, value: @query, placeholder: "Search member, email, reference...", class: "col-span-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white dark:placeholder:text-slate-400 md:col-span-1 md:rounded-lg md:py-2" %>
+  <%= render ::RubyUI::Card.new(class: "rounded-xl border-[#E2E8F0] bg-white p-3 shadow-sm dark:border-[#334155] dark:bg-[#1E293B]") do %>
+  <%= form_with url: admin_membership_payments_path, method: :get, class: "grid grid-cols-2 gap-2 xl:grid-cols-[minmax(16rem,1fr)_11rem_11rem_11rem_auto]" do |form| %>
+    <div class="relative col-span-2 md:col-span-1">
+      <span class="pointer-events-none absolute inset-y-0 left-0 grid w-10 place-items-center text-slate-400"><%= icon_svg(:search, classes: "h-4 w-4") %></span>
+      <%= form.search_field :query, value: @query, placeholder: "Search member, email, reference...", aria: { label: "Search payment records" }, class: "w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white dark:placeholder:text-slate-400 md:rounded-lg md:py-2" %>
+    </div>
     <% status_options = [
       [ "All records", "all" ],
       [ "To verify", "pending_verification" ],
@@ -35,9 +32,9 @@
       [ "Needs correction", "failed" ],
       [ "Refunded", "refunded" ]
     ] %>
-    <%= form.select :status, options_for_select(status_options, @status), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
-    <% if @years.many? %><%= form.select :year, options_for_select([ [ "All years", "" ] ] + @years.map { |year| [ year, year ] }, @year), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %><% end %>
-    <% if @plan_type_options.many? %><%= form.select :plan_type_id, options_for_select([ [ "All plan types", "" ] ] + @plan_type_options.map { |type| [ type.name, type.id ] }, @plan_type_id), {}, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %><% end %>
+    <%= form.select :status, options_for_select(status_options, @status), {}, aria: { label: "Payment status" }, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %>
+    <% if @years.many? %><%= form.select :year, options_for_select([ [ "All years", "" ] ] + @years.map { |year| [ year, year ] }, @year), {}, aria: { label: "Payment year" }, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %><% end %>
+    <% if @plan_type_options.many? %><%= form.select :plan_type_id, options_for_select([ [ "All plan types", "" ] ] + @plan_type_options.map { |type| [ type.name, type.id ] }, @plan_type_id), {}, aria: { label: "Payment plan type" }, class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#475569] dark:bg-[#0F172A] dark:text-white" %><% end %>
     <div class="col-span-2 flex justify-end gap-2 xl:col-span-1">
       <% if @query.present? || @status != "all" || @year.present? || @plan_type_id.present? %>
         <%= link_to admin_membership_payments_path, class: action_button_classes(:secondary, size: :sm) do %>
@@ -50,9 +47,10 @@
     <% end %>
     </div>
   <% end %>
+  <% end %>
 
   <% if @payment_batches.any? %>
-    <section class="rounded-2xl border border-amber-200 bg-amber-50/40 p-3 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10 sm:p-4">
+    <%= render ::RubyUI::Card.new(class: "rounded-xl border-amber-200 bg-amber-50/40 p-3 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10 sm:p-4") do %>
       <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-xs font-black uppercase tracking-wide text-amber-700 dark:text-amber-300">Combined transfers</p>
@@ -64,12 +62,12 @@
       <div class="mt-3 grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
         <%= render partial: "payment_batch_card", collection: @payment_batches, as: :payment_batch %>
       </div>
-    </section>
+    <% end %>
   <% end %>
 
   <% if @membership_payments.any? %>
-    <div class="hidden overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B] lg:block">
-      <table class="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-[#334155]">
+    <%= render ::RubyUI::Card.new(class: "hidden overflow-hidden rounded-xl border-[#E2E8F0] bg-white shadow-sm dark:border-[#334155] dark:bg-[#1E293B] lg:block") do %>
+      <%= render ::RubyUI::Table.new(class: "min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-[#334155]") do %>
         <thead class="bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500 dark:bg-[#0F172A] dark:text-slate-300">
           <tr>
             <th class="px-5 py-3">Member</th>
@@ -84,9 +82,9 @@
         <tbody class="divide-y divide-slate-100 bg-white dark:divide-[#334155] dark:bg-[#1E293B]">
           <%= render partial: "payment_row", collection: @membership_payments, as: :payment %>
         </tbody>
-      </table>
+      <% end %>
       <%= render "shared/data_table_footer", pagination: @pagination, label: "payment records" %>
-    </div>
+    <% end %>
 
     <div class="grid gap-2 lg:hidden">
       <%= render partial: "payment_card", collection: @membership_payments, as: :payment %>

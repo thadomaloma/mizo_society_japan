@@ -467,25 +467,34 @@ module ApplicationHelper
     "#{url}?text=#{URI.encode_www_form_component(message)}"
   end
 
-  def payment_receipt_share_payload(payment)
+  def payment_receipt_whatsapp_message(payment, sender: current_user)
     receipt = payment.payment_batch&.paid? ? payment.payment_batch : payment
-    {
-      receipt_number: receipt.receipt_number,
-      date: receipt.receipt_date.strftime("%d %b %Y"),
-      member: payment.user&.display_name || "Member",
-      member_number: payment.user&.member_profile&.membership_number.presence || "-",
-      items: receipt.receipt_payments.map do |item|
-        {
-          name: item.membership_plan.name,
-          detail: "#{item.beneficiary_label} · #{item.period_label}",
-          amount: yen(item.amount)
-        }
+    sender_name = sender&.display_name.presence || "MSJ Finance Team"
+    sender_role = sender.present? ? User.role_label(sender.role) : "Finance Team"
+
+    [
+      "Chibai #{payment.user&.display_name || 'Member'},",
+      "",
+      "MSJ PAYMENT RECEIPT",
+      "Receipt No: #{receipt.receipt_number}",
+      "Date: #{receipt.receipt_date.strftime('%d %b %Y')}",
+      "Member No: #{payment.user&.member_profile&.membership_number.presence || '-'}",
+      "",
+      "Payment details:",
+      *receipt.receipt_payments.map.with_index(1) do |item, index|
+        "#{index}. #{item.membership_plan.name} - #{item.beneficiary_label} (#{item.period_label}): #{yen(item.amount)}"
       end,
-      total: yen(receipt.receipt_total),
-      method: receipt.receipt_payment_method,
-      reference: receipt.receipt_reference,
-      approved_by: receipt.approved_by&.display_name || "MSJ Finance Team"
-    }
+      "",
+      "Total paid: #{yen(receipt.receipt_total)}",
+      "Payment method: #{receipt.receipt_payment_method}",
+      ("Reference: #{receipt.receipt_reference}" unless receipt.receipt_reference == "-"),
+      "Status: PAID",
+      "",
+      "Confirmed by: #{sender_name} (#{sender_role})",
+      "Mizo Society of Japan",
+      "",
+      "Thank you for your payment."
+    ].compact.join("\n")
   end
 
   def printable_payment_receipt_path(payment)
@@ -496,38 +505,51 @@ module ApplicationHelper
     end
   end
 
-  def receipt_image_share_button(payment, classes:, label: nil)
-    button_label = label || (payment.receipt_shared? ? "Share Again" : "Share Receipt Image")
-    payload = payment_receipt_share_payload(payment)
+  def payment_receipt_whatsapp_url(payment)
+    whatsapp_url_for(
+      payment.user&.member_profile,
+      message: payment_receipt_whatsapp_message(payment)
+    )
+  end
 
-    button_tag type: :button,
-      class: classes,
-      title: "Share the payment receipt as a PNG image",
-      data: {
-        controller: "receipt-share",
-        action: "receipt-share#share",
-        receipt_share_receipt_value: payload.to_json,
-        receipt_share_mark_url_value: share_receipt_admin_membership_payment_path(payment),
-        receipt_share_filename_value: "#{payload[:receipt_number]}.png"
-      } do
-        safe_join([
-          icon_svg(:upload, classes: "h-4 w-4 shrink-0"),
-          tag.span(button_label, class: "truncate", data: { receipt_share_target: "label" })
-        ])
-      end
+  def payment_receipt_send_label(payment)
+    return "Send Again" if payment.receipt_sent?
+    return "Open WhatsApp Again" if payment.receipt_whatsapp_opened?
+
+    "Send via WhatsApp"
+  end
+
+  def payment_receipt_delivery_description(payment)
+    if payment.receipt_sent?
+      sender = payment.receipt_sent_by&.display_name || "Finance team"
+      "Sent by #{sender} · #{payment.receipt_sent_at.strftime('%d %b %Y, %H:%M')}"
+    elsif payment.receipt_whatsapp_opened?
+      "WhatsApp opened. Confirm after the message is sent."
+    elsif payment.receipt_sendable?
+      "Ready to send to the member."
+    elsif payment.paid?
+      "A valid member WhatsApp number is required."
+    else
+      "Approve the payment before sending a receipt."
+    end
   end
 
   def payment_receipt_label(payment)
-    return "Receipt shared" if payment.receipt_shared?
-    return "Ready to share" if payment.receipt_sendable?
+    return "Sent" if payment.receipt_sent?
+    return "Awaiting confirmation" if payment.receipt_whatsapp_opened?
+    return "Not sent" if payment.receipt_sendable?
+    return "No WhatsApp" if payment.paid?
+
     "Verify first"
   end
 
   def payment_receipt_badge_classes(payment)
-    if payment.receipt_shared?
+    if payment.receipt_sent?
       "bg-emerald-50 text-emerald-700 ring-emerald-200"
+    elsif payment.receipt_whatsapp_opened?
+      "bg-amber-50 text-amber-700 ring-amber-200"
     elsif payment.receipt_sendable?
-      "bg-sky-50 text-sky-700 ring-sky-200"
+      "bg-red-50 text-red-700 ring-red-200"
     elsif payment.paid?
       "bg-slate-100 text-slate-700 ring-slate-200"
     else

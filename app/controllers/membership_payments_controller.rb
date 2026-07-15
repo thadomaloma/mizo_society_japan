@@ -10,7 +10,7 @@ class MembershipPaymentsController < ApplicationController
     @status = params[:status]
     @year = params[:year]
     payment_scope = current_user.membership_payments
-      .includes(:family_member, membership_plan: :membership_plan_type)
+      .includes(:family_member, :payment_batch, membership_plan: :membership_plan_type)
       .by_year(@year)
 
     @current_payments = payment_scope

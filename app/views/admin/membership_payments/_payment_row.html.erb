@@ -1,8 +1,7 @@
 <% table_button_base = "inline-flex h-8 min-w-[4.5rem] items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-black transition focus:outline-none focus:ring-2 focus:ring-red-500/30" %>
 <% table_button_neutral = "#{table_button_base} border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" %>
-<% table_button_dark = "#{table_button_base} bg-slate-900 text-white shadow-sm shadow-slate-950/10 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600" %>
 <% table_button_success = "#{table_button_base} bg-emerald-600 text-white shadow-sm shadow-emerald-950/10 hover:bg-emerald-700" %>
-<% table_button_receipt = "#{table_button_base} #{payment.receipt_shared? ? "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" : "bg-emerald-600 text-white shadow-sm shadow-emerald-950/10 hover:bg-emerald-700"}" %>
+<% table_button_receipt = "#{table_button_base} bg-emerald-600 text-white shadow-sm shadow-emerald-950/10 hover:bg-emerald-700" %>
 
 <tr class="transition-colors hover:bg-slate-50/80 dark:hover:bg-[#334155]/45">
   <td class="px-5 py-4">
@@ -28,18 +27,10 @@
   </td>
   <td class="px-5 py-4">
     <div class="flex min-w-[12rem] flex-col items-end gap-2">
-      <div class="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm dark:border-slate-700 dark:bg-slate-900/70">
-        <%= link_to admin_membership_payment_path(payment), class: table_button_neutral do %>
-          <%= icon_svg(:eye, classes: "h-3.5 w-3.5") %>
-          <span>View</span>
-        <% end %>
-        <% if policy(payment).update? %>
-          <%= link_to edit_admin_membership_payment_path(payment), class: "#{table_button_dark} ml-1" do %>
-            <%= icon_svg(:edit, classes: "h-3.5 w-3.5") %>
-            <span>Edit</span>
-          <% end %>
-        <% end %>
-      </div>
+      <%= link_to admin_membership_payment_path(payment), class: table_button_neutral do %>
+        <%= icon_svg(:eye, classes: "h-3.5 w-3.5") %>
+        <span>View</span>
+      <% end %>
 
       <% if policy(payment).approve? %>
         <%= button_to approve_admin_membership_payment_path(payment), method: :patch, form: { class: "min-w-0" }, class: table_button_success do %>
@@ -48,13 +39,13 @@
         <% end %>
       <% end %>
 
-      <% if payment.receipt_sendable? %>
-        <div class="rounded-xl border border-emerald-100 bg-emerald-50/70 p-1.5 dark:border-emerald-500/20 dark:bg-emerald-500/10">
-          <p class="mb-1 px-1 text-right text-[10px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Receipt</p>
-          <div class="flex flex-wrap justify-end gap-1.5">
-            <%= receipt_image_share_button(payment, classes: table_button_receipt, label: payment.receipt_shared? ? "Share Again" : "Share Image") %>
-          </div>
-        </div>
+      <% if payment.receipt_sendable? && !payment.receipt_sent? %>
+        <%= render "admin/membership_payments/receipt_delivery_actions",
+          payment: payment,
+          compact: true,
+          wrapper_classes: "flex justify-end",
+          send_classes: table_button_receipt,
+          confirm_classes: table_button_success %>
       <% end %>
     </div>
   </td>
