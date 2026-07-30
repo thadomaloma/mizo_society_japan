@@ -174,8 +174,8 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match(/Payment History.*#{paid_payment.membership_plan.name}/m, response.body)
-    assert_not_includes response.body, "value=\"#{stale_payment.id}\""
-    assert_not_includes response.body, "value=\"#{@donation_plan.id}\""
+    assert_select "input[name='membership_payment_ids[]'][value='#{stale_payment.id}']", count: 0
+    assert_select "form[action='#{start_membership_payments_path}'] input[name='membership_plan_id'][value='#{@donation_plan.id}']", count: 0
   end
 
   test "pending combined batch remains visible on payments page" do
