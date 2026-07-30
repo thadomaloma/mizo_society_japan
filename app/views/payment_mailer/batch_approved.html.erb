@@ -1,0 +1,7 @@
+<h1>Combined payment approved</h1>
+
+<p>Your combined bank transfer for <%= pluralize(@payment_batch.membership_payments.count, "payment") %> has been verified and marked as paid.</p>
+
+<p>Total paid: <%= number_to_currency(@payment_batch.total_amount, unit: "¥", precision: 0) %></p>
+
+<p>Thank you for supporting Mizo Society of Japan.</p>

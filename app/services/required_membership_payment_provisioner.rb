@@ -143,7 +143,16 @@ class RequiredMembershipPaymentProvisioner
       attributes[:notes] = append_note(payment.notes, CHILD_AGE_REACTIVATION_NOTE)
     end
 
-    payment.update!(attributes) if attributes.any?
+    return if attributes.empty?
+
+    payment.update!(attributes)
+    reconcile_open_batch_total(payment.payment_batch)
+  end
+
+  def reconcile_open_batch_total(batch)
+    return unless batch&.status.in?(%w[pending rejected])
+
+    batch.update!(total_amount: batch.membership_payments.sum(:amount))
   end
 
   def payment_amount(plan, family_member)

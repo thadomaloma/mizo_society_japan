@@ -71,7 +71,7 @@ Email: president@msj.local
 Password: password123
 ```
 
-For production, set your own seed values with environment variables before running `bin/rails db:seed`.
+For production, set your own seed email, role, and a secure `SEED_SUPER_ADMIN_PASSWORD` before running `bin/rails db:seed`. The first sign-in opens the profile setup page so real member details can be entered instead of seeded placeholder data.
 
 On a new production database, run:
 

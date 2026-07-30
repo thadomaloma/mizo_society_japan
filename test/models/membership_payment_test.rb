@@ -70,7 +70,11 @@ class MembershipPaymentTest < ActiveSupport::TestCase
   end
 
   test "guardian and family members can each have the same yearly membership plan" do
-    @yearly_plan.update_column(:membership_plan_type_id, membership_plan_types(:membership).id)
+    @yearly_plan.update_columns(
+      membership_plan_type_id: membership_plan_types(:membership).id,
+      child_fee_enabled: true,
+      child_amount: 2000
+    )
     child = @user.member_profile.family_members.create!(
       name: "Payment Child",
       relationship: "Child",
@@ -83,8 +87,38 @@ class MembershipPaymentTest < ActiveSupport::TestCase
     assert child_payment.valid?
   end
 
+  test "child membership payment requires the child fee plan and minimum age" do
+    @yearly_plan.update_columns(
+      membership_plan_type_id: membership_plan_types(:membership).id,
+      child_fee_enabled: true,
+      child_amount: 2000
+    )
+    child = @user.member_profile.family_members.create!(
+      name: "Young Payment Child",
+      relationship: "Child",
+      date_of_birth: 17.years.ago.to_date
+    )
+    payment = build_payment(@yearly_plan, payment_year: 2026, status: :pending)
+    payment.family_member = child
+
+    assert_not payment.valid?
+    assert_includes payment.errors[:family_member], "is not eligible for this payment plan"
+  end
+
+  test "payment amount must be greater than zero" do
+    payment = build_payment(@yearly_plan, payment_year: 2026, status: :pending)
+    payment.amount = 0
+
+    assert_not payment.valid?
+    assert_includes payment.errors[:amount], "must be greater than 0"
+  end
+
   test "blocks duplicate payment for the same family member and period" do
-    @yearly_plan.update_column(:membership_plan_type_id, membership_plan_types(:membership).id)
+    @yearly_plan.update_columns(
+      membership_plan_type_id: membership_plan_types(:membership).id,
+      child_fee_enabled: true,
+      child_amount: 2000
+    )
     child = @user.member_profile.family_members.create!(
       name: "Duplicate Child",
       relationship: "Child",

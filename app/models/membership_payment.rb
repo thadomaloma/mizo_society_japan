@@ -1,7 +1,16 @@
 class MembershipPayment < ApplicationRecord
+  include AttachmentValidation
+
   CURRENT_STATUSES = %i[pending pending_verification failed expired].freeze
   HISTORY_STATUSES = %i[paid cancelled refunded].freeze
   DUPLICATE_BLOCKING_STATUSES = %i[pending pending_verification failed expired paid].freeze
+  TRANSFER_PROOF_CONTENT_TYPES = %w[
+    application/pdf
+    image/jpeg
+    image/png
+    image/webp
+  ].freeze
+  TRANSFER_PROOF_MAX_SIZE = 10.megabytes
 
   belongs_to :user
   belongs_to :membership_plan
@@ -25,7 +34,7 @@ class MembershipPayment < ApplicationRecord
     pending_verification: 8
   }, default: :pending
 
-  validates :amount, numericality: { greater_than_or_equal_to: 0 }
+  validates :amount, numericality: { greater_than: 0 }
   validates :transfer_amount, allow_blank: true, numericality: { greater_than_or_equal_to: 0 }
   validates :payment_year, numericality: { only_integer: true, greater_than_or_equal_to: 2000 }
   validates :payment_month, allow_blank: true, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than_or_equal_to: 12 }
@@ -34,10 +43,12 @@ class MembershipPayment < ApplicationRecord
   validate :no_duplicate_active_payment_for_plan
   validate :family_member_belongs_to_guardian
   validate :family_member_is_eligible_for_plan
+  validate :transfer_screenshot_is_safe
 
   before_validation :copy_plan_amount, if: -> { amount.blank? && membership_plan.present? }
   before_validation :assign_payment_year, if: -> { payment_year.blank? }
   before_validation :copy_beneficiary_details, if: -> { family_member.present? }
+  after_commit -> { DashboardCache.expire_payments }
 
   scope :latest, -> { order(created_at: :desc) }
   scope :unpaid, -> { where(status: [ :pending, :pending_verification, :failed, :expired, :cancelled ]) }
@@ -61,15 +72,31 @@ class MembershipPayment < ApplicationRecord
       )
   }
 
-  def approve!(approver)
-    transaction do
+  def approve!(approver, allow_pending: false)
+    with_lock do
+      return false if paid?
+      unless pending_verification? || (allow_pending && bank_transfer_submittable?)
+        errors.add(:status, "must be pending verification before approval")
+        raise ActiveRecord::RecordInvalid, self
+      end
+
       update!(status: :paid, approved_by: approver, paid_on: paid_on || Time.current)
       MembershipPaymentFinanceRecorder.call(payment: self, actor: approver)
+      true
     end
   end
 
   def reject!(approver)
-    update!(status: :failed, approved_by: approver)
+    with_lock do
+      return false if failed?
+      unless pending_verification?
+        errors.add(:status, "must be pending verification before rejection")
+        raise ActiveRecord::RecordInvalid, self
+      end
+
+      update!(status: :failed, approved_by: approver)
+      true
+    end
   end
 
   def bank_transfer_submittable?
@@ -77,16 +104,31 @@ class MembershipPayment < ApplicationRecord
   end
 
   def submit_bank_transfer!(transferred_on:, transfer_amount:, transfer_reference_name:, transfer_screenshot: nil)
-    assign_attributes(
-      payment_method: :manual_bank_transfer,
-      status: :pending_verification,
-      transferred_on: transferred_on,
-      transfer_amount: transfer_amount,
-      transfer_reference_name: transfer_reference_name,
-      reference_number: transfer_reference_name
-    )
-    self.transfer_screenshot.attach(transfer_screenshot) if transfer_screenshot.present?
-    save!
+    with_lock do
+      return false if pending_verification?
+      unless bank_transfer_submittable?
+        errors.add(:status, "does not allow a bank transfer submission")
+        raise ActiveRecord::RecordInvalid, self
+      end
+
+      submitted_amount = BigDecimal(transfer_amount.to_s)
+      unless submitted_amount == amount
+        errors.add(:transfer_amount, "must match the payment amount")
+        raise ActiveRecord::RecordInvalid, self
+      end
+
+      assign_attributes(
+        payment_method: :manual_bank_transfer,
+        status: :pending_verification,
+        transferred_on: transferred_on,
+        transfer_amount: submitted_amount,
+        transfer_reference_name: transfer_reference_name,
+        reference_number: transfer_reference_name
+      )
+      self.transfer_screenshot.attach(transfer_screenshot) if transfer_screenshot.present?
+      save!
+      true
+    end
   end
 
   def finance_reference_number
@@ -206,6 +248,15 @@ class MembershipPayment < ApplicationRecord
     validate_whole_yen(:transfer_amount, transfer_amount) if transfer_amount.present?
   end
 
+  def transfer_screenshot_is_safe
+    validate_attachment_upload(
+      transfer_screenshot,
+      attribute: :transfer_screenshot,
+      content_types: TRANSFER_PROOF_CONTENT_TYPES,
+      max_size: TRANSFER_PROOF_MAX_SIZE
+    )
+  end
+
   def validate_whole_yen(attribute, value)
     return if BigDecimal(value.to_s).frac.zero?
 
@@ -277,8 +328,16 @@ class MembershipPayment < ApplicationRecord
   end
 
   def family_member_is_eligible_for_plan
-    return if family_member.blank? || membership_plan.blank? || membership_plan.membership?
-    return if family_member.spouse? && membership_plan.spouse_payable?
+    return if family_member.blank? || membership_plan.blank?
+
+    if membership_plan.membership?
+      return if family_member.spouse?
+      return if family_member.child? &&
+        membership_plan.child_fee_enabled? &&
+        family_member.membership_fee_eligible?
+    elsif family_member.spouse? && membership_plan.spouse_payable?
+      return
+    end
 
     errors.add(:family_member, "is not eligible for this payment plan")
   end

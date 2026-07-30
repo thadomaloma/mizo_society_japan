@@ -1098,5 +1098,4 @@ class MizoAiAssistant
       "programming", "code", "ruby", "rails", "homework", "translate this"
     )
   end
-
 end

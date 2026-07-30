@@ -38,8 +38,7 @@ module Admin
       @welfare_case = WelfareCase.new(welfare_case_params)
       authorize @welfare_case, :admin_create?
 
-      if @welfare_case.save
-        attach_uploaded_files(@welfare_case)
+      if save_welfare_case
         NotificationCreator.welfare_case_submitted(@welfare_case, actor: current_user)
         AuditLogger.call(
           user: current_user,
@@ -62,8 +61,7 @@ module Admin
       authorize @welfare_case
       previous_status = @welfare_case.status
 
-      if @welfare_case.update(welfare_case_params)
-        attach_uploaded_files(@welfare_case)
+      if save_welfare_case
         NotificationCreator.welfare_case_updated(@welfare_case, actor: current_user) if previous_status != @welfare_case.status
         redirect_to admin_welfare_case_path(@welfare_case), notice: "Welfare case was updated."
       else
@@ -164,12 +162,13 @@ module Admin
       Array(params.dig(:welfare_case, :files)).compact_blank
     end
 
-    def attach_uploaded_files(welfare_case)
-      uploaded_files.each do |file|
-        attachment = welfare_case.welfare_attachments.build(uploaded_by: current_user)
-        attachment.file.attach(file)
-        attachment.save!
-      end
+    def save_welfare_case
+      WelfareCaseWithAttachmentsSaver.call(
+        welfare_case: @welfare_case,
+        attributes: welfare_case_params,
+        files: uploaded_files,
+        uploaded_by: current_user
+      )
     end
   end
 end

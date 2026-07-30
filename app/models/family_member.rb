@@ -44,19 +44,33 @@ class FamilyMember < ApplicationRecord
   end
 
   def assign_membership_number
-    prefix = "#{member_profile.membership_number}-#{spouse? ? 'S' : 'C'}"
-    persisted_numbers = member_profile.family_members
-      .where.not(id: id)
-      .where("membership_number LIKE ?", "#{prefix}%")
-      .pluck(:membership_number)
-    pending_numbers = member_profile.family_members.target
-      .reject { |member| member.equal?(self) || member.marked_for_destruction? }
-      .filter_map(&:membership_number)
-    last_suffix = (persisted_numbers + pending_numbers)
-      .uniq
-      .filter_map { |number| number.delete_prefix(prefix).to_i if number.match?(/\A#{Regexp.escape(prefix)}\d+\z/) }
-      .max.to_i
+    with_membership_number_lock do
+      prefix = "#{member_profile.membership_number}-#{spouse? ? 'S' : 'C'}"
+      persisted_numbers = member_profile.family_members
+        .where.not(id: id)
+        .where("membership_number LIKE ?", "#{prefix}%")
+        .pluck(:membership_number)
+      pending_numbers = member_profile.family_members.target
+        .reject { |member| member.equal?(self) || member.marked_for_destruction? }
+        .filter_map(&:membership_number)
+      last_suffix = (persisted_numbers + pending_numbers)
+        .uniq
+        .filter_map { |number| number.delete_prefix(prefix).to_i if number.match?(/\A#{Regexp.escape(prefix)}\d+\z/) }
+        .max.to_i
 
-    self.membership_number = "#{prefix}#{(last_suffix + 1).to_s.rjust(2, '0')}"
+      self.membership_number = "#{prefix}#{(last_suffix + 1).to_s.rjust(2, '0')}"
+    end
+  end
+
+  def with_membership_number_lock
+    return yield unless member_profile.persisted?
+
+    self.class.transaction do
+      lock_sql = self.class.sanitize_sql_array(
+        [ "SELECT pg_advisory_xact_lock(?, ?)", 1_297_300_049, Integer(member_profile.id) ]
+      )
+      self.class.connection.execute(lock_sql)
+      yield
+    end
   end
 end

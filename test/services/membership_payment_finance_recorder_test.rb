@@ -10,6 +10,13 @@ class MembershipPaymentFinanceRecorderTest < ActiveSupport::TestCase
 
   test "approving a membership payment creates an approved income transaction" do
     payment = create_payment(plan: create_plan("Recorder Annual Fee", @plan_type, 5000))
+    payment.update!(
+      status: :pending_verification,
+      payment_method: :manual_bank_transfer,
+      transferred_on: Date.current,
+      transfer_amount: payment.amount,
+      transfer_reference_name: "RECORDER BANK REF"
+    )
 
     assert_difference -> { FinanceTransaction.approved.income.count }, 1 do
       payment.approve!(@approver)

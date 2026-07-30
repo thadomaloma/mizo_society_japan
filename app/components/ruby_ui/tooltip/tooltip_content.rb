@@ -8,7 +8,7 @@ module RubyUI
     end
 
     def view_template(&)
-      template(data: {ruby_ui__tooltip_target: "content"}) do
+      template(data: { ruby_ui__tooltip_target: "content" }) do
         div(**attrs, &)
       end
     end

@@ -87,7 +87,7 @@ module ApplicationHelper
       { label: "Dashboard", path: admin_dashboard_path, icon: :dashboard, roles: :operations },
       { label: "AI Assistant", path: ai_assistant_path, icon: :chat },
       { label: "Payments", path: membership_payments_path, icon: :credit_card },
-      { label: "Payment Records", path: admin_membership_payments_path, icon: :credit_card, roles: :finance },
+      { label: "Payment Records", path: admin_membership_payments_path, icon: :banknotes, roles: :finance },
       { label: "Payment Plans", path: admin_membership_plans_path, icon: :tag, roles: :finance },
       { label: "Transactions", path: admin_finance_transactions_path, icon: :finance, roles: :finance },
       { label: "Welfare", path: admin_welfare_cases_path, icon: :welfare, roles: :welfare },
@@ -364,6 +364,10 @@ module ApplicationHelper
       meeting_minute_path(record)
     when :documents
       document_path(record)
+    when :events
+      event_path(record)
+    when :announcements
+      announcement_path(record)
     end
   end
 
@@ -413,7 +417,7 @@ module ApplicationHelper
     base_classes = "#{classes} overflow-hidden rounded-full bg-[#0F172A] text-white dark:bg-[#334155] dark:text-[#F8FAFC]"
     profile = user&.member_profile
 
-    if profile&.avatar&.attached?
+    if profile && persisted_attachment?(profile.avatar)
       image_tag avatar_thumbnail(profile.avatar),
         alt: user.display_name,
         class: "#{base_classes} object-cover",

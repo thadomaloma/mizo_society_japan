@@ -57,7 +57,7 @@
         </div>
       </article>
 
-      <% if policy(@payment_batch).submit_transfer? %>
+      <% if policy(@payment_batch).submit_transfer? && @bank_transfer_configured %>
         <article class="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#334155] dark:bg-[#1E293B] sm:p-5">
           <div class="mb-4 rounded-xl border border-red-100 bg-red-50 p-3 dark:border-red-500/20 dark:bg-red-500/10 sm:hidden">
             <div class="flex items-center justify-between gap-3">
@@ -80,7 +80,7 @@
             </div>
             <div>
               <%= form.label :transfer_amount, "Total Amount", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
-              <%= form.number_field :transfer_amount, required: true, min: 0, step: 1, value: @payment_batch.total_amount.to_i, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
+              <%= form.number_field :transfer_amount, required: true, min: 1, step: 1, value: @payment_batch.total_amount.to_i, class: "mt-2 block w-full rounded-lg border border-[#CBD5E1] px-3 py-2 text-[#0F172A] outline-none transition focus:border-red-600 focus:ring-2 focus:ring-red-100 dark:border-[#334155] dark:bg-[#0F172A] dark:text-white" %>
             </div>
             <div class="sm:col-span-2">
               <%= form.label :transfer_reference_name, "Reference Name", class: "block text-sm font-black text-[#334155] dark:text-[#CBD5E1]" %>
@@ -98,10 +98,15 @@
             </div>
           <% end %>
         </article>
-      <% else %>
+      <% elsif !policy(@payment_batch).submit_transfer? %>
         <article class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
           <p class="font-black">Transfer submitted</p>
           <p class="mt-1">Treasurer will verify this combined payment and mark all included payments as paid.</p>
+        </article>
+      <% else %>
+        <article class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+          <p class="font-black">Bank transfer is temporarily unavailable</p>
+          <p class="mt-1">The MSJ finance team must finish the bank account setup before you can submit this payment.</p>
         </article>
       <% end %>
     </div>

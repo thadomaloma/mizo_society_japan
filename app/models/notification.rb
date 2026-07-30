@@ -27,14 +27,39 @@ class Notification < ApplicationRecord
   scope :for_user, ->(user) { where(recipient: user) }
   scope :relevant_to, lambda { |user|
     owned_notifications = for_user(user)
-    other_notifications = owned_notifications.where.not(action: actions[:event_created])
+    content_actions = [
+      actions[:announcement_published],
+      actions[:event_created],
+      actions[:document_uploaded],
+      actions[:meeting_minute_published]
+    ]
+    other_notifications = owned_notifications.where.not(action: content_actions)
+    visible_announcement_notifications = owned_notifications.where(
+      action: actions[:announcement_published],
+      notifiable_type: "Announcement",
+      notifiable_id: Announcement.active.select(:id)
+    )
     visible_event_notifications = owned_notifications.where(
       action: actions[:event_created],
       notifiable_type: "Event",
       notifiable_id: Event.visible_to(user).select(:id)
     )
+    visible_document_notifications = owned_notifications.where(
+      action: actions[:document_uploaded],
+      notifiable_type: "Document",
+      notifiable_id: Document.visible_to(user).select(:id)
+    )
+    visible_minute_notifications = owned_notifications.where(
+      action: actions[:meeting_minute_published],
+      notifiable_type: "MeetingMinute",
+      notifiable_id: MeetingMinute.visible_to(user).select(:id)
+    )
 
-    other_notifications.or(visible_event_notifications)
+    other_notifications
+      .or(visible_announcement_notifications)
+      .or(visible_event_notifications)
+      .or(visible_document_notifications)
+      .or(visible_minute_notifications)
   }
 
   def read?

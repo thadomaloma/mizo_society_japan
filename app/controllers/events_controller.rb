@@ -73,23 +73,36 @@ class EventsController < ApplicationController
 
   def complete
     authorize @event, :complete?
-    @event.update!(status: :completed)
+    @event.transaction do
+      @event.update!(status: :completed)
+      @event.notifications.destroy_all
+    end
     AuditLogger.call(user: current_user, action: "event_completed", auditable: @event, metadata: event_metadata, request: request)
     redirect_to @event, notice: "Event was marked completed."
   end
 
   def cancel
     authorize @event, :cancel?
-    @event.update!(status: :cancelled)
+    @event.transaction do
+      @event.update!(status: :cancelled)
+      @event.notifications.destroy_all
+    end
     AuditLogger.call(user: current_user, action: "event_cancelled", auditable: @event, metadata: event_metadata, request: request)
     redirect_to @event, notice: "Event was cancelled."
   end
 
   def rsvp
     authorize @event, :rsvp?
-    registration = @event.event_registrations.find_or_initialize_by(user: current_user)
-    registration.assign_attributes(status: :going, note: params.dig(:event_registration, :note))
-    registration.save!
+    @event.with_lock do
+      unless @event.registration_open?
+        redirect_to @event, alert: "Registration is no longer available."
+        return
+      end
+
+      registration = @event.event_registrations.find_or_initialize_by(user: current_user)
+      registration.assign_attributes(status: :going, note: params.dig(:event_registration, :note))
+      registration.save!
+    end
 
     redirect_to @event, notice: "Your RSVP has been recorded."
   end

@@ -9,12 +9,14 @@ class AnnouncementPublisher
   end
 
   def call
-    unless announcement.publishable?
-      announcement.errors.add(:base, "Archived announcements cannot be published")
-      raise ActiveRecord::RecordInvalid, announcement
-    end
+    announcement.with_lock do
+      return announcement if announcement.published?
 
-    Announcement.transaction do
+      unless announcement.publishable?
+        announcement.errors.add(:base, "Archived announcements cannot be published")
+        raise ActiveRecord::RecordInvalid, announcement
+      end
+
       announcement.update!(
         status: :published,
         published_at: announcement.published_at || Time.current
@@ -26,9 +28,8 @@ class AnnouncementPublisher
         auditable: announcement,
         metadata: { title: announcement.title, status: announcement.status }
       )
+      announcement
     end
-
-    announcement
   end
 
   private

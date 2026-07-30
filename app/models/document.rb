@@ -1,4 +1,6 @@
 class Document < ApplicationRecord
+  include AttachmentValidation
+
   ALLOWED_CONTENT_TYPES = %w[
     application/pdf
     application/vnd.openxmlformats-officedocument.wordprocessingml.document
@@ -6,6 +8,7 @@ class Document < ApplicationRecord
     image/png
     image/jpeg
   ].freeze
+  FILE_MAX_SIZE = 20.megabytes
 
   belongs_to :document_category
   belongs_to :uploaded_by, class_name: "User"
@@ -23,6 +26,7 @@ class Document < ApplicationRecord
 
   validates :title, :visibility, :status, presence: true
   validate :file_content_type
+  validate :file_size_is_safe
 
   scope :latest, -> { order(published_at: :desc, created_at: :desc) }
   scope :active, -> { published.where("expires_at IS NULL OR expires_at > ?", Time.current) }
@@ -108,5 +112,14 @@ class Document < ApplicationRecord
     return if file.blob.content_type.in?(ALLOWED_CONTENT_TYPES)
 
     errors.add(:file, "must be a PDF, DOCX, XLSX, PNG, or JPG file")
+  end
+
+  def file_size_is_safe
+    validate_attachment_upload(
+      file,
+      attribute: :file,
+      content_types: nil,
+      max_size: FILE_MAX_SIZE
+    )
   end
 end

@@ -73,7 +73,7 @@
             <%= form.label :amount, "Amount (JPY)", class: label_classes %>
             <%= form.number_field :amount,
               step: 1,
-              min: 0,
+              min: 1,
               inputmode: "numeric",
               value: yen_input_value(membership_payment.amount),
               placeholder: "Select a payment plan",
@@ -118,18 +118,24 @@
           <% if current_user.finance_approver? && membership_payment.persisted? %>
             <div>
               <%= form.label :status, "Record Status", class: label_classes %>
-              <%= form.select :status,
-                [
-                  [ "Waiting transfer", "pending" ],
-                  [ "To verify", "pending_verification" ],
-                  [ "Paid", "paid" ],
-                  [ "Failed", "failed" ],
-                  [ "Cancelled", "cancelled" ],
-                  [ "Refunded", "refunded" ]
-                ],
-                {},
-                class: input_classes %>
-              <p class="<%= hint_classes %>">Use Paid only after the transfer or cash receipt is verified.</p>
+              <% if membership_payment.pending_verification? || membership_payment.paid? %>
+                <div class="<%= input_classes %> flex items-center justify-between">
+                  <span><%= membership_payment.status.humanize %></span>
+                  <%= render "shared/status_badge", status: membership_payment.status, compact: true %>
+                </div>
+                <p class="<%= hint_classes %>"><%= membership_payment.paid? ? "Approved records are locked to protect the finance ledger." : "Use the Review actions on the record page to approve or reject this transfer." %></p>
+              <% else %>
+                <%= form.select :status,
+                  [
+                    [ "Waiting transfer", "pending" ],
+                    [ "Paid", "paid" ],
+                    [ "Failed", "failed" ],
+                    [ "Cancelled", "cancelled" ]
+                  ],
+                  {},
+                  class: input_classes %>
+                <p class="<%= hint_classes %>">Use Paid only after cash or bank transfer has been confirmed.</p>
+              <% end %>
             </div>
           <% else %>
             <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm font-bold text-amber-800 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-100">

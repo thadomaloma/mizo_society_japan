@@ -1,6 +1,28 @@
 require "test_helper"
 
 class UserTest < ActiveSupport::TestCase
+  test "Google OAuth links a verified email to its existing account" do
+    user = users(:member)
+    auth = google_auth(email: user.email, uid: "verified-google-user")
+
+    result = User.from_google_oauth2(auth)
+
+    assert_equal user, result
+    assert_equal "google_oauth2", result.provider
+    assert_equal "verified-google-user", result.uid
+  end
+
+  test "Google OAuth rejects an unverified email" do
+    auth = google_auth(email: "unverified@example.test", uid: "unverified-google-user", verified: false)
+
+    assert_no_difference -> { User.count } do
+      result = User.from_google_oauth2(auth)
+
+      assert_not result.persisted?
+      assert_includes result.errors[:email], "must be verified by Google"
+    end
+  end
+
   test "role helper groups match MSJ permissions" do
     president = User.new(role: :president)
     vice_president = User.new(role: :vice_president)
@@ -88,5 +110,16 @@ class UserTest < ActiveSupport::TestCase
     User::ROLES.each_key do |role|
       assert_equal office_bearers.include?(role.to_s), User.new(role: role).office_bearer?
     end
+  end
+
+  private
+
+  def google_auth(email:, uid:, verified: true)
+    OmniAuth::AuthHash.new(
+      provider: "google_oauth2",
+      uid: uid,
+      info: { email: email, name: "Google Member" },
+      extra: { raw_info: { email_verified: verified } }
+    )
   end
 end

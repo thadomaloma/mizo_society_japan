@@ -1,9 +1,12 @@
 class WelfareAttachment < ApplicationRecord
+  include AttachmentValidation
+
   ALLOWED_CONTENT_TYPES = %w[
     application/pdf
     image/jpeg
     image/png
   ].freeze
+  MAX_FILE_SIZE = 10.megabytes
 
   belongs_to :welfare_case
   belongs_to :uploaded_by, class_name: "User"
@@ -11,6 +14,7 @@ class WelfareAttachment < ApplicationRecord
 
   validate :file_attached
   validate :file_content_type
+  validate :file_size_is_safe
 
   def file_size
     file.attached? ? file.blob.byte_size : 0
@@ -33,5 +37,14 @@ class WelfareAttachment < ApplicationRecord
     return if file.blob.content_type.in?(ALLOWED_CONTENT_TYPES)
 
     errors.add(:file, "must be a PDF, JPG, or PNG file")
+  end
+
+  def file_size_is_safe
+    validate_attachment_upload(
+      file,
+      attribute: :file,
+      content_types: nil,
+      max_size: MAX_FILE_SIZE
+    )
   end
 end

@@ -24,19 +24,22 @@ class MembershipPaymentPolicy < ApplicationPolicy
   end
 
   def update?
-    finance_user?
+    finance_user? &&
+      record.payment_batch_id.nil? &&
+      !record.paid? &&
+      !record.pending_verification?
   end
 
   def destroy?
-    finance_user?
+    update?
   end
 
   def approve?
-    finance_approver? && record.pending_verification?
+    finance_approver? && record.payment_batch_id.nil? && record.pending_verification?
   end
 
   def reject?
-    finance_approver? && record.pending_verification?
+    finance_approver? && record.payment_batch_id.nil? && record.pending_verification?
   end
 
   def mark_receipt_whatsapp_opened?

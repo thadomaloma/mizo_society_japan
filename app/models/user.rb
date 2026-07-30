@@ -83,21 +83,44 @@ class User < ApplicationRecord
   end
 
   def self.from_google_oauth2(auth)
-    user = find_or_initialize_by(provider: auth.provider, uid: auth.uid)
-    user.email = auth.info.email.to_s.downcase
-    user.name = auth.info.name.presence || auth.info.email.to_s.split("@").first
-    user.password = Devise.friendly_token[0, 32] if user.encrypted_password.blank?
-    user.role ||= :member
-    user.save!
-    user
-  rescue ActiveRecord::RecordInvalid
-    existing_user = find_by(email: auth.info.email.to_s.downcase)
-    if existing_user.present?
-      existing_user.update!(provider: auth.provider, uid: auth.uid)
-      existing_user
-    else
+    email = auth.info.email.to_s.strip.downcase
+    unless google_email_verified?(auth) && email.present?
+      return new.tap { |user| user.errors.add(:email, "must be verified by Google") }
+    end
+
+    transaction do
+      oauth_user = lock.find_by(provider: auth.provider, uid: auth.uid)
+      email_user = lock.find_by(email: email)
+
+      if oauth_user.present? && email_user.present? && oauth_user != email_user
+        next new.tap { |user| user.errors.add(:email, "is already linked to another account") }
+      end
+
+      user = oauth_user || email_user || new
+      user.assign_attributes(
+        provider: auth.provider,
+        uid: auth.uid,
+        email: email,
+        name: auth.info.name.presence || email.split("@").first
+      )
+      user.password = Devise.friendly_token[0, 32] if user.encrypted_password.blank?
+      user.role ||= :member
+      user.save!
       user
     end
+  rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => error
+    (error.respond_to?(:record) ? error.record : new).tap do |user|
+      user.errors.add(:base, "Google sign-in could not be completed") if user.errors.empty?
+    end
+  end
+
+  def self.google_email_verified?(auth)
+    raw_info = auth.extra&.raw_info
+    value = raw_info&.[]("email_verified")
+    value = raw_info&.[](:email_verified) if value.nil?
+    value = raw_info&.[]("verified_email") if value.nil?
+    value = raw_info&.[](:verified_email) if value.nil?
+    ActiveModel::Type::Boolean.new.cast(value)
   end
 
   def super_admin?

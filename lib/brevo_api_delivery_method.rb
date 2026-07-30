@@ -69,7 +69,8 @@ class BrevoApiDeliveryMethod
 
   def html_content(mail)
     return mail.html_part.decoded if mail.html_part.present?
-    return mail.body.decoded if mail.mime_type == "text/html"
+
+    mail.body.decoded if mail.mime_type == "text/html"
   end
 
   def text_content(mail)

@@ -68,12 +68,14 @@ module Admin
       end
 
       changed_keys = []
-      normalized_settings.each do |key, value|
-        previous_value = AppSetting.get(key)
-        next if previous_value.to_s == value.to_s
+      AppSetting.transaction do
+        normalized_settings.each do |key, value|
+          previous_value = AppSetting.get(key)
+          next if previous_value.to_s == value.to_s
 
-        AppSetting.set(key, value)
-        changed_keys << key
+          AppSetting.set(key, value)
+          changed_keys << key
+        end
       end
 
       if changed_keys.any?
@@ -128,7 +130,25 @@ module Admin
     end
 
     def settings_errors_for(settings)
-      []
+      return [] if settings.values.all?(&:blank?)
+
+      errors = []
+      errors << "Bank account name is required." if settings["bank_account_name"].blank?
+      errors << "Bank name is required." if settings["bank_name"].blank?
+
+      if settings["bank_branch_name"].present? ^ settings["bank_account_number"].present?
+        errors << "Store name and bank account number must be entered together."
+      end
+
+      if settings["yucho_symbol"].present? ^ settings["yucho_number"].present?
+        errors << "Yuucho symbol and Yuucho number must be entered together."
+      end
+
+      unless settings["bank_account_number"].present? || settings["yucho_number"].present?
+        errors << "Enter transfer details for another bank or Yuucho."
+      end
+
+      errors
     end
   end
 end

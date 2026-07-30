@@ -9,12 +9,14 @@ class EventPublisher
   end
 
   def call
-    unless event.publishable?
-      event.errors.add(:base, "Cancelled or completed events cannot be published")
-      raise ActiveRecord::RecordInvalid, event
-    end
+    event.with_lock do
+      return event if event.published?
 
-    Event.transaction do
+      unless event.publishable?
+        event.errors.add(:base, "Cancelled or completed events cannot be published")
+        raise ActiveRecord::RecordInvalid, event
+      end
+
       event.update!(
         status: :published,
         published_at: event.published_at || Time.current
@@ -26,9 +28,8 @@ class EventPublisher
         auditable: event,
         metadata: { title: event.title, start_time: event.start_time }
       )
+      event
     end
-
-    event
   end
 
   private

@@ -49,7 +49,7 @@ module Admin
       end
       @pending_verification_batches = if @finance_dashboard_enabled
         PaymentBatch.pending_verification
-          .includes(:user, membership_payments: [ :family_member, { membership_plan: :membership_plan_type } ])
+          .includes({ user: :member_profile }, membership_payments: [ :family_member, { membership_plan: :membership_plan_type } ])
           .latest
           .limit(3)
       else
@@ -130,7 +130,7 @@ module Admin
     def recent_activities(visible_welfare_cases)
       activities = []
       if current_user.finance_viewer?
-        activities += MembershipPayment.includes(:user, membership_plan: :membership_plan_type).latest.limit(2).map do |payment|
+        activities += MembershipPayment.includes({ user: :member_profile }, membership_plan: :membership_plan_type).latest.limit(2).map do |payment|
           title = if payment.pending_verification?
             "#{payment.user.display_name} submitted bank transfer"
           elsif payment.paid?

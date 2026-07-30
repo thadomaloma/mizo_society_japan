@@ -8,7 +8,12 @@ module Admin
 
     def approve
       authorize @payment_batch
-      @payment_batch.approve!(current_user)
+      approved = @payment_batch.approve!(current_user)
+      unless approved
+        redirect_to admin_payment_batch_path(@payment_batch), notice: "Combined payment was already approved."
+        return
+      end
+
       AuditLogger.call(
         user: current_user,
         action: "payment_batch_approved",
@@ -24,13 +29,19 @@ module Admin
         title: "Combined payment approved",
         body: "#{@payment_batch.membership_payments.count} payments have been verified and marked paid."
       )
+      PaymentMailer.with(payment_batch: @payment_batch).batch_approved.deliver_later
 
       redirect_to admin_payment_batch_path(@payment_batch), notice: "Combined payment was approved."
     end
 
     def reject
       authorize @payment_batch
-      @payment_batch.reject!(current_user)
+      rejected = @payment_batch.reject!(current_user)
+      unless rejected
+        redirect_to admin_payment_batch_path(@payment_batch), notice: "Combined payment was already rejected."
+        return
+      end
+
       AuditLogger.call(
         user: current_user,
         action: "payment_batch_rejected",
@@ -38,6 +49,7 @@ module Admin
         metadata: payment_batch_metadata,
         request: request
       )
+      PaymentMailer.with(payment_batch: @payment_batch).batch_rejected.deliver_later
 
       redirect_to admin_payment_batch_path(@payment_batch), notice: "Combined payment was rejected."
     end

@@ -46,6 +46,9 @@ class AnnouncementsController < ApplicationController
     authorize @announcement
 
     if @announcement.update(announcement_params)
+      if @announcement.published? && @announcement.saved_changes.keys.intersect?(%w[title body expires_at])
+        NotificationCreator.announcement_published(@announcement, actor: current_user)
+      end
       AuditLogger.call(user: current_user, action: "announcement_updated", auditable: @announcement, metadata: announcement_metadata, request: request)
       redirect_to @announcement, notice: "Announcement was updated."
     else
@@ -61,7 +64,10 @@ class AnnouncementsController < ApplicationController
 
   def archive
     authorize @announcement, :archive?
-    @announcement.update!(status: :archived)
+    @announcement.transaction do
+      @announcement.update!(status: :archived)
+      @announcement.notifications.destroy_all
+    end
     AuditLogger.call(user: current_user, action: "announcement_archived", auditable: @announcement, metadata: announcement_metadata, request: request)
     redirect_to @announcement, notice: "Announcement was archived."
   end

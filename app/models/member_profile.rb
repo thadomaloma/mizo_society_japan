@@ -1,4 +1,6 @@
 class MemberProfile < ApplicationRecord
+  include AttachmentValidation
+
   JAPAN_MOBILE_NUMBER_REGEX = /\A0[789]0\d{8}\z/
   JAPAN_POSTAL_CODE_REGEX = /\A\d{3}-\d{4}\z/
   RESERVED_MOBILE_NUMBERS = %w[
@@ -12,6 +14,8 @@ class MemberProfile < ApplicationRecord
     08011111111
     09011111111
   ].freeze
+  AVATAR_CONTENT_TYPES = %w[image/jpeg image/png image/webp].freeze
+  AVATAR_MAX_SIZE = 5.megabytes
 
   REQUIRED_PROFILE_FIELDS = %i[
     full_name
@@ -41,6 +45,7 @@ class MemberProfile < ApplicationRecord
   before_validation :clear_household_details_unless_family
   after_save :sync_spouse_family_member, if: :family?
   after_save :remove_family_members_unless_family
+  after_commit -> { DashboardCache.expire_community }
 
   validates :full_name, :mobile_number, :date_of_birth, :family_status, :postal_code, :prefecture, :city, :address_line1, presence: true
   validates :membership_number, presence: true, uniqueness: true
@@ -49,6 +54,7 @@ class MemberProfile < ApplicationRecord
   validate :mobile_number_is_not_placeholder
   validate :family_status_preserves_payment_history
   validate :spouse_name_preserves_payment_history
+  validate :avatar_is_safe
   validates :mobile_number, format: {
     with: JAPAN_MOBILE_NUMBER_REGEX,
     message: "must be a valid Japan mobile number starting with 070, 080, or 090"
@@ -76,14 +82,21 @@ class MemberProfile < ApplicationRecord
   }
 
   def self.next_membership_number(year = Date.current.year)
-    prefix = "MSJ-#{year}-"
-    last_number = where("membership_number LIKE ?", "#{prefix}%")
-      .maximum(:membership_number)
-      &.split("-")
-      &.last
-      .to_i
+    transaction do
+      # Serialize number allocation for the same year without locking the whole table.
+      lock_sql = sanitize_sql_array(
+        [ "SELECT pg_advisory_xact_lock(?, ?)", 1_297_300_048, Integer(year) ]
+      )
+      connection.execute(lock_sql)
+      prefix = "MSJ-#{year}-"
+      last_number = where("membership_number LIKE ?", "#{prefix}%")
+        .maximum(:membership_number)
+        &.split("-")
+        &.last
+        .to_i
 
-    "#{prefix}#{(last_number + 1).to_s.rjust(4, "0")}"
+      "#{prefix}#{(last_number + 1).to_s.rjust(4, "0")}"
+    end
   end
 
   def self.normalize_postal_code(value)
@@ -97,7 +110,8 @@ class MemberProfile < ApplicationRecord
     return if date_of_birth.blank?
 
     today = Date.current
-    today.year - date_of_birth.year - (today.yday < date_of_birth.yday ? 1 : 0)
+    years = today.year - date_of_birth.year
+    years - (date_of_birth.advance(years: years) > today ? 1 : 0)
   end
 
   def full_address
@@ -219,6 +233,15 @@ class MemberProfile < ApplicationRecord
       sequential_digits?(local_part)
 
     errors.add(:mobile_number, "cannot be an example or placeholder number")
+  end
+
+  def avatar_is_safe
+    validate_attachment_upload(
+      avatar,
+      attribute: :avatar,
+      content_types: AVATAR_CONTENT_TYPES,
+      max_size: AVATAR_MAX_SIZE
+    )
   end
 
   def family_status_preserves_payment_history

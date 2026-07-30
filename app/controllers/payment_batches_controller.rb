@@ -5,24 +5,34 @@ class PaymentBatchesController < ApplicationController
 
   def create
     authorize PaymentBatch
-
-    payments = current_user.membership_payments
-      .includes(:family_member, membership_plan: :membership_plan_type)
-      .where(id: selected_payment_ids)
-      .select(&:bank_transfer_submittable?)
-      .reject { |payment| settled_payment_keys.include?(payment.settlement_key) }
-
-    if payments.empty?
-      redirect_to membership_payments_path, alert: "Select at least one unpaid payment."
+    unless BankTransferDetails.configured?
+      redirect_to membership_payments_path, alert: "Bank transfer is temporarily unavailable. Please contact the MSJ finance team."
       return
     end
 
-    current_user.payment_batches.pending.destroy_all
-    payment_batch = current_user.payment_batches.create!(status: :pending)
-    payments.each { |payment| payment.update!(payment_batch: payment_batch) }
-    payment_batch.update!(total_amount: payments.sum(&:amount))
+    payment_batch = PaymentBatch.transaction do
+      current_user.lock!
+      payments = current_user.membership_payments
+        .lock
+        .includes(:family_member, membership_plan: :membership_plan_type)
+        .where(id: selected_payment_ids)
+        .select(&:bank_transfer_submittable?)
+        .reject { |payment| settled_payment_keys.include?(payment.settlement_key) }
+
+      if payments.empty?
+        raise ActiveRecord::RecordNotFound
+      end
+
+      current_user.payment_batches.pending.destroy_all
+      current_user.payment_batches.create!(status: :pending).tap do |batch|
+        payments.each { |payment| payment.update!(payment_batch: batch) }
+        batch.update!(total_amount: payments.sum(&:amount))
+      end
+    end
 
     redirect_to payment_batch_path(payment_batch), notice: "Combined payment is ready. Transfer once for the total amount."
+  rescue ActiveRecord::RecordNotFound
+    redirect_to membership_payments_path, alert: "Select at least one unpaid payment."
   end
 
   def show
@@ -38,7 +48,13 @@ class PaymentBatchesController < ApplicationController
 
   def submit_transfer
     authorize @payment_batch
+    original_status = @payment_batch.status
     submission = bank_transfer_submission_params
+    unless @bank_transfer_configured
+      @payment_batch.errors.add(:base, "Bank transfer is temporarily unavailable. Please contact the MSJ finance team.")
+      render :show, status: :unprocessable_entity
+      return
+    end
 
     if submission[:transferred_on].blank? || submission[:transfer_amount].blank? || submission[:transfer_reference_name].blank?
       @payment_batch.assign_attributes(submission.except(:transfer_screenshot))
@@ -54,14 +70,19 @@ class PaymentBatchesController < ApplicationController
       return
     end
 
-    @payment_batch.submit_bank_transfer!(
+    submitted = @payment_batch.submit_bank_transfer!(
       transferred_on: submission[:transferred_on],
       transfer_amount: submission[:transfer_amount],
       transfer_reference_name: submission[:transfer_reference_name],
       transfer_screenshot: submission[:transfer_screenshot]
     )
+    unless submitted
+      redirect_to payment_batch_path(@payment_batch), notice: "Combined bank transfer was already submitted."
+      return
+    end
 
     notify_finance_team
+    PaymentMailer.with(payment_batch: @payment_batch).batch_transfer_submitted.deliver_later
     AuditLogger.call(
       user: current_user,
       action: "payment_batch_transfer_submitted",
@@ -76,6 +97,13 @@ class PaymentBatchesController < ApplicationController
     )
 
     redirect_to payment_batch_path(@payment_batch), notice: "Combined bank transfer submitted. Treasurer will verify the payment."
+  rescue ArgumentError
+    @payment_batch.assign_attributes(submission.except(:transfer_screenshot))
+    @payment_batch.errors.add(:transfer_amount, "must be a valid whole yen amount.")
+    render :show, status: :unprocessable_entity
+  rescue ActiveRecord::RecordInvalid
+    @payment_batch.status = original_status
+    render :show, status: :unprocessable_entity
   end
 
   def cancel
@@ -123,6 +151,7 @@ class PaymentBatchesController < ApplicationController
 
   def set_bank_transfer_details
     @bank_transfer_details = BankTransferDetails.call
+    @bank_transfer_configured = BankTransferDetails.configured?
   end
 
   def settled_payment_keys

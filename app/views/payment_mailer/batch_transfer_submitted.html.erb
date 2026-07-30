@@ -1,0 +1,11 @@
+<h1>Combined payment pending verification</h1>
+
+<p><%= @payment_batch.user.display_name %> submitted one bank transfer for <%= pluralize(@payment_batch.membership_payments.count, "payment") %>.</p>
+
+<p>
+  Total amount: <%= number_to_currency(@payment_batch.transfer_amount || @payment_batch.total_amount, unit: "¥", precision: 0) %><br>
+  Transfer date: <%= @payment_batch.transferred_on&.strftime("%B %d, %Y") %><br>
+  Reference name: <%= @payment_batch.transfer_reference_name %>
+</p>
+
+<p>Please verify the transfer in the MSJ Portal before approving the combined payment.</p>

@@ -66,12 +66,14 @@ module Admin
       end
 
       changed_keys = []
-      normalized_settings.each do |key, value|
-        previous_value = AppSetting.get(key)
-        next if previous_value.to_s == value.to_s
+      AppSetting.transaction do
+        normalized_settings.each do |key, value|
+          previous_value = AppSetting.get(key)
+          next if previous_value.to_s == value.to_s
 
-        AppSetting.set(key, value)
-        changed_keys << key
+          AppSetting.set(key, value)
+          changed_keys << key
+        end
       end
 
       if changed_keys.any?

@@ -1,4 +1,9 @@
 class Event < ApplicationRecord
+  include AttachmentValidation
+
+  IMAGE_CONTENT_TYPES = %w[image/jpeg image/png image/webp].freeze
+  IMAGE_MAX_SIZE = 10.megabytes
+
   belongs_to :created_by, class_name: "User"
   belongs_to :event_category
   has_many :event_registrations, dependent: :destroy
@@ -15,6 +20,7 @@ class Event < ApplicationRecord
   validates :title, :event_date, :venue, :description, :start_time, :end_time, :event_category, :status, :visibility, presence: true
   validates :max_participants, allow_blank: true, numericality: { only_integer: true, greater_than: 0 }
   validate :end_time_after_start_time
+  validate :uploaded_images_are_safe
 
   before_validation :sync_schedule_fields
   before_validation :sync_legacy_event_fields
@@ -121,5 +127,20 @@ class Event < ApplicationRecord
     return if start_time.blank? || end_time.blank?
 
     errors.add(:end_time, "must be after start time") if end_time <= start_time
+  end
+
+  def uploaded_images_are_safe
+    validate_attachment_upload(
+      cover_image,
+      attribute: :cover_image,
+      content_types: IMAGE_CONTENT_TYPES,
+      max_size: IMAGE_MAX_SIZE
+    )
+    validate_attachment_upload(
+      photos,
+      attribute: :photos,
+      content_types: IMAGE_CONTENT_TYPES,
+      max_size: IMAGE_MAX_SIZE
+    )
   end
 end

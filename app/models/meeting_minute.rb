@@ -1,4 +1,6 @@
 class MeetingMinute < ApplicationRecord
+  include AttachmentValidation
+
   ALLOWED_CONTENT_TYPES = %w[
     application/pdf
   ].freeze
@@ -8,6 +10,7 @@ class MeetingMinute < ApplicationRecord
   SIGNATURE_MAX_SIZE = 2.megabytes
   SIGNATURE_MIN_WIDTH = 300
   SIGNATURE_MIN_HEIGHT = 60
+  FILE_MAX_SIZE = 20.megabytes
 
   belongs_to :uploaded_by, class_name: "User"
   has_one_attached :file
@@ -23,10 +26,11 @@ class MeetingMinute < ApplicationRecord
   }, default: :draft
 
   validates :title, :meeting_date, :status, presence: true
-  validates :meeting_time, presence: true, on: :create
+  validates :meeting_time, presence: true
   validates(*ATTENDANCE_COUNT_FIELDS, numericality: { only_integer: true, greater_than_or_equal_to: 0 })
   validate :summary_contains_text
   validate :file_content_type
+  validate :file_size_is_safe
   validate :signature_content_type
 
   before_validation :sanitize_rich_text
@@ -142,6 +146,15 @@ class MeetingMinute < ApplicationRecord
     return if file.blob.content_type.in?(ALLOWED_CONTENT_TYPES)
 
     errors.add(:file, "must be a PDF file")
+  end
+
+  def file_size_is_safe
+    validate_attachment_upload(
+      file,
+      attribute: :file,
+      content_types: nil,
+      max_size: FILE_MAX_SIZE
+    )
   end
 
   def signature_content_type

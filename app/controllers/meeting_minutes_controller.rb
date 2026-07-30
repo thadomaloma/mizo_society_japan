@@ -34,11 +34,8 @@ class MeetingMinutesController < ApplicationController
     @meeting_minute.status = :draft
     authorize @meeting_minute
 
-    if @meeting_minute.save
-      sync_checkbox_attendance
-      audit_minute("meeting_minute_created")
-      notice = publish_after_save_if_requested || "Meeting minute was saved as a draft."
-      redirect_to meeting_minute_path(@meeting_minute), notice: notice
+    if save_meeting_minute("meeting_minute_created")
+      redirect_to meeting_minute_path(@meeting_minute), notice: @notice
     else
       render :new, status: :unprocessable_entity
     end
@@ -50,12 +47,10 @@ class MeetingMinutesController < ApplicationController
 
   def update
     authorize @meeting_minute
+    @meeting_minute.assign_attributes(meeting_minute_params)
 
-    if @meeting_minute.update(meeting_minute_params)
-      sync_checkbox_attendance
-      audit_minute("meeting_minute_updated")
-      notice = publish_after_save_if_requested || "Meeting minute was updated."
-      redirect_to meeting_minute_path(@meeting_minute), notice: notice
+    if save_meeting_minute("meeting_minute_updated")
+      redirect_to meeting_minute_path(@meeting_minute), notice: @notice
     else
       render :edit, status: :unprocessable_entity
     end
@@ -151,6 +146,28 @@ class MeetingMinutesController < ApplicationController
       present_ids: params.dig(:meeting_minute, :present_attendee_ids),
       apology_ids: params.dig(:meeting_minute, :apology_attendee_ids)
     )
+  end
+
+  def save_meeting_minute(audit_action)
+    @notice = nil
+    published_content_changed = @meeting_minute.published? &&
+      (@meeting_minute.will_save_change_to_title? || @meeting_minute.will_save_change_to_summary?)
+    MeetingMinute.transaction do
+      @meeting_minute.save!
+      sync_checkbox_attendance
+      sync_published_notification if published_content_changed
+      audit_minute(audit_action)
+      @notice = publish_after_save_if_requested ||
+        (action_name == "create" ? "Meeting minute was saved as a draft." : "Meeting minute was updated.")
+    end
+
+    true
+  rescue ActiveRecord::RecordInvalid
+    false
+  end
+
+  def sync_published_notification
+    NotificationCreator.meeting_minute_published(@meeting_minute, actor: current_user)
   end
 
   def publish_after_save_if_requested

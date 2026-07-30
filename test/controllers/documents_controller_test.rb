@@ -27,6 +27,26 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert document.reload.published?
   end
 
+  test "published letter visibility changes resync member notifications" do
+    document = create_document(title: "Member Letter", status: :published, visibility: :members_only)
+    NotificationCreator.document_uploaded(document, actor: @president)
+    assert Notification.exists?(recipient: @member, notifiable: document, action: :document_uploaded)
+    sign_in @president
+
+    patch document_path(document), params: {
+      document: {
+        title: document.title,
+        description: document.description,
+        document_category_id: document.document_category_id,
+        visibility: "office_bearers_only"
+      }
+    }
+
+    assert_redirected_to document_path(document)
+    assert document.reload.office_bearers_only?
+    assert_not Notification.exists?(recipient: @member, notifiable: document, action: :document_uploaded)
+  end
+
   test "president can download an MSJ official letter docx" do
     sign_in @president
 

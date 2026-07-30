@@ -53,6 +53,31 @@ class Admin::WelfareCasesControllerTest < ActionDispatch::IntegrationTest
     assert_equal @assistant_secretary, welfare_case.assigned_to
   end
 
+  test "invalid welfare attachment rolls back the new case and rerenders" do
+    sign_in @president
+
+    assert_no_difference -> { WelfareCase.count } do
+      assert_no_difference -> { WelfareAttachment.count } do
+        post admin_welfare_cases_path, params: {
+          welfare_case: {
+            user_id: @member.id,
+            welfare_category_id: @category.id,
+            title: "Case with unsafe upload",
+            description: "The case must not be saved without its accepted evidence.",
+            priority: "medium",
+            status: "submitted",
+            assigned_to_id: @assistant_secretary.id,
+            confidential: "1",
+            files: [ fixture_file_upload("unsafe.txt", "text/plain") ]
+          }
+        }
+      end
+    end
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "must be a PDF, JPG, or PNG file"
+  end
+
   test "assignment endpoint accepts assistant secretary" do
     welfare_case = WelfareCase.create!(
       user: @member,

@@ -23,6 +23,36 @@ class SearchesControllerTest < ActionDispatch::IntegrationTest
     assert_not results.any? { |section| section.key == :members }
   end
 
+  test "event and announcement search results link to their detail pages" do
+    event = Event.create!(
+      title: "Searchable Community Gathering",
+      event_category: event_categories(:general),
+      created_by: @admin,
+      event_date: Date.tomorrow,
+      start_time_of_day: "10:00",
+      venue: "Tokyo",
+      description: "Searchable event details.",
+      status: :published,
+      visibility: :members_only,
+      published_at: Time.current
+    )
+    announcement = Announcement.create!(
+      title: "Searchable Community Notice",
+      body: "Searchable announcement details.",
+      category: :general,
+      status: :published,
+      published_at: Time.current,
+      author: @admin
+    )
+    sign_in @member
+
+    get global_search_path(q: "Searchable Community"), headers: { "Turbo-Frame" => "global_search_results" }
+
+    assert_response :success
+    assert_select "a[href='#{event_path(event)}']"
+    assert_select "a[href='#{announcement_path(announcement)}']"
+  end
+
   private
 
   def ensure_profile_for(user, mobile_number: "09024681357")

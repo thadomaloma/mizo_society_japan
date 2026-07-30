@@ -87,7 +87,12 @@ module Admin
 
     def approve
       authorize @finance_transaction, :approve?
-      @finance_transaction.approve!(current_user)
+      approved = @finance_transaction.approve!(current_user)
+      unless approved
+        redirect_back fallback_location: admin_finance_transaction_path(@finance_transaction), notice: "Finance transaction was already approved."
+        return
+      end
+
       AuditLogger.call(
         user: current_user,
         action: "finance_transaction_approved",
@@ -101,7 +106,12 @@ module Admin
 
     def reject
       authorize @finance_transaction, :reject?
-      @finance_transaction.reject!(current_user)
+      rejected = @finance_transaction.reject!(current_user)
+      unless rejected
+        redirect_back fallback_location: admin_finance_transaction_path(@finance_transaction), notice: "Finance transaction was already rejected."
+        return
+      end
+
       AuditLogger.call(
         user: current_user,
         action: "finance_transaction_rejected",
@@ -126,11 +136,9 @@ module Admin
     def finance_transaction_params
       params.require(:finance_transaction).permit(
         :finance_category_id,
-        :transaction_type,
         :amount,
         :transaction_date,
         :description,
-        :status,
         :reference_number
       )
     end

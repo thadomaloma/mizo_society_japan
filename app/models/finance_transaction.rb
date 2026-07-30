@@ -6,14 +6,17 @@ class FinanceTransaction < ApplicationRecord
   enum :transaction_type, { income: 0, expense: 1 }
   enum :status, { pending: 0, approved: 1, rejected: 2 }, default: :pending
 
-  validates :amount, numericality: { greater_than_or_equal_to: 0 }
+  validates :amount, numericality: { greater_than: 0 }
   validates :transaction_date, presence: true
   validates :transaction_type, :status, presence: true
   validate :category_matches_transaction_type
   validate :amount_is_whole_yen
 
   before_validation :assign_transaction_date, if: -> { transaction_date.blank? }
-  before_validation :copy_category_type, if: -> { transaction_type.blank? && finance_category.present? }
+  before_validation :copy_category_type, if: -> {
+    finance_category.present? && (transaction_type.blank? || will_save_change_to_finance_category_id?)
+  }
+  after_commit -> { DashboardCache.expire_finance }
 
   scope :latest, -> { order(transaction_date: :desc, created_at: :desc) }
   scope :income, -> { where(transaction_type: :income) }
@@ -44,11 +47,29 @@ class FinanceTransaction < ApplicationRecord
   end
 
   def approve!(approver)
-    update!(status: :approved, approved_by: approver)
+    with_lock do
+      return false if approved?
+      unless pending?
+        errors.add(:status, "must be pending before approval")
+        raise ActiveRecord::RecordInvalid, self
+      end
+
+      update!(status: :approved, approved_by: approver)
+      true
+    end
   end
 
   def reject!(approver)
-    update!(status: :rejected, approved_by: approver)
+    with_lock do
+      return false if rejected?
+      unless pending?
+        errors.add(:status, "must be pending before rejection")
+        raise ActiveRecord::RecordInvalid, self
+      end
+
+      update!(status: :rejected, approved_by: approver)
+      true
+    end
   end
 
   private

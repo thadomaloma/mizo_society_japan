@@ -5,6 +5,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @member = users(:member)
     @president = users(:admin)
+    configure_bank_transfer
     ensure_profile_for(@member)
     ensure_profile_for(@president, mobile_number: "08013572468")
     @plan = MembershipPlan.create!(
@@ -123,6 +124,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "paid guardian fee does not hide an unpaid child fee for the same plan" do
+    @plan.update!(child_fee_enabled: true, child_amount: 2000)
     child = @member.member_profile.family_members.create!(
       name: "Family Fee Child",
       relationship: "Child",
@@ -224,7 +226,11 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "member can combine guardian and child fees in one bank transfer" do
-    @plan.update!(membership_plan_type: membership_plan_types(:membership))
+    @plan.update!(
+      membership_plan_type: membership_plan_types(:membership),
+      child_fee_enabled: true,
+      child_amount: 2000
+    )
     child = @member.member_profile.family_members.create!(
       name: "Combined Fee Child",
       relationship: "Child",
@@ -273,6 +279,107 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, @donation_plan.name
   end
 
+  test "member can submit one transfer for a combined payment" do
+    donation_payment = MembershipPayment.create!(
+      user: @member,
+      membership_plan: @donation_plan,
+      amount: @donation_plan.amount,
+      payment_year: Date.current.year,
+      payment_method: :bank_transfer,
+      status: :pending
+    )
+    batch = @member.payment_batches.create!(status: :pending)
+    @payment.update!(payment_batch: batch)
+    donation_payment.update!(payment_batch: batch)
+    batch.update!(total_amount: @payment.amount + donation_payment.amount)
+    sign_in @member
+
+    assert_enqueued_emails 1 do
+      assert_difference -> { Notification.payment_submitted.count }, User.active.where(role: User::FINANCE_ROLES).count do
+        patch submit_transfer_payment_batch_path(batch), params: {
+          payment_batch: {
+            transferred_on: Date.current,
+            transfer_amount: batch.total_amount,
+            transfer_reference_name: "MEMBER USER"
+          }
+        }
+      end
+    end
+
+    assert_redirected_to payment_batch_path(batch)
+    assert batch.reload.pending_verification?
+    assert_equal %w[pending_verification pending_verification], batch.membership_payments.order(:id).pluck(:status)
+  end
+
+  test "finance approver can approve a submitted combined payment once" do
+    donation_payment = MembershipPayment.create!(
+      user: @member,
+      membership_plan: @donation_plan,
+      amount: @donation_plan.amount,
+      payment_year: Date.current.year,
+      payment_method: :manual_bank_transfer,
+      status: :pending_verification
+    )
+    batch = @member.payment_batches.create!(
+      status: :pending_verification,
+      total_amount: @payment.amount + donation_payment.amount,
+      transfer_amount: @payment.amount + donation_payment.amount,
+      transferred_on: Date.current,
+      transfer_reference_name: "MEMBER USER"
+    )
+    @payment.update!(
+      payment_batch: batch,
+      payment_method: :manual_bank_transfer,
+      status: :pending_verification
+    )
+    donation_payment.update!(payment_batch: batch)
+    sign_in @president
+
+    assert_enqueued_emails 1 do
+      assert_difference -> { FinanceTransaction.count }, 2 do
+        patch approve_admin_payment_batch_path(batch)
+      end
+    end
+
+    assert_redirected_to admin_payment_batch_path(batch)
+    assert batch.reload.paid?
+    assert batch.membership_payments.all?(&:paid?)
+
+    assert_no_enqueued_emails do
+      assert_no_difference -> { FinanceTransaction.count } do
+        patch approve_admin_payment_batch_path(batch)
+      end
+    end
+  end
+
+  test "finance approver can reject a submitted combined payment once" do
+    batch = @member.payment_batches.create!(
+      status: :pending_verification,
+      total_amount: @payment.amount,
+      transfer_amount: @payment.amount,
+      transferred_on: Date.current,
+      transfer_reference_name: "MEMBER USER"
+    )
+    @payment.update!(
+      payment_batch: batch,
+      payment_method: :manual_bank_transfer,
+      status: :pending_verification
+    )
+    sign_in @president
+
+    assert_enqueued_emails 1 do
+      patch reject_admin_payment_batch_path(batch)
+    end
+
+    assert_redirected_to admin_payment_batch_path(batch)
+    assert batch.reload.rejected?
+    assert @payment.reload.failed?
+
+    assert_no_enqueued_emails do
+      patch reject_admin_payment_batch_path(batch)
+    end
+  end
+
   test "member can cancel pending combined payment and select again" do
     donation_payment = MembershipPayment.create!(
       user: @member,
@@ -314,6 +421,36 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Select at least one unpaid payment.", flash[:alert]
   end
 
+  test "member cannot create or submit a payment before bank details are configured" do
+    AppSetting.where(key: %w[
+      bank_account_name
+      bank_name
+      bank_branch_name
+      bank_account_number
+      yucho_symbol
+      yucho_number
+    ]).destroy_all
+    sign_in @member
+
+    assert_no_difference -> { @member.payment_batches.count } do
+      post payment_batches_path, params: { membership_payment_ids: [ @payment.id ] }
+    end
+    assert_redirected_to membership_payments_path
+    assert_equal "Bank transfer is temporarily unavailable. Please contact the MSJ finance team.", flash[:alert]
+
+    patch submit_transfer_membership_payment_path(@payment), params: {
+      membership_payment: {
+        transferred_on: Date.current,
+        transfer_amount: @payment.amount,
+        transfer_reference_name: "MEMBER USER"
+      }
+    }
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "Bank transfer is temporarily unavailable"
+    assert @payment.reload.pending?
+  end
+
   test "member can submit bank transfer details for treasurer verification" do
     sign_in @member
 
@@ -336,6 +473,116 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal Date.current, @payment.transferred_on
     assert_equal BigDecimal("5000"), @payment.transfer_amount
     assert_equal "MEMBER USER", @payment.transfer_reference_name
+  end
+
+  test "member cannot submit a transfer amount that differs from the payment" do
+    sign_in @member
+
+    assert_no_enqueued_emails do
+      assert_no_difference -> { Notification.payment_submitted.count } do
+        patch submit_transfer_membership_payment_path(@payment), params: {
+          membership_payment: {
+            transferred_on: Date.current,
+            transfer_amount: "4999",
+            transfer_reference_name: "MEMBER USER"
+          }
+        }
+      end
+    end
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "must match the payment amount"
+    assert @payment.reload.pending?
+  end
+
+  test "invalid transfer proof rerenders instead of partially submitting payment" do
+    sign_in @member
+
+    assert_no_enqueued_emails do
+      patch submit_transfer_membership_payment_path(@payment), params: {
+        membership_payment: {
+          transferred_on: Date.current,
+          transfer_amount: "5000",
+          transfer_reference_name: "MEMBER USER",
+          transfer_screenshot: fixture_file_upload("unsafe.txt", "text/plain")
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "unsupported file type"
+    assert @payment.reload.pending?
+    assert_not @payment.transfer_screenshot.attached?
+  end
+
+  test "pending verification payment cannot be approved through generic edit" do
+    @payment.update!(
+      status: :pending_verification,
+      transferred_on: Date.current,
+      transfer_amount: @payment.amount,
+      transfer_reference_name: "MEMBER USER"
+    )
+    sign_in @president
+
+    patch admin_membership_payment_path(@payment), params: {
+      membership_payment: {
+        user_id: @member.id,
+        membership_plan_id: @plan.id,
+        amount: @payment.amount,
+        payment_year: @payment.payment_year,
+        payment_method: "manual_bank_transfer",
+        status: "paid"
+      }
+    }
+
+    assert_redirected_to root_path
+    assert @payment.reload.pending_verification?
+    assert_nil @payment.approved_by
+  end
+
+  test "paid payment cannot be edited or deleted from the generic record actions" do
+    @payment.update!(
+      status: :paid,
+      paid_on: Time.current,
+      approved_by: @president
+    )
+    original_amount = @payment.amount
+    sign_in @president
+
+    patch admin_membership_payment_path(@payment), params: {
+      membership_payment: {
+        amount: original_amount + 1000,
+        notes: "Unsafe paid record rewrite"
+      }
+    }
+
+    assert_redirected_to root_path
+    assert_equal original_amount, @payment.reload.amount
+    assert_not_equal "Unsafe paid record rewrite", @payment.notes
+
+    assert_no_difference -> { MembershipPayment.count } do
+      delete admin_membership_payment_path(@payment)
+    end
+    assert_redirected_to root_path
+  end
+
+  test "payment belonging to a combined batch cannot be edited or deleted individually" do
+    batch = @member.payment_batches.create!(status: :pending)
+    @payment.update!(payment_batch: batch)
+    batch.update!(total_amount: @payment.amount)
+    sign_in @president
+
+    patch admin_membership_payment_path(@payment), params: {
+      membership_payment: { notes: "Unsafe batch item rewrite" }
+    }
+
+    assert_redirected_to root_path
+    assert_not_equal "Unsafe batch item rewrite", @payment.reload.notes
+
+    assert_no_difference -> { MembershipPayment.count } do
+      delete admin_membership_payment_path(@payment)
+    end
+    assert_redirected_to root_path
   end
 
   test "member can start an optional donation plan without creating duplicate pending payments" do
@@ -677,6 +924,17 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+
+  def configure_bank_transfer
+    {
+      "bank_account_name" => "Mizo Society of Japan",
+      "bank_name" => "Yuucho Bank",
+      "bank_branch_name" => "〇一八",
+      "bank_account_number" => "1234567",
+      "yucho_symbol" => "12345",
+      "yucho_number" => "12345671"
+    }.each { |key, value| AppSetting.set(key, value) }
+  end
 
   def ensure_profile_for(user, mobile_number: "09024681357")
     user.create_member_profile!(

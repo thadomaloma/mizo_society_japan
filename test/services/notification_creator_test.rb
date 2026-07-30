@@ -37,6 +37,22 @@ class NotificationCreatorTest < ActiveSupport::TestCase
     assert_not Notification.exists?(recipient: users(:member), notifiable: announcement)
   end
 
+  test "stale notification for archived content is excluded from the member feed" do
+    announcement = Announcement.create!(
+      title: "Temporary member update",
+      body: "This update was later archived.",
+      category: :general,
+      status: :published,
+      published_at: Time.current,
+      author: users(:admin)
+    )
+    NotificationCreator.announcement_published(announcement, actor: users(:admin))
+    notification = Notification.find_by!(recipient: users(:member), notifiable: announcement)
+    announcement.update_column(:status, Announcement.statuses.fetch("archived"))
+
+    assert_not_includes Notification.relevant_to(users(:member)), notification
+  end
+
   private
 
   def create_event!(visibility:)

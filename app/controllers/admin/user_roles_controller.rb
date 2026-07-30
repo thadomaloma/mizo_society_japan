@@ -1,5 +1,7 @@
 module Admin
   class UserRolesController < ApplicationController
+    LastActiveSuperAdminError = Class.new(StandardError)
+
     before_action :set_user, only: [ :edit, :update, :deactivate, :reactivate ]
 
     def index
@@ -57,21 +59,23 @@ module Admin
       attributes = update_user_params
       new_role = requested_role || @user.role
 
-      if @user.active? && last_active_super_admin? && !User::SUPER_ADMIN_ROLES.include?(new_role)
-        redirect_to admin_user_roles_path, alert: "President or Secretary access must remain assigned."
-        return
-      end
-
       previous_role = @user.role
       profile_changed = attributes.slice(:name, :email).to_h.any? { |attribute, value| @user.public_send(attribute) != value }
       role_changed = previous_role != new_role
 
-      @user.assign_attributes(attributes)
-      @user.role = new_role
+      User.transaction do
+        lock_active_super_admins
+        if @user.active? && last_active_super_admin? && !User::SUPER_ADMIN_ROLES.include?(new_role)
+          raise LastActiveSuperAdminError
+        end
 
-      if @user.save
+        @user.assign_attributes(attributes)
+        @user.role = new_role
+        @user.save!
         sync_member_profile_name(attributes[:name])
+      end
 
+      if @user.persisted?
         AuditLogger.call(
           user: current_user,
           action: "user_updated",
@@ -95,20 +99,28 @@ module Admin
 
         redirect_to admin_user_roles_path(role: params[:current_role], query: params[:query]),
           notice: "User details were updated."
-      else
-        @role_options = role_options
-        render :edit, status: :unprocessable_entity
       end
+    rescue LastActiveSuperAdminError
+      redirect_to admin_user_roles_path, alert: "President or Secretary access must remain assigned."
+    rescue ActiveRecord::RecordInvalid
+      @role_options = role_options
+      render :edit, status: :unprocessable_entity
     end
 
     def deactivate
       authorize :user_role, :deactivate?
       return redirect_to_user_roles_with_alert("You cannot deactivate your own account.") if @user == current_user
-      return redirect_to_user_roles_with_alert("President or Secretary access must remain assigned.") if last_active_super_admin?
 
-      @user.update!(active: false)
+      User.transaction do
+        lock_active_super_admins
+        raise LastActiveSuperAdminError if last_active_super_admin?
+
+        @user.update!(active: false)
+      end
       audit_account_status_change("user_deactivated")
       redirect_to admin_user_roles_path, notice: "#{@user.display_name} was deactivated."
+    rescue LastActiveSuperAdminError
+      redirect_to_user_roles_with_alert("President or Secretary access must remain assigned.")
     end
 
     def reactivate
@@ -164,6 +176,10 @@ module Admin
       return false unless User::SUPER_ADMIN_ROLES.include?(@user.role)
 
       User.active.where(role: User::SUPER_ADMIN_ROLES).where.not(id: @user.id).none?
+    end
+
+    def lock_active_super_admins
+      User.active.where(role: User::SUPER_ADMIN_ROLES).lock.load
     end
 
     def redirect_to_user_roles_with_alert(message)

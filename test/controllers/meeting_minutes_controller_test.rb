@@ -156,6 +156,20 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Updated Executive Meeting", minute.reload.title
   end
 
+  test "meeting time remains required when an existing minute is updated" do
+    minute = create_minute(status: :draft)
+    original_time = minute.meeting_time
+    sign_in @president
+
+    patch meeting_minute_path(minute), params: {
+      meeting_minute: valid_minute_params(title: minute.title).merge(meeting_time: "")
+    }
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "Meeting time can&#39;t be blank"
+    assert_equal original_time, minute.reload.meeting_time
+  end
+
   test "published minute edit form shows update action instead of draft publish actions" do
     minute = create_minute(status: :published)
     sign_in @president
@@ -282,13 +296,12 @@ class MeetingMinutesControllerTest < ActionDispatch::IntegrationTest
     user.create_member_profile!(
       full_name: user.name,
       mobile_number: mobile_number,
-        date_of_birth: Date.new(1990, 1, 1),
-        family_status: :single,
+      date_of_birth: Date.new(1990, 1, 1),
+      family_status: :single,
       postal_code: "169-0075",
       prefecture: "Tokyo",
       city: "Shinjuku",
       address_line1: "1-1-1 Okubo"
     )
   end
-
 end

@@ -76,8 +76,7 @@ module Admin
     def update
       authorize @membership_payment
 
-      if @membership_payment.update(membership_payment_params)
-        MembershipPaymentFinanceRecorder.call(payment: @membership_payment, actor: current_user) if @membership_payment.paid?
+      if update_membership_payment
         AuditLogger.call(
           user: current_user,
           action: "membership_payment_updated",
@@ -107,7 +106,12 @@ module Admin
 
     def approve
       authorize @membership_payment, :approve?
-      @membership_payment.approve!(current_user)
+      approved = @membership_payment.approve!(current_user)
+      unless approved
+        redirect_back fallback_location: admin_membership_payment_path(@membership_payment), notice: "Membership payment was already approved."
+        return
+      end
+
       AuditLogger.call(
         user: current_user,
         action: "payment_approved",
@@ -123,7 +127,12 @@ module Admin
 
     def reject
       authorize @membership_payment, :reject?
-      @membership_payment.reject!(current_user)
+      rejected = @membership_payment.reject!(current_user)
+      unless rejected
+        redirect_back fallback_location: admin_membership_payment_path(@membership_payment), notice: "Membership payment was already rejected."
+        return
+      end
+
       AuditLogger.call(
         user: current_user,
         action: "payment_rejected",
@@ -231,6 +240,46 @@ module Admin
       )
       permitted[:status] = params.dig(:membership_payment, :status) if current_user.finance_approver? && action_name == "update"
       permitted
+    end
+
+    def update_membership_payment
+      attributes = membership_payment_params
+      requested_status = attributes.delete(:status).presence
+      manually_approved = false
+
+      if requested_status.present? && !MembershipPayment.statuses.key?(requested_status)
+        @membership_payment.errors.add(:status, "is not valid")
+        return false
+      end
+
+      if @membership_payment.paid? && requested_status.present? && requested_status != "paid"
+        @membership_payment.errors.add(:status, "cannot be changed after approval")
+        return false
+      end
+
+      if @membership_payment.pending_verification? && requested_status.present? && requested_status != "pending_verification"
+        @membership_payment.errors.add(:status, "must be changed with the review actions")
+        return false
+      end
+
+      MembershipPayment.transaction do
+        @membership_payment.update!(attributes)
+        if requested_status == "paid" && !@membership_payment.paid?
+          @membership_payment.approve!(current_user, allow_pending: true)
+          manually_approved = true
+        elsif requested_status.present?
+          @membership_payment.update!(status: requested_status)
+        end
+      end
+
+      if manually_approved
+        NotificationCreator.payment_approved(@membership_payment, actor: current_user)
+        PaymentMailer.with(payment: @membership_payment).payment_approved.deliver_later
+      end
+
+      true
+    rescue ActiveRecord::RecordInvalid
+      false
     end
 
     def membership_payment_metadata(payment)

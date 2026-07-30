@@ -9,17 +9,19 @@ class DocumentPublisher
   end
 
   def call
-    unless document.publishable?
-      document.errors.add(:base, "Archived documents cannot be published")
-      raise ActiveRecord::RecordInvalid, document
-    end
+    document.with_lock do
+      return document if document.published?
 
-    unless document.file.attached?
-      document.errors.add(:file, "must be attached before publishing")
-      raise ActiveRecord::RecordInvalid, document
-    end
+      unless document.publishable?
+        document.errors.add(:base, "Archived documents cannot be published")
+        raise ActiveRecord::RecordInvalid, document
+      end
 
-    Document.transaction do
+      unless document.file.attached?
+        document.errors.add(:file, "must be attached before publishing")
+        raise ActiveRecord::RecordInvalid, document
+      end
+
       document.update!(
         status: :published,
         published_at: document.published_at || Time.current
@@ -31,9 +33,8 @@ class DocumentPublisher
         auditable: document,
         metadata: { title: document.title, visibility: document.visibility, status: document.status }
       )
+      document
     end
-
-    document
   end
 
   private

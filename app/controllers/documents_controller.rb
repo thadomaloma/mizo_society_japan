@@ -1,6 +1,4 @@
 class DocumentsController < ApplicationController
-  skip_forgery_protection only: :official_letter_template
-
   before_action :set_document, only: [ :show, :edit, :update, :destroy, :download, :download_letter, :publish, :archive ]
   before_action :set_category_options, only: [ :new, :create, :edit, :update ]
 
@@ -62,6 +60,9 @@ class DocumentsController < ApplicationController
     authorize @document
 
     if @document.update(document_attributes)
+      if @document.published? && @document.saved_changes.keys.intersect?(%w[title description visibility expires_at])
+        NotificationCreator.document_uploaded(@document, actor: current_user)
+      end
       audit_document("document_updated")
       redirect_to @document, notice: "Letter was updated."
     else
@@ -110,7 +111,10 @@ class DocumentsController < ApplicationController
 
   def archive
     authorize @document, :archive?
-    @document.update!(status: :archived)
+    @document.transaction do
+      @document.update!(status: :archived)
+      @document.notifications.destroy_all
+    end
     audit_document("document_archived")
     redirect_to @document, notice: "Letter was archived."
   end

@@ -63,7 +63,13 @@ class MembershipPaymentsController < ApplicationController
 
   def submit_transfer
     authorize @membership_payment
+    original_status = @membership_payment.status
     submission = bank_transfer_submission_params
+    unless @bank_transfer_configured
+      @membership_payment.errors.add(:base, "Bank transfer is temporarily unavailable. Please contact the MSJ finance team.")
+      render :show, status: :unprocessable_entity
+      return
+    end
 
     if submission[:transferred_on].blank? || submission[:transfer_amount].blank? || submission[:transfer_reference_name].blank?
       @membership_payment.assign_attributes(submission.except(:transfer_screenshot))
@@ -72,12 +78,24 @@ class MembershipPaymentsController < ApplicationController
       return
     end
 
-    @membership_payment.submit_bank_transfer!(
+    if BigDecimal(submission[:transfer_amount].to_s) != @membership_payment.amount
+      @membership_payment.assign_attributes(submission.except(:transfer_screenshot))
+      @membership_payment.errors.add(:transfer_amount, "must match the payment amount.")
+      render :show, status: :unprocessable_entity
+      return
+    end
+
+    submitted = @membership_payment.submit_bank_transfer!(
       transferred_on: submission[:transferred_on],
       transfer_amount: submission[:transfer_amount],
       transfer_reference_name: submission[:transfer_reference_name],
       transfer_screenshot: submission[:transfer_screenshot]
     )
+    unless submitted
+      redirect_to membership_payment_path(@membership_payment), notice: "Bank transfer details were already submitted."
+      return
+    end
+
     NotificationCreator.payment_submitted(@membership_payment, actor: current_user)
     PaymentMailer.with(payment: @membership_payment).transfer_submitted.deliver_later
     AuditLogger.call(
@@ -93,6 +111,13 @@ class MembershipPaymentsController < ApplicationController
     )
 
     redirect_to membership_payment_path(@membership_payment), notice: "Bank transfer details submitted. Treasurer will verify the payment."
+  rescue ArgumentError
+    @membership_payment.assign_attributes(submission.except(:transfer_screenshot))
+    @membership_payment.errors.add(:transfer_amount, "must be a valid whole yen amount.")
+    render :show, status: :unprocessable_entity
+  rescue ActiveRecord::RecordInvalid
+    @membership_payment.status = original_status
+    render :show, status: :unprocessable_entity
   end
 
   private
@@ -109,6 +134,7 @@ class MembershipPaymentsController < ApplicationController
 
   def set_bank_transfer_details
     @bank_transfer_details = BankTransferDetails.call
+    @bank_transfer_configured = BankTransferDetails.configured?
   end
 
   def bank_transfer_submission_params
@@ -140,5 +166,4 @@ class MembershipPaymentsController < ApplicationController
       .includes(:family_member, :membership_plan, :payment_batch)
       .select { |payment| payment.paid? || payment.payment_batch&.paid? }
   end
-
 end

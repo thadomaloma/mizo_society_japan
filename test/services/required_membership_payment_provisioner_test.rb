@@ -68,6 +68,23 @@ class RequiredMembershipPaymentProvisionerTest < ActiveSupport::TestCase
     assert_equal 2500, child_payment.reload.amount
   end
 
+  test "syncing a plan amount also updates an open combined payment total" do
+    RequiredMembershipPaymentProvisioner.call(user: @user, membership_plan: @plan)
+    guardian_payment = @user.membership_payments.find_by!(
+      membership_plan: @plan,
+      family_member_id: nil
+    )
+    batch = PaymentBatch.create!(user: @user, status: :pending)
+    guardian_payment.update!(payment_batch: batch)
+    batch.update!(total_amount: guardian_payment.amount)
+    @plan.update!(amount: 6500)
+
+    RequiredMembershipPaymentProvisioner.call(user: @user, membership_plan: @plan)
+
+    assert_equal 6500, guardian_payment.reload.amount
+    assert_equal 6500, batch.reload.total_amount
+  end
+
   test "retires unpaid child fees below eighteen but preserves reviewed financial records" do
     pending_child = @profile.family_members.create!(
       name: "Pending Child",
