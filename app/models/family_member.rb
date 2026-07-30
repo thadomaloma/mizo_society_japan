@@ -1,4 +1,6 @@
 class FamilyMember < ApplicationRecord
+  MEMBERSHIP_FEE_ELIGIBLE_AGE = 18
+
   belongs_to :member_profile
   has_many :membership_payments, dependent: :restrict_with_error
 
@@ -32,7 +34,7 @@ class FamilyMember < ApplicationRecord
   end
 
   def membership_fee_eligible?(on: Date.current)
-    child? && age_on(on).to_i >= 14
+    child? && age_on(on).to_i >= MEMBERSHIP_FEE_ELIGIBLE_AGE
   end
 
   private

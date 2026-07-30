@@ -5,42 +5,40 @@ module Admin
 
       total_users = User.count
       active_profiles = MemberProfile.active.count
-      role_counts = User.group(:role).count
       @finance_dashboard_enabled = current_user.finance_viewer?
       visible_welfare_cases = policy_scope(WelfareCase)
-      yearly_transactions = FinanceTransaction.approved.where(transaction_date: Date.current.all_year)
-      yearly_income = yearly_transactions.income.sum(:amount)
-      yearly_expense = yearly_transactions.expense.sum(:amount)
-      current_balance = FinanceTransaction.approved_income_total - FinanceTransaction.approved_expense_total
+      visible_meeting_minutes = policy_scope(MeetingMinute)
+      visible_events = policy_scope(Event)
+      visible_documents = policy_scope(Document)
       new_members_this_month = MemberProfile.active.where(joined_on: Date.current.all_month).count
-      draft_minutes = MeetingMinute.draft.count
-      payment_batches_to_verify = PaymentBatch.pending_verification.count
-      payments_to_verify = MembershipPayment.pending_verification.where(payment_batch_id: nil).count + payment_batches_to_verify
-      payments_waiting_transfer = MembershipPayment.pending.count
+      draft_minutes = visible_meeting_minutes.draft.count
       open_welfare_count = visible_welfare_cases.open_cases.count
       in_progress_welfare_count = visible_welfare_cases.in_progress.count
       resolved_welfare_count = visible_welfare_cases.resolved.count
+      payments_to_verify = 0
+      payments_waiting_transfer = 0
+      if @finance_dashboard_enabled
+        payment_batches_to_verify = PaymentBatch.pending_verification.count
+        payments_to_verify = MembershipPayment.pending_verification.where(payment_batch_id: nil).count + payment_batches_to_verify
+        payments_waiting_transfer = MembershipPayment.pending.count
+      end
 
       @stats = [
         { label: "Active Members", value: active_profiles, tone: "red", icon: :members, caption: "#{total_users} total accounts", caption_tone: "text-slate-500 dark:text-slate-300" },
         { label: "New Members", value: new_members_this_month, tone: "blue", icon: :user_plus, caption: "Joined this month", caption_tone: "text-sky-700 dark:text-sky-300" },
         { label: "Open Welfare Cases", value: open_welfare_count, tone: "red", icon: :welfare, caption: "Needs attention", caption_tone: "text-red-700 dark:text-red-300" },
-        { label: "Meeting Minutes", value: MeetingMinute.count, tone: "purple", icon: :documents, caption: "#{draft_minutes} awaiting publication", caption_tone: "text-fuchsia-700 dark:text-fuchsia-300" },
-        { label: "Upcoming Events", value: Event.published.upcoming.count, tone: "dark", icon: :events, caption: "Published schedule", caption_tone: "text-slate-500 dark:text-slate-300" }
+        { label: "Meeting Minutes", value: visible_meeting_minutes.count, tone: "purple", icon: :documents, caption: "#{draft_minutes} awaiting publication", caption_tone: "text-fuchsia-700 dark:text-fuchsia-300" },
+        { label: "Upcoming Events", value: visible_events.published.upcoming.count, tone: "dark", icon: :events, caption: "Published schedule", caption_tone: "text-slate-500 dark:text-slate-300" }
       ]
       if @finance_dashboard_enabled
         @stats.insert(2, { label: "Payment Review", value: payments_to_verify, tone: "amber", icon: :finance, caption: "#{payments_waiting_transfer} waiting transfer", caption_tone: "text-amber-700 dark:text-amber-300" })
       end
 
-      @role_counts = User.roles.keys.index_with { |role| role_counts.fetch(role, 0) }
-      official_letters = Document
+      official_letters = visible_documents
         .joins(:document_category)
         .where(document_categories: { name: "Official Letters" })
       @latest_documents = official_letters.includes(:document_category, :uploaded_by, file_attachment: :blob).latest.limit(5)
-      @recent_meeting_minutes = MeetingMinute.includes(:uploaded_by, file_attachment: :blob).latest.limit(5)
-      @pending_meeting_minutes = MeetingMinute.draft.includes(:uploaded_by).latest.limit(5)
-      @recent_welfare_cases = visible_welfare_cases.includes(:welfare_category, :user, :assigned_to).latest.limit(5)
-      @upcoming_events = Event.published.upcoming.limit(3)
+      @upcoming_events = visible_events.published.upcoming.limit(3)
       @pending_verification_payments = if @finance_dashboard_enabled
         MembershipPayment.pending_verification.where(payment_batch_id: nil)
           .includes(:family_member, { membership_plan: :membership_plan_type }, user: :member_profile)
@@ -57,14 +55,19 @@ module Admin
       else
         PaymentBatch.none
       end
-      @recent_activities = recent_activities
-      @finance_chart = finance_chart
-      @membership_payment_summary = membership_payment_summary
-      @finance_summary = {
-        income: yearly_income,
-        expense: yearly_expense,
-        balance: current_balance
-      }
+      @recent_activities = recent_activities(visible_welfare_cases)
+      if @finance_dashboard_enabled
+        yearly_transactions = FinanceTransaction.approved.where(transaction_date: Date.current.all_year)
+        yearly_income = yearly_transactions.income.sum(:amount)
+        yearly_expense = yearly_transactions.expense.sum(:amount)
+        @finance_chart = finance_chart
+        @membership_payment_summary = membership_payment_summary
+        @finance_summary = {
+          income: yearly_income,
+          expense: yearly_expense,
+          balance: FinanceTransaction.approved_income_total - FinanceTransaction.approved_expense_total
+        }
+      end
       @welfare_summary = {
         open: open_welfare_count,
         in_progress: in_progress_welfare_count,
@@ -77,7 +80,6 @@ module Admin
         published: active_documents.count,
         final_files: official_letters.joins(:file_attachment).count
       }
-      @workflow_rows = workflow_rows
     end
 
     private
@@ -125,40 +127,35 @@ module Admin
       end
     end
 
-    def recent_activities
+    def recent_activities(visible_welfare_cases)
       activities = []
-      activities += MembershipPayment.includes(:user, membership_plan: :membership_plan_type).latest.limit(2).map do |payment|
-        title = if payment.pending_verification?
-          "#{payment.user.display_name} submitted bank transfer"
-        elsif payment.paid?
-          "#{payment.user.display_name} payment approved"
-        else
-          "#{payment.user.display_name} has a pending #{payment.plan_type_label.downcase} payment"
+      if current_user.finance_viewer?
+        activities += MembershipPayment.includes(:user, membership_plan: :membership_plan_type).latest.limit(2).map do |payment|
+          title = if payment.pending_verification?
+            "#{payment.user.display_name} submitted bank transfer"
+          elsif payment.paid?
+            "#{payment.user.display_name} payment approved"
+          else
+            "#{payment.user.display_name} has a pending #{payment.plan_type_label.downcase} payment"
+          end
+          { title: title, subtitle: payment.created_at.strftime("%b %d, %Y"), icon: :finance, occurred_at: payment.created_at }
         end
-        { title: title, subtitle: payment.created_at.strftime("%b %d, %Y"), icon: :finance }
       end
       if current_user.super_admin?
         activities += AuditLog.latest.limit(2).map do |audit|
-          { title: audit.action.humanize, subtitle: audit.created_at.strftime("%b %d, %Y %H:%M"), icon: :reports }
+          { title: audit.action.humanize, subtitle: audit.created_at.strftime("%b %d, %Y %H:%M"), icon: :reports, occurred_at: audit.created_at }
         end
       end
-      activities += WelfareCase.includes(:welfare_category).latest.limit(1).map do |welfare_case|
-        { title: "Welfare case updated: #{welfare_case.welfare_category.name}", subtitle: welfare_case.updated_at.strftime("%b %d, %Y"), icon: :welfare }
+      if current_user.welfare_viewer?
+        activities += visible_welfare_cases.includes(:welfare_category).latest.limit(2).map do |welfare_case|
+          { title: "Welfare case updated: #{welfare_case.welfare_category.name}", subtitle: welfare_case.updated_at.strftime("%b %d, %Y"), icon: :welfare, occurred_at: welfare_case.updated_at }
+        end
       end
-      activities.first(5)
-    end
 
-    def workflow_rows
-      [
-        { area: "Members", roles: "President, secretary", status: "Model ready", tone: "emerald" },
-        { area: "Finance", roles: "Treasurer, finance secretary", status: "Active", tone: "emerald" },
-        { area: "Official Notices", roles: "Secretary, assistant secretary", status: "Foundation ready", tone: "sky" },
-        { area: "Events", roles: "Secretary, assistant secretary", status: "Foundation ready", tone: "sky" },
-        { area: "Letters", roles: "Secretary, assistant secretary", status: "Foundation ready", tone: "sky" },
-        { area: "Meeting minutes", roles: "President, secretary, assistant secretary", status: "Foundation ready", tone: "sky" },
-        { area: "Welfare", roles: "President, secretary, assistant secretary", status: "Active", tone: "emerald" },
-        { area: "Reports", roles: "Executive committee", status: "Active", tone: "emerald" }
-      ]
+      activities
+        .sort_by { |activity| activity[:occurred_at] }
+        .reverse
+        .first(5)
     end
   end
 end

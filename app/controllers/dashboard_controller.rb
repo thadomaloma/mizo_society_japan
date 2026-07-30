@@ -56,7 +56,7 @@ class DashboardController < ApplicationController
     @latest_payment_batches = current_user.payment_batches.where.not(status: :pending).includes(membership_payments: [ :family_member, :membership_plan ]).latest.limit(2)
     @pending_payment_count = current_user.membership_payments.pending.count + current_user.payment_batches.pending_verification.count
     @visible_announcement_count = Announcement.visible_to_members.count
-    @latest_announcements = Announcement.visible_to_members.limit(3)
+    @latest_announcements = Announcement.visible_to_members.limit(6)
     @upcoming_events = EventPolicy::Scope.new(current_user, Event).resolve.upcoming.limit(3)
     @visible_meeting_minutes_count = if current_user.minutes_access?
       MeetingMinute.visible_to(current_user).count
@@ -164,12 +164,35 @@ class DashboardController < ApplicationController
   end
 
   def recent_updates
-    updates = @latest_announcements.limit(3).map do |announcement|
-      { title: announcement.title, subtitle: announcement.published_at&.strftime("%b %d, %Y") || "Published", icon: :announcements, path: announcement_path(announcement) }
+    announcement_updates = @latest_announcements.map do |announcement|
+      {
+        title: announcement.title,
+        subtitle: announcement.published_at&.strftime("%b %d, %Y") || "Published",
+        icon: :announcements,
+        path: announcement_path(announcement),
+        occurred_at: announcement.published_at || announcement.created_at,
+        announcement_id: announcement.id
+      }
     end
-    updates += current_user.notifications.latest.limit(3).map do |notification|
-      { title: notification.title, subtitle: notification.created_at.strftime("%b %d, %Y"), icon: :notifications, path: notifications_path }
+
+    represented_announcement_ids = announcement_updates.pluck(:announcement_id)
+    notification_updates = current_user.notifications.relevant_to(current_user).latest.limit(8).filter_map do |notification|
+      next if notification.announcement_published? &&
+        notification.notifiable_type == "Announcement" &&
+        notification.notifiable_id.in?(represented_announcement_ids)
+
+      {
+        title: notification.title,
+        subtitle: notification.created_at.strftime("%b %d, %Y"),
+        icon: :notifications,
+        path: notifications_path,
+        occurred_at: notification.created_at
+      }
     end
-    updates.first(3)
+
+    (announcement_updates + notification_updates)
+      .sort_by { |update| update[:occurred_at] }
+      .reverse
+      .first(3)
   end
 end

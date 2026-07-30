@@ -25,6 +25,17 @@ class Notification < ApplicationRecord
   scope :unread, -> { where(read_at: nil) }
   scope :read, -> { where.not(read_at: nil) }
   scope :for_user, ->(user) { where(recipient: user) }
+  scope :relevant_to, lambda { |user|
+    owned_notifications = for_user(user)
+    other_notifications = owned_notifications.where.not(action: actions[:event_created])
+    visible_event_notifications = owned_notifications.where(
+      action: actions[:event_created],
+      notifiable_type: "Event",
+      notifiable_id: Event.visible_to(user).select(:id)
+    )
+
+    other_notifications.or(visible_event_notifications)
+  }
 
   def read?
     read_at.present?

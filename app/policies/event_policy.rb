@@ -49,12 +49,7 @@ class EventPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      return scope.all if can_manage_content?
-
-      visible_scope = scope.published.where(visibility: [ :public_event, :members_only ])
-      return visible_scope.or(scope.published.where(visibility: :office_bearers_only)) if user&.office_bearer?
-
-      visible_scope
+      scope.visible_to(user)
     end
   end
 

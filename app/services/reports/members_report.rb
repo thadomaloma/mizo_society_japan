@@ -33,7 +33,7 @@ module Reports
         registered_children: children.size,
         registered_spouses: spouses.size,
         household_population: profiles.size + children.size + spouses.size,
-        children_14_and_over: children.count { |child| child.age.to_i >= 14 },
+        children_18_and_over: children.count { |child| child.age.to_i >= FamilyMember::MEMBERSHIP_FEE_ELIGIBLE_AGE },
         under_18_members: profiles.count { |profile| profile.age.present? && profile.age < 18 },
         by_prefecture: location_summary(:prefecture),
         by_city: location_summary(:city),

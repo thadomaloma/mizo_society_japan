@@ -6,18 +6,20 @@ class NotificationCreator
       notifiable: announcement,
       action: :announcement_published,
       title: announcement.title,
-      body: announcement.body.to_s.truncate(180)
+      body: announcement.body.to_s.truncate(180),
+      sync_recipients: true
     ).call
   end
 
   def self.event_created(event, actor:)
     new(
-      recipients: active_recipients,
+      recipients: event_recipients(event),
       actor: actor,
       notifiable: event,
       action: :event_created,
       title: event.title,
-      body: event.description.to_s.truncate(180)
+      body: event.description.to_s.truncate(180),
+      sync_recipients: true
     ).call
   end
 
@@ -28,7 +30,8 @@ class NotificationCreator
       notifiable: document,
       action: :document_uploaded,
       title: document.title,
-      body: document.description.to_s.truncate(180)
+      body: document.description.to_s.truncate(180),
+      sync_recipients: true
     ).call
   end
 
@@ -39,7 +42,8 @@ class NotificationCreator
       notifiable: meeting_minute,
       action: :meeting_minute_published,
       title: meeting_minute.title,
-      body: meeting_minute.summary.to_s.truncate(180)
+      body: meeting_minute.summary.to_s.truncate(180),
+      sync_recipients: true
     ).call
   end
 
@@ -138,9 +142,14 @@ class NotificationCreator
   end
 
   def self.active_recipients
-    User.left_outer_joins(:member_profile)
+    User.active
+      .left_outer_joins(:member_profile)
       .where("member_profiles.id IS NULL OR member_profiles.status = ?", MemberProfile.statuses[:active])
       .distinct
+  end
+
+  def self.event_recipients(event)
+    recipients_for_visibility(event.visibility)
   end
 
   def self.document_recipients(document)
@@ -153,7 +162,7 @@ class NotificationCreator
 
   def self.recipients_for_visibility(visibility)
     case visibility.to_s
-    when "public_access", "members_only"
+    when "public_access", "public_event", "members_only"
       active_recipients
     when "office_bearers_only"
       active_recipients.where(role: User::OFFICE_BEARER_ROLES)
@@ -174,42 +183,45 @@ class NotificationCreator
     active_recipients.where(role: User::FINANCE_ROLES)
   end
 
-  def initialize(recipients:, actor:, notifiable:, action:, title:, body: nil)
+  def initialize(recipients:, actor:, notifiable:, action:, title:, body: nil, sync_recipients: false)
     @recipients = recipients
     @actor = actor
     @notifiable = notifiable
     @action = action
     @title = title
     @body = body
+    @sync_recipients = sync_recipients
   end
 
   def call
-    each_recipient do |recipient|
+    recipient_list = recipients.to_a.compact.uniq
+    remove_notifications_for_other_recipients(recipient_list) if sync_recipients
+
+    recipient_list.each do |recipient|
       create_notification(recipient)
     end
   end
 
   private
 
-  attr_reader :recipients, :actor, :notifiable, :action, :title, :body
-
-  def each_recipient(&)
-    return recipients.find_each(&) if recipients.respond_to?(:find_each)
-
-    recipients.each(&)
-  end
+  attr_reader :recipients, :actor, :notifiable, :action, :title, :body, :sync_recipients
 
   def create_notification(recipient)
-    Notification.find_or_create_by!(
+    notification = Notification.find_or_initialize_by(
       recipient: recipient,
       action: action,
       notifiable: notifiable
-    ) do |notification|
-      notification.actor = actor
-      notification.title = title
-      notification.body = body
-    end
+    )
+    notification.assign_attributes(actor: actor, title: title, body: body)
+    notification.save! if notification.new_record? || notification.changed?
   rescue ActiveRecord::RecordNotUnique
     retry
+  end
+
+  def remove_notifications_for_other_recipients(recipient_list)
+    existing = Notification.where(action: action, notifiable: notifiable)
+    recipient_ids = recipient_list.map(&:id)
+    existing = existing.where.not(recipient_id: recipient_ids) if recipient_ids.any?
+    existing.destroy_all
   end
 end

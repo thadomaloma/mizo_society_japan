@@ -78,6 +78,58 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "Expired Announcement"
   end
 
+  test "member dashboard prioritizes personal notifications over older announcements" do
+    3.times do |index|
+      announcement = create_announcement!(title: "Older Announcement #{index + 1}")
+      announcement.update_columns(published_at: (index + 2).days.ago, created_at: (index + 2).days.ago)
+    end
+    Notification.create!(
+      recipient: @member,
+      actor: users(:admin),
+      action: :payment_approved,
+      title: "Your payment was approved",
+      body: "The payment is complete."
+    )
+    Notification.create!(
+      recipient: users(:admin),
+      actor: users(:admin),
+      action: :payment_submitted,
+      title: "Another member payment needs review",
+      body: "Admin-only payment activity."
+    )
+    sign_in @member
+
+    get root_path
+
+    assert_response :success
+    assert_includes response.body, "Your payment was approved"
+    assert_not_includes response.body, "Another member payment needs review"
+  end
+
+  test "member notification surfaces hide historical office bearer event notifications" do
+    event = create_visible_event!(title: "Private Office Bearer Planning")
+    event.update!(visibility: :office_bearers_only)
+    Notification.create!(
+      recipient: @member,
+      actor: users(:admin),
+      action: :event_created,
+      notifiable: event,
+      title: event.title,
+      body: "Restricted event details."
+    )
+    sign_in @member
+
+    get root_path
+
+    assert_response :success
+    assert_not_includes response.body, event.title
+
+    get notifications_path
+
+    assert_response :success
+    assert_not_includes response.body, event.title
+  end
+
   test "executive member uses member style dashboard with payments reports and announcements" do
     announcement = create_announcement!(title: "Executive Update")
     executive_member = create_profiled_member!("executive-dashboard@example.com", role: :executive_member)

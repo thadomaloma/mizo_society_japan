@@ -190,7 +190,7 @@ class User < ApplicationRecord
 
   def unread_notifications_count
     Rails.cache.fetch(notification_count_cache_key, expires_in: 1.minute) do
-      notifications.unread.count
+      notifications.relevant_to(self).unread.count
     end
   end
 

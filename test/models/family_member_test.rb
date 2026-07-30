@@ -31,12 +31,12 @@ class FamilyMemberTest < ActiveSupport::TestCase
     assert_not spouse.child?
   end
 
-  test "membership fee eligibility starts on fourteenth birthday" do
+  test "membership fee eligibility starts on eighteenth birthday" do
     today = Date.new(2026, 7, 13)
     child = @profile.family_members.build(
       name: "Eligible Child",
       relationship: "Child",
-      date_of_birth: Date.new(2012, 7, 13)
+      date_of_birth: Date.new(2008, 7, 13)
     )
 
     assert_not child.membership_fee_eligible?(on: today.yesterday)

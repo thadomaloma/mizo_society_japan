@@ -120,7 +120,7 @@ class Admin::MembershipPlansControllerTest < ActionDispatch::IntegrationTest
     eligible_child = @member.member_profile.family_members.create!(
       name: "Plan Test Child",
       relationship: "Child",
-      date_of_birth: 14.years.ago.to_date
+      date_of_birth: 18.years.ago.to_date
     )
     sign_in @president
 

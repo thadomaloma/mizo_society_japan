@@ -48,6 +48,9 @@ class EventsController < ApplicationController
     authorize @event
 
     if @event.update(event_params)
+      if @event.published? && @event.saved_changes.keys.intersect?(%w[title description visibility])
+        NotificationCreator.event_created(@event, actor: current_user)
+      end
       AuditLogger.call(user: current_user, action: "event_updated", auditable: @event, metadata: event_metadata, request: request)
       redirect_to @event, notice: "Event was updated."
     else

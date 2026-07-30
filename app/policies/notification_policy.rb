@@ -17,7 +17,7 @@ class NotificationPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      scope.for_user(user)
+      scope.relevant_to(user)
     end
   end
 

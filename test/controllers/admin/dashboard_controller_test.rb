@@ -41,6 +41,23 @@ module Admin
       end
     end
 
+    test "assistant secretary dashboard does not expose finance overview" do
+      assistant_secretary = User.create!(
+        name: "Assistant Secretary",
+        email: "assistant-dashboard@example.test",
+        password: "password123",
+        role: :assistant_secretary
+      )
+      ensure_profile_for(assistant_secretary)
+      sign_in assistant_secretary
+
+      get admin_dashboard_path
+
+      assert_response :success
+      assert_not_includes response.body, "Financial Overview"
+      assert_not_includes response.body, "Payment Review"
+    end
+
     private
 
     def ensure_profile_for(user)

@@ -126,7 +126,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     child = @member.member_profile.family_members.create!(
       name: "Family Fee Child",
       relationship: "Child",
-      date_of_birth: 14.years.ago.to_date
+      date_of_birth: 18.years.ago.to_date
     )
     @payment.update!(status: :paid, paid_on: Time.current)
     child_payment = MembershipPayment.create!(
@@ -228,7 +228,7 @@ class MembershipPaymentsControllerTest < ActionDispatch::IntegrationTest
     child = @member.member_profile.family_members.create!(
       name: "Combined Fee Child",
       relationship: "Child",
-      date_of_birth: 14.years.ago.to_date
+      date_of_birth: 18.years.ago.to_date
     )
     child_payment = MembershipPayment.create!(
       user: @member,

@@ -14,7 +14,7 @@ class MizoAiAssistant
       { key: :pay_together, text: "Fee leh fund te vawi khat bank transfer-in engtin nge ka pek ang?", answer: :payment_answer },
       *BANK_TRANSFER_QUESTIONS,
       { key: :submit_and_track, text: "Transfer zawh hnuah eng nge ka submit a, status engtin nge ka check ang?", answer: :payment_submission_status_answer },
-      { key: :family_fee, text: "Kum 14+ child membership fee hi engtin nge ka pek ang?", answer: :family_fee_answer },
+      { key: :family_fee, text: "Kum 18+ child membership fee hi engtin nge ka pek ang?", answer: :family_fee_answer },
       { key: :welfare_request, text: "Welfare support private taka engtin nge ka dil ang?", answer: :welfare_answer },
       { key: :events_and_updates, text: "Events, RSVP leh announcements engtin nge ka hman ang?", answer: :member_events_updates_answer },
       { key: :account_help, text: "Password ka theihnghilh emaw sign in harsatna ka neih chuan engtin nge ka tih ang?", answer: :account_answer }
@@ -23,7 +23,7 @@ class MizoAiAssistant
       { key: :admin_access, text: "Super Admin daily checklist leh portal control dan min hrilh rawh.", answer: :super_admin_general_answer },
       { key: :review_transfers, text: "Submitted payment batch approve/reject dan min hrilh rawh.", answer: :payment_review_answer },
       { key: :plans_and_duplicates, text: "Payment plans manage leh duplicate payment ven dan eng nge?", answer: :payment_plan_answer },
-      { key: :family_fee_setup, text: "Kum 14+ child membership fee engtin nge ka setup ang?", answer: :family_fee_answer },
+      { key: :family_fee_setup, text: "Kum 18+ child membership fee engtin nge ka setup ang?", answer: :family_fee_answer },
       { key: :finance_operations, text: "Transactions leh yearly finance report check dan min hrilh rawh.", answer: :finance_operations_answer },
       { key: :manage_welfare, text: "Welfare case assign/resolve dan eng nge?", answer: :welfare_answer },
       { key: :manage_minutes, text: "Meeting minutes siam leh publish dan min hrilh rawh.", answer: :minutes_answer },
@@ -39,7 +39,7 @@ class MizoAiAssistant
       { key: :review_transfers, text: "Combined transfer verify, approve leh reject dan eng nge?", answer: :payment_review_answer },
       { key: :manual_payment, text: "Manual payment record duplicate lovin engtin nge ka siam ang?", answer: :manual_payment_answer },
       { key: :manage_plans, text: "Payment plans engtin nge ka manage ang?", answer: :payment_plan_answer },
-      { key: :family_fee_setup, text: "Kum 14+ child membership fee engtin nge ka setup ang?", answer: :family_fee_answer },
+      { key: :family_fee_setup, text: "Kum 18+ child membership fee engtin nge ka setup ang?", answer: :family_fee_answer },
       { key: :transactions, text: "Income leh expense transaction record dan min hrilh rawh.", answer: :finance_transactions_answer },
       { key: :finance_reports, text: "Finance report leh CSV export engtin nge ka hman ang?", answer: :reports_answer },
       { key: :finance_own_payment, text: "Mahni fee leh fund te engtin nge ka pek ang?", answer: :payment_answer },
@@ -436,14 +436,14 @@ class MizoAiAssistant
   def family_fee_answer
     if user.super_admin? || user.finance_admin?
       <<~ANSWER.strip
-        Family account spouse leh kum 14+ child payment setup dan:
+        Family account spouse leh kum 18+ child payment setup dan:
 
         1. Profile-ah Family Status chu Family leh Spouse Name dah fel tur a ni.
         2. Required membership fee leh fundraiser/family fund plan save hnuah spouse payment chu family account-ah record hranin a lo lang ang.
         3. Child fee atan Payment Plans page-ah membership fee plan open la Edit Plan click rawh.
-        4. Required for all members leh Charge eligible children aged 14 or older tih enable rawh.
+        4. Required for all members leh Charge eligible children aged 18 or older tih enable rawh.
         5. Fee per eligible child amount chu whole yen-in dah rawh.
-        6. Family profile-a date of birth recorded, kum 14 tling tawh child-te payment pawh record hranin a lo lang ang.
+        6. Family profile-a date of birth recorded, kum 18 tling tawh child-te payment pawh record hranin a lo lang ang.
         7. Account holder, spouse leh child fee te checkbox-in select kawp a, bank transfer vawi khat chauh tih theih a ni.
         8. Payment Records review-ah beneficiary name leh membership number check la, bank transfer verify hnuah approve rawh.
 
@@ -451,12 +451,12 @@ class MizoAiAssistant
       ANSWER
     else
       <<~ANSWER.strip
-        Family account-a spouse leh kum 14+ child fee pek dan:
+        Family account-a spouse leh kum 18+ child fee pek dan:
 
         1. Profile page-ah Family Status chu Family thlang la, Spouse Name dah rawh.
         2. Child nei chuan child name leh date of birth dah bawk rawh.
         3. Required membership fee/fund atan spouse payment chu Payments page-ah For spouse name tih nen record hran a lo lang ang.
-        4. MSJ-in child fee plan enable a, child kum 14 a tlin chuan child fee pawh record hran a lo lang ang.
+        4. MSJ-in child fee plan enable a, child kum 18 a tlin chuan child fee pawh record hran a lo lang ang.
         5. Account holder, spouse leh child payments te checkbox-in select kawp rawh.
         6. Pay Together click la, total amount chu bank transfer vawi khat chauh ti rawh.
         7. Transfer date, total amount leh reference name submit rawh.

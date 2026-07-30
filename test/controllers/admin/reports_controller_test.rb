@@ -168,6 +168,7 @@ module Admin
       assert_select "nav[aria-label='Table pagination']"
       assert_select "select[name='per_page'] option[selected]", text: "25"
       assert_includes response.body, "Household Reach"
+      assert_includes response.body, "Children 18+"
       assert_includes response.body, "Data Quality"
       assert_includes response.body, "Member Directory"
     end

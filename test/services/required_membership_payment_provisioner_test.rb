@@ -30,12 +30,12 @@ class RequiredMembershipPaymentProvisionerTest < ActiveSupport::TestCase
     eligible_child = @profile.family_members.create!(
       name: "Older Child",
       relationship: "Child",
-      date_of_birth: 14.years.ago.to_date
+      date_of_birth: 18.years.ago.to_date
     )
     @profile.family_members.create!(
       name: "Younger Child",
       relationship: "Child",
-      date_of_birth: 13.years.ago.to_date
+      date_of_birth: 17.years.ago.to_date
     )
 
     assert_difference -> { @user.membership_payments.where(membership_plan: @plan).count }, 2 do
@@ -55,7 +55,7 @@ class RequiredMembershipPaymentProvisionerTest < ActiveSupport::TestCase
     child = @profile.family_members.create!(
       name: "Older Child",
       relationship: "Child",
-      date_of_birth: 15.years.ago.to_date
+      date_of_birth: 19.years.ago.to_date
     )
     RequiredMembershipPaymentProvisioner.call(user: @user, membership_plan: @plan)
     child_payment = @user.membership_payments.find_by!(membership_plan: @plan, family_member: child)
@@ -66,6 +66,47 @@ class RequiredMembershipPaymentProvisionerTest < ActiveSupport::TestCase
     end
 
     assert_equal 2500, child_payment.reload.amount
+  end
+
+  test "retires unpaid child fees below eighteen but preserves reviewed financial records" do
+    pending_child = @profile.family_members.create!(
+      name: "Pending Child",
+      relationship: "Child",
+      date_of_birth: 18.years.ago.to_date
+    )
+    paid_child = @profile.family_members.create!(
+      name: "Paid Child",
+      relationship: "Child",
+      date_of_birth: 18.years.ago.to_date
+    )
+    review_child = @profile.family_members.create!(
+      name: "Review Child",
+      relationship: "Child",
+      date_of_birth: 18.years.ago.to_date
+    )
+    RequiredMembershipPaymentProvisioner.call(user: @user, membership_plan: @plan)
+
+    pending_payment = @user.membership_payments.find_by!(membership_plan: @plan, family_member: pending_child)
+    paid_payment = @user.membership_payments.find_by!(membership_plan: @plan, family_member: paid_child)
+    review_payment = @user.membership_payments.find_by!(membership_plan: @plan, family_member: review_child)
+    paid_payment.update!(status: :paid, paid_on: Time.current)
+    review_payment.update!(status: :pending_verification)
+    [ pending_child, paid_child, review_child ].each do |child|
+      child.update!(date_of_birth: 17.years.ago.to_date)
+    end
+
+    RequiredMembershipPaymentProvisioner.call(user: @user, membership_plan: @plan)
+
+    assert pending_payment.reload.cancelled?
+    assert_includes pending_payment.notes, "child fees start at age 18"
+    assert paid_payment.reload.paid?
+    assert review_payment.reload.pending_verification?
+
+    pending_child.update!(date_of_birth: 18.years.ago.to_date)
+    RequiredMembershipPaymentProvisioner.call(user: @user, membership_plan: @plan)
+
+    assert pending_payment.reload.pending?
+    assert_includes pending_payment.notes, "child reached age 18"
   end
 
   test "creates a separate spouse membership payment under the family account" do
@@ -82,12 +123,32 @@ class RequiredMembershipPaymentProvisionerTest < ActiveSupport::TestCase
     assert_equal spouse.membership_number, spouse_payment.beneficiary_membership_number
   end
 
+  test "removes an ineligible child fee from an unsubmitted payment batch" do
+    child = @profile.family_members.create!(
+      name: "Batched Child",
+      relationship: "Child",
+      date_of_birth: 18.years.ago.to_date
+    )
+    RequiredMembershipPaymentProvisioner.call(user: @user, membership_plan: @plan)
+    child_payment = @user.membership_payments.find_by!(membership_plan: @plan, family_member: child)
+    batch = PaymentBatch.create!(user: @user, total_amount: child_payment.amount, status: :pending)
+    child_payment.update!(payment_batch: batch)
+    child.update!(date_of_birth: 17.years.ago.to_date)
+
+    RequiredMembershipPaymentProvisioner.call(user: @user, membership_plan: @plan)
+
+    assert child_payment.reload.cancelled?
+    assert_nil child_payment.payment_batch_id
+    assert batch.reload.cancelled?
+    assert_equal 0, batch.total_amount
+  end
+
   test "creates spouse fundraiser payment but does not charge children for the fund" do
     @profile.update!(spouse_name: "Fund Spouse")
     child = @profile.family_members.create!(
       name: "Fund Child",
       relationship: "Child",
-      date_of_birth: 15.years.ago.to_date
+      date_of_birth: 19.years.ago.to_date
     )
     fund = MembershipPlan.create!(
       name: "Spouse Provisioning Fund",

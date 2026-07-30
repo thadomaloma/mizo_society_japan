@@ -74,7 +74,7 @@ class MembershipPaymentTest < ActiveSupport::TestCase
     child = @user.member_profile.family_members.create!(
       name: "Payment Child",
       relationship: "Child",
-      date_of_birth: 14.years.ago.to_date
+      date_of_birth: 18.years.ago.to_date
     )
     create_payment(@yearly_plan, payment_year: 2026, status: :paid)
     child_payment = build_payment(@yearly_plan, payment_year: 2026, status: :pending)
@@ -88,7 +88,7 @@ class MembershipPaymentTest < ActiveSupport::TestCase
     child = @user.member_profile.family_members.create!(
       name: "Duplicate Child",
       relationship: "Child",
-      date_of_birth: 14.years.ago.to_date
+      date_of_birth: 18.years.ago.to_date
     )
     first_payment = build_payment(@yearly_plan, payment_year: 2026, status: :paid)
     first_payment.family_member = child

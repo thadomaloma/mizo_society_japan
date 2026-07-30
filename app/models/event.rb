@@ -26,6 +26,14 @@ class Event < ApplicationRecord
   scope :by_category, ->(category_id) { category_id.present? ? where(event_category_id: category_id) : all }
   scope :by_status, ->(status) { statuses.key?(status.to_s) ? where(status: status) : all }
   scope :visible_to_members, -> { published.where(visibility: [ :public_event, :members_only ]) }
+  scope :visible_to, lambda { |user|
+    next all if user&.event_manager?
+
+    visible_events = published.where(visibility: [ :public_event, :members_only ])
+    next visible_events.or(published.where(visibility: :office_bearers_only)) if user&.office_bearer?
+
+    visible_events
+  }
   scope :search, lambda { |query|
     normalized_query = query.to_s.strip
     next all if normalized_query.blank?
